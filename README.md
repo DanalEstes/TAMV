@@ -1,5 +1,5 @@
 # TAMV
-TAMV = Tool Align Machine Vision for Duet based tool changing 3D printers.
+TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
 * Runs on the Pi that has the USB camera (Sorry, no PiCam at this moment)
 * Requires network connection to DUET RepRap V2 or V3 based printer.
