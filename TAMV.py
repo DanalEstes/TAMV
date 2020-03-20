@@ -54,12 +54,12 @@ print("Connected to a Duet V"+str(printer.printerType())+" printer at "+printer.
 params = cv2.SimpleBlobDetector_Params()
 
 # Change thresholds
-params.minThreshold = 20;
-params.maxThreshold = 200;
+params.minThreshold = 40;
+params.maxThreshold = 180;
 
 # Filter by Area.
 params.filterByArea = True
-params.minArea = 200
+params.minArea = 500
 
 # Filter by Circularity
 params.filterByCircularity = True
@@ -67,17 +67,17 @@ params.minCircularity = 0.75
 
 # Filter by Convexity
 params.filterByConvexity = True
-params.minConvexity = 0.75
+params.minConvexity = 0.5
 
 # Filter by Inertia
 params.filterByInertia = True
-params.minInertiaRatio = 0.75
+params.minInertiaRatio = 0.5
 
 # Create a detector with the parameters
 ver = (cv2.__version__).split('.')
 if int(ver[0]) < 3 :
     detector = cv2.SimpleBlobDetector(params)
-else : 
+else:
     detector = cv2.SimpleBlobDetector_create(params)
 
 ###################################################################################
@@ -85,6 +85,10 @@ else :
 # Start of method definitions
 ###################################################################################
 
+def printKeypointXYR(keypoints):
+    for i in range(len(keypoints)):
+        print("Keypoint "+str(i)+" XY = ",np.around(keypoints[i].pt,3))
+        print("Keypoints "+str(i)+" R = ",np.around(keypoints[i].size/2,3))
 
 def firstTool():
     # Get user to position a tool.
@@ -121,27 +125,36 @@ def eachTool():
     state = 0 # State machine for figuring out image rotation to carriage XY move mapping. 
     rot = 0 # Amount of rotation of image. 
     count=0
+    rd = 0;
     # loop over the frames from the video stream
     while True:
         (grabbed, fg) = vs.read()
         frame = imutils.rotate_bound(fg,rot)
         target = [np.around(frame.shape[1]/2),np.around(frame.shape[0]/2)]
+        keypoints = detector.detect(frame)
 
-        # draw the timestamp on the frame
+        # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
         timestamp = datetime.datetime.now()
         ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
         cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
 
-        keypoints = detector.detect(frame)
-        #print(np.around(keypoints[0].pt))
-
-        if ((keypoints is None) or (len(keypoints) != 1)):
-            if (250 < (int(round(time.time() * 1000)) - rd)):
+        lk=len(keypoints)
+        if (lk == 0):
+            if (25 < (int(round(time.time() * 1000)) - rd)):
+                cv2.putText(frame, 'no circles found', (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
                 cv2.imshow("Nozzle", frame)
                 key = cv2.waitKey(1) # Required to get frames to display.
             continue
-        l=len(keypoints)
-        #print(l, end='', sep=' ', flush=True)
+        if (lk > 1):
+            if (25 < (int(round(time.time() * 1000)) - rd)):
+                #printKeypointXYR(keypoints)
+                cv2.putText(frame, 'too many circles '+str(lk), (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+                frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                cv2.imshow("Nozzle", frame)
+                key = cv2.waitKey(1) # Required to get frames to display.
+            continue
+
+        # Found one and only one circle.  Process it. 
         xy = np.around(keypoints[0].pt)
         r = np.around(keypoints[0].size/2)
         # Keep track of center of circle and average across many circles
