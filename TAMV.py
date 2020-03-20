@@ -24,7 +24,7 @@ import imutils
 import datetime
 import time
 import numpy as np
-import duetWebAPI as DWA
+import DuetWebAPI as DWA
 
 
 if (os.environ.get('SSH_CLIENT')):
@@ -41,7 +41,7 @@ time.sleep(2.0)
 
 print("Please standby, attempting to connect to printer...")
 
-# Get connected to the printer.  First, see if we are running on the Pi in a Duet3. 
+# Get connected to the printer.  First, see if we are running on the Pi in a Duet3.
 printer = DWA.DuetWebAPI('http://127.0.0.1')
 while (not printer.printerType()):
     ip = input("\nPlease Enter IP or name of printer\n")
@@ -91,6 +91,8 @@ def printKeypointXYR(keypoints):
         print("Keypoints "+str(i)+" R = ",np.around(keypoints[i].size/2,3))
 
 def firstTool():
+    printer.gCode("G10 P0 X0Y0 ")  # Remove tool offsets, before we start positioning.
+
     # Get user to position a tool.
     print('#################################################################################')
     print('# 1) Using Deut Web, mount tool zero                                            #')
@@ -115,17 +117,18 @@ def firstTool():
     except:
         raise
 
-def eachTool():
+def eachTool(tool):
     avg=[0,0]
     guess  = [1,1];  # Millimeters.
-    target = [720/2, 480/2] # Pixels. Will be recalculated from frame size. 
+    target = [720/2, 480/2] # Pixels. Will be recalculated from frame size.
     drctn  = [1,1]  # Either 1 or -1, which we must figure out from the initial moves
     xy     = [0,0]
     oldxy  = xy
-    state = 0 # State machine for figuring out image rotation to carriage XY move mapping. 
-    rot = 0 # Amount of rotation of image. 
+    state = 0 # State machine for figuring out image rotation to carriage XY move mapping.
+    rot = 0 # Amount of rotation of image.
     count=0
     rd = 0;
+    printer.gCode("G10 P"+str(tool)+" X0Y0 ")  # Remove tool offsets, before we start positioning.
     # loop over the frames from the video stream
     while True:
         (grabbed, fg) = vs.read()
@@ -154,7 +157,7 @@ def eachTool():
                 key = cv2.waitKey(1) # Required to get frames to display.
             continue
 
-        # Found one and only one circle.  Process it. 
+        # Found one and only one circle.  Process it.
         xy = np.around(keypoints[0].pt)
         r = np.around(keypoints[0].size/2)
         # Keep track of center of circle and average across many circles
@@ -169,8 +172,8 @@ def eachTool():
             #print("state = ",state)
             #print("Average Pixel Position = X{0:7.3f}  Y{1:7.3f} ".format(avg[0],avg[1]))
             #print("Target        Position = X{0:7.3f}  Y{1:7.3f} ".format(target[0],target[1]))
-            if (state == 0):  # Finding Rotation: Collected frames before first move. 
-                print("Initiating a small X move to calibrate camera to carriage rotation.")
+            if (state == 0):  # Finding Rotation: Collected frames before first move.
+                print("Initiating a small X move to calibrate camera to carriage rottion.")
                 oldxy = xy
                 printer.gCode("G91 G1 X-0.25 G90 ")
                 state += 1
@@ -186,7 +189,7 @@ def eachTool():
                 else:
                     print("Camera to carriage movement axis incompatiabile... will rotate image and calibrate again.")
                     rot = (rot + 90) % 360
-                    state = 0 #start over. 
+                    state = 0 #start over.
 
             elif (state == 2): # Incrementally attempt to center the nozzle.
                 for j in [0,1]:
@@ -219,7 +222,7 @@ def eachTool():
 
         # show the frame
         cv2.imshow("Nozzle", frame)
-        key = cv2.waitKey(1) # Required to get frames to display. 
+        key = cv2.waitKey(1) # Required to get frames to display.
         rd = int(round(time.time() * 1000))
 
 ###################################################################################
@@ -227,9 +230,9 @@ def eachTool():
 # Start of Main Code
 ###################################################################################
 firstTool()
-baseCoords = eachTool()
-print(baseCoords)
+toolCoords [0] = ['']
+
+for t in range(1,printer.getNumTools()):
+    toolCoords[t] = eachTool(t)
 
 
-#for t in range(1:printer.getNumExtruders()):
-  #eachTool()
