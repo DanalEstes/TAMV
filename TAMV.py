@@ -34,6 +34,7 @@ if (os.environ.get('SSH_CLIENT')):
 os.environ['QT_LOGGING_RULES'] ="qt5ct.debug=false"
 
 # Globals.
+cameraCoords = []
 
 # initialize the video stream and allow the cammera sensor to warmup
 vs = cv2.VideoCapture(0)
@@ -63,7 +64,7 @@ params.minArea = 500
 
 # Filter by Circularity
 params.filterByCircularity = True
-params.minCircularity = 0.75
+params.minCircularity = 0.5
 
 # Filter by Convexity
 params.filterByConvexity = True
@@ -91,15 +92,16 @@ def printKeypointXYR(keypoints):
         print("Keypoints "+str(i)+" R = ",np.around(keypoints[i].size/2,3))
 
 def firstTool():
-    printer.gCode("G10 P0 X0Y0 ")  # Remove tool offsets, before we start positioning.
+    tool = 0
+    printer.gCode("G10 P0 X0Y0 ")          # Remove tool offsets, before we start positioning.
+    printer.gCode("T{0:d} ".format(tool))  # Mount correct tool
 
-    # Get user to position a tool.
-    print('#################################################################################')
-    print('# 1) Using Deut Web, mount tool zero                                            #')
-    print('# 2) Using Duet Web, jog that tool until it appears in the camera view window.  #')
-    print('# 3) Using Duet Web, very roughly center the tool in the window.                #')
-    print('# 4) Click back in this script window, and press Ctrl+C                         #')
-    print('#################################################################################')
+    # Get user to position the first tool over the camera.
+    print('#########################################################################')
+    print('# 1) Using Duet Web, jog T0 until it appears in the camera view window. #')
+    print('# 2) Using Duet Web, very roughly center the tool in the window.        #')
+    print('# 3) Click back in this script window, and press Ctrl+C                 #')
+    print('#########################################################################')
     key = -1
     try:
         while True:
@@ -113,6 +115,8 @@ def firstTool():
     except KeyboardInterrupt:
         print()
         print("Please standby, initializing machine vision...")
+        global cameraCoords
+        cameraCoords=printer.getCoords()
         return
     except:
         raise
@@ -128,7 +132,10 @@ def eachTool(tool):
     rot = 0 # Amount of rotation of image.
     count=0
     rd = 0;
-    printer.gCode("G10 P"+str(tool)+" X0Y0 ")  # Remove tool offsets, before we start positioning.
+    printer.gCode("G10 P{0:d} X0Y0 ".format(tool))  # Remove tool offsets, before we start positioning.
+    print("Please standby, mounting tool T{0:d}... ".format(tool))
+    printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
+    printer.gCode("G1 F5000 X{0:1.3f} Y{1:1.3f}".format(np.around(cameraCoords['X'],3),np.around(cameraCoords['Y'],3)))  # Position Tool in Frame
     # loop over the frames from the video stream
     while True:
         (grabbed, fg) = vs.read()
@@ -230,9 +237,18 @@ def eachTool(tool):
 # Start of Main Code
 ###################################################################################
 firstTool()
-toolCoords [0] = ['']
 
-for t in range(1,printer.getNumTools()):
-    toolCoords[t] = eachTool(t)
+toolCoords = []
+for t in range(printer.getNumTools()):
+    toolCoords.append(eachTool(t))
 
+for t in range(len(toolCoords)):
+    print("Tool ",t)
+    print(toolCoords[t])
 
+print()
+print("G10 P0 X0 Y0")
+for t in range(1,len(toolCoords)):
+    x = np.around(toolCoords[0]['X'] - toolCoords[t]['X'],3)
+    y = np.around(toolCoords[0]['Y'] - toolCoords[t]['Y'],3)
+    print("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
