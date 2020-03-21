@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Python Script to align multiple tools on Jubilee printer with Duet3d Controller
-# Using images from USB camera and finding circles in those images
+# Python Script to mount a single tool multiple times and measure
+# repeatability on aJubilee printer with Duet3d Controller,
+# using images from USB camera and finding circles in those images
 #
 # Copyright (C) 2020 Danal Estes all rights reserved.
 # Released under The MIT License. Full text available via https://opensource.org/licenses/MIT
 #
 # Requires OpenCV to be installed on Pi
-# Requires running via the OpenCV installed python (that is why no shebang)
 # Requires network connection to Duet based printer running Duet/RepRap V2 or V3
 #
 
@@ -80,36 +80,6 @@ def printKeypointXYR(keypoints):
     for i in range(len(keypoints)):
         print("Keypoint "+str(i)+" XY = ",np.around(keypoints[i].pt,3))
         print("Keypoints "+str(i)+" R = ",np.around(keypoints[i].size/2,3))
-
-def firstTool():
-    tool = 0
-    printer.gCode("G10 P0 X0Y0 ")          # Remove tool offsets, before we start positioning.
-    printer.gCode("T{0:d} ".format(tool))  # Mount correct tool
-
-    # Get user to position the first tool over the camera.
-    print('#########################################################################')
-    print('# 1) Using Duet Web, jog T0 until it appears in the camera view window. #')
-    print('# 2) Using Duet Web, very roughly center the tool in the window.        #')
-    print('# 3) Click back in this script window, and press Ctrl+C                 #')
-    print('#########################################################################')
-    key = -1
-    try:
-        while True:
-            (grabbed, frame) = vs.read()
-            # draw the timestamp on the frame
-            timestamp = datetime.datetime.now()
-            ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
-            cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
-            cv2.imshow("Nozzle", frame)
-            cv2.waitKey(10) # Required to get frames to display.
-    except KeyboardInterrupt:
-        print()
-        print("initializing machine vision...")
-        global cameraCoords
-        cameraCoords=printer.getCoords()
-        return
-    except:
-        raise
 
 def eachTool(tool):
     avg=[0,0]
@@ -199,7 +169,7 @@ def eachTool(tool):
                     guess[j] = np.around((target[j]-xy[j])/40,3)
                     guess[j] = guess[j] * drctn[j]  # Force a direction
                 printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
-                print("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
+                #print("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
                 oldxy = xy
                 #if ((np.around(guess)[0] == 0) and (np.around(guess)[1] == 0)):
                 if ((np.around(guess[0],3) == 0.0) and (np.around(guess[1],3) == 0.0)):
@@ -231,31 +201,32 @@ def eachTool(tool):
 ###################################################################################
 
 # Where is ithe camera?  Command line arguments can tell us.
-if (len(sys.argv) == 1): # No command line.
-    firstTool()          # Get the user jog T0 to the camera.
+if (len(sys.argv) == 3):  # Yes command line. Must be two numbers, the X Y of camera.
+    cameraCoords = {'X': 0, 'Y': 0}
+    cameraCoords['X'] = float(sys.argv[1])
+    cameraCoords['Y'] = float(sys.argv[2])
 else:
-    if (len(sys.argv) == 3):  # Yes command line. Must be two numbers, the X Y of camera.
-        cameraCoords = {'X': 0, 'Y': 0}
-        cameraCoords['X'] = float(sys.argv[1])
-        cameraCoords['Y'] = float(sys.argv[2])
-    else:
-        print("Invoke with no arguments, or with X Y cordinate of Camera")
-        exit(8)
+    print("Invoke with X Y cordinate of Camera")
+    exit(8)
 
 # Now look at each tool.
 toolCoords = []
-for t in range(printer.getNumTools()):
-    toolCoords.append(eachTool(t))
-
-print("Unmounting last tool")
-printer.gCode("T-1 ")
+for t in range(10):
+    toolCoords.append(eachTool(0))
+    print("Unmounting Tool on pass ",t)
+    printer.gCode("T-1 ")
 
 ###################################################################################
 # End of all vision, etc.  Now calculate and report.
 ###################################################################################
 print()
-print("G10 P0 X0 Y0")
-for t in range(1,len(toolCoords)):
-    x = np.around(toolCoords[0]['X'] - toolCoords[t]['X'],3)
-    y = np.around(toolCoords[0]['Y'] - toolCoords[t]['Y'],3)
-    print("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+print("X average = ",np.around(np.average([toolCoords[i]['X'] for i in range(len(toolCoords))]),4))
+print("X     max = ",np.around(np.max([toolCoords[i]['X'] for i in range(len(toolCoords))]),4))
+print("X     min = ",np.around(np.min([toolCoords[i]['X'] for i in range(len(toolCoords))]),4))
+print("X  stddev = ",np.around(np.std([toolCoords[i]['X'] for i in range(len(toolCoords))]),4))
+print()
+print("Y average = ",np.around(np.average([toolCoords[i]['Y'] for i in range(len(toolCoords))]),4))
+print("Y     max = ",np.around(np.max([toolCoords[i]['Y'] for i in range(len(toolCoords))]),4))
+print("Y     min = ",np.around(np.min([toolCoords[i]['Y'] for i in range(len(toolCoords))]),4))
+print("Y  stddev = ",np.around(np.std([toolCoords[i]['Y'] for i in range(len(toolCoords))]),4))
+
