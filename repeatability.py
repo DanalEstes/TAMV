@@ -85,7 +85,7 @@ def eachTool(tool):
     avg=[0,0]
     guess  = [1,1];  # Millimeters.
     target = [720/2, 480/2] # Pixels. Will be recalculated from frame size.
-    drctn  = [1,1]  # Either 1 or -1, which we must figure out from the initial moves
+    drctn  = [-1,-1]  # Either 1 or -1, which we must figure out from the initial moves
     xy     = [0,0]
     oldxy  = xy
     state = 0 # State machine for figuring out image rotation to carriage XY move mapping.
@@ -152,6 +152,8 @@ def eachTool(tool):
                     print("Found X movement via rotation, will now calibrate camera to carriage direction.")
                     ppm = 0.5/float(vectDist(xy,oldxy))
                     print("MM per Pixel discovered = {0:1.4f}".format(ppm) )
+                    mpp = float(vectDist(xy,oldxy))/0.5
+                    print("Pixel per MM discovered = {0:1.4f}".format(mpp) )
                     state += 1
                     oldxy = xy
                     drctn = [1,1]
@@ -166,7 +168,7 @@ def eachTool(tool):
                         print("Detected movement away from target, now reversing "+'XY'[j])
                         drctn[j] = -drctn[j]                         # If we are getting further away, reverse!
                     #print("Direction         Factor = X{0:-d}  Y{1:-d} ".format(drctn[0],drctn[1]))
-                    guess[j] = np.around((target[j]-xy[j])/40,3)
+                    guess[j] = np.around((target[j]-xy[j])/(mpp*2),3)
                     guess[j] = guess[j] * drctn[j]  # Force a direction
                 printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
                 #print("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
