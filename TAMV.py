@@ -24,7 +24,7 @@ import imutils
 import datetime
 import time
 import numpy as np
-import DuetWebAPI as DWA
+from DuetWebAPI import DuetWebAPI as DWA
 
 
 if (os.environ.get('SSH_CLIENT')):
