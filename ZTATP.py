@@ -28,7 +28,7 @@ yp = 340              # Y coord of Z-Probe over flat plate to probe Z. 15x15mm a
 
 toffs = [[0] * 3 for i in range(len(tl))]
 poffs = 0
-import DuetWebAPI as dwa 
+from DuetWebAPI import DuetWebAPI as dwa
 import numpy as np
 
 # Get connected to the printer.  First, see if we are running on the Pi in a Duet3.
