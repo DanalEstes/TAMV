@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
+# ZTATP = Z (only) Tool Align Touch Plate
+#
 # Python Script to align Z for multiple tools on Jubilee printer with Duet3d Controller
-# Using a touchplate, and and endstop endput wire to every nozzle and that touchplate. 
+# Using a touchplate, and and endstop endput wire to every nozzle and that touchplate.
+# May also work on other Duet/RepRap based mutli-tool printers.  
 #
 # Copyright (C) 2020 Danal Estes all rights reserved.
 # Released under The MIT License. Full text available via https://opensource.org/licenses/MIT

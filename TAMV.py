@@ -125,6 +125,7 @@ def eachTool(tool):
     printer.gCode("G10 P{0:d} X0Y0 ".format(tool))  # Remove tool offsets, before we start positioning.
     print("mounting tool T{0:d}... ".format(tool))
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
+    printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(cameraCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     printer.gCode("G1 F5000 X{0:1.3f} Y{1:1.3f}".format(np.around(cameraCoords['X'],3),np.around(cameraCoords['Y'],3)))  # Position Tool in Frame
     # loop over the frames from the video stream
     while True:
