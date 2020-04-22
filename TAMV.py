@@ -427,6 +427,6 @@ txq.put([FOAD])
 
 print('')
 print('If your camera is in a consistent location, next time you run TAMV, ')
-print('you can optionally supply -cp x{0:1.3f} y{1:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
+print('you can optionally supply -cp {0:1.3f} {1:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
 print('Adding this will cause TAMV to skip all interaction, and attempt to align all tools on its own.')
 print('(This is really the x y of your camera)')
