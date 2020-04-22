@@ -170,13 +170,13 @@ def init():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Program to allign multiple tools on Duet based printers, using machine vision.', allow_abbrev=False)
     parser.add_argument('-duet',type=str,nargs=1,help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.',required=True)
-    parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
+    #parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
     parser.add_argument('-cp',type=float,nargs=2,default=[0.0,0.0],help="x y that will put 'controlled point' on carriage over camera.")
     args=vars(parser.parse_args())
 
     global duet, camera, cp
     duet     = args['duet'][0]
-    camera   = args['camera'][0]
+    #camera   = args['camera'][0]
     cp       = args['cp']
 
     # Get connected to the printer.
@@ -199,6 +199,32 @@ def init():
 
     vidStrThr = threading.Thread(target=runVideoStream)
     vidStrThr.start()
+
+    print('#########################################################################')
+    print('# Important:                                                            #')
+    print('# Your printer MUST be capable of mounting and parking every tool with  #')
+    print('# no collisions between tools.                                          #')
+    print('#                                                                       #')
+    print('# Offsets for each tool must be set roughly correctly, even before the  #')
+    print('# first run of TAMV.  They do not need to be perfect; only good enough  #')
+    print('# to get the tool on camera.  TAMV has to see it to align it.           #')
+    print('#########################################################################')
+    print('')
+    print('#########################################################################')
+    print('# Hints:                                                                #')
+    print('# Preferred location for the camera is along the max Y edge of the bed. #')
+    print('# Fixed camera is also OK, but may limit aligning tools that differ     #')
+    print('# significantly in Z.                                                   #')
+    print('#                                                                       #')
+    print('# If circle detect finds no circles, try changing lighting, changing z, #')
+    print('# cleaning the nozzle, or slightly blurring focus.                      #')
+    print('#                                                                       #')
+    print('# Quite often, the open end of the insulation on the heater wires will  #')
+    print('# be detected as a circle.  They may have to be covered.                #')
+    print('#                                                                       #')
+    print('# Your "controlled point" can be anything. Tool changer pin is fine.    #')
+    print('#########################################################################')
+    print('')
 
 def createDetector(t1=40,t2=180, all=0.5, area=300):
         # Setup SimpleBlobDetector parameters.
@@ -240,14 +266,13 @@ def controlledPoint():
     txq.put([ROTR])         # Tell subtask reset rotation. 
     # Get user to position the first tool over the camera.
     print('#########################################################################')
-    print('# 1) Using Duet Web, jog until your controled point appears.            #')
-    print('# 2) Using Duet Web, very roughly center the controled point.           #')
+    print('# 1) Using Duet Web, jog until your controlled point appears.           #')
+    print('# 2) Using Duet Web, very roughly center the controled point            #')
     print('# 3) Click back in this script window, and press Ctrl+C                 #')
     print('#########################################################################')
-    #key = -1
     try:
         while(1): 
-            print('enter message to be sent to subthread ')
+            #print('enter message to be sent to subthread ')
             x = input()
             txq.put([MCMD,x])
     except KeyboardInterrupt:
@@ -261,33 +286,6 @@ def controlledPoint():
     except:
         raise
 
-
-def firstTool():
-    tool = 0
-    txq.put([STFU])         # Tell subtask not to send us circle messages. 
-    txq.put([CRSH,False])   # Tell subtask to stop displaying a cross hair reticle. 
-    txq.put([ROTR])         # Tell subtask reset rotation. 
-    # Get user to position the first tool over the camera.
-    print('#########################################################################')
-    print('# 1) Using Duet Web, jog T0 until it appears in the camera view window. #')
-    print('# 2) Using Duet Web, very roughly center the tool in the window.        #')
-    print('# 3) Click back in this script window, and press Ctrl+C                 #')
-    print('#########################################################################')
-    printer.gCode("T{0:d} ".format(tool))  # Mount correct tool
-    try:
-        while(1): 
-            print('enter message to be sent to subthread ')
-            x = input()
-            txq.put([MCMD,x])
-    except KeyboardInterrupt:
-        print()
-        print("Capturing raw position of this tool.")
-        global T0Coords
-        T0Coords=printer.getCoords()
-        print("Controlled Point X{0:-1.3f} Y{1:-1.3f} ".format(T0Coords['X'],T0Coords['Y']))
-        return
-    except:
-        raise
 
 def eachTool(tool):
     txq.put([STFU])  # Tell subtask not to send us circle messages. 
@@ -304,7 +302,7 @@ def eachTool(tool):
     count=0
     rd = 0;
 
-    print("mounting tool T{0:d}. ".format(tool))
+    print("Mounting tool T{0:d}. ".format(tool))
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
     printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
@@ -426,3 +424,8 @@ for t in range(0,len(toolCoords)):
 
 # Tell subtask to exit
 txq.put([FOAD])
+
+print('If your camera is in a consistent location, next time you run TAMV, ')
+print('you can optionally supply -cp x{1:1.3f} y{2:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
+print('Adding this will cause TAMV to skip all interaction, and attempt to align all tools on its own.')
+print('(This is really the x y of your camera)')
