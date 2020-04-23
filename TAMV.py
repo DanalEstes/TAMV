@@ -170,26 +170,14 @@ def init():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Program to allign multiple tools on Duet based printers, using machine vision.', allow_abbrev=False)
     parser.add_argument('-duet',type=str,nargs=1,help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.',required=True)
-    #parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
+    parser.add_argument('-vidonly',action='store_true',help='Open video window and do nothing else.')
     parser.add_argument('-cp',type=float,nargs=2,default=[0.0,0.0],help="x y that will put 'controlled point' on carriage over camera.")
     args=vars(parser.parse_args())
 
-    global duet, camera, cp
+    global duet, vidonly, cp
     duet     = args['duet'][0]
-    #camera   = args['camera'][0]
+    vidonly  = args['vidonly']
     cp       = args['cp']
-
-    # Get connected to the printer.
-
-    print('Attempting to connect to printer at '+duet)
-    global printer
-    printer = DWA.DuetWebAPI('http://'+duet)
-    if (not printer.printerType()):
-        print('Device at '+duet+' either did not respond or is not a Duet V2 or V3 printer.')
-        exit(2)
-    printer = DWA.DuetWebAPI('http://'+duet)
-
-    print("Connected to a Duet V"+str(printer.printerType())+" printer at "+printer.baseURL())
 
     # Set up queues to talk to subthread. 
     global txq, rxq
@@ -200,6 +188,19 @@ def init():
     vidStrThr = threading.Thread(target=runVideoStream)
     vidStrThr.start()
 
+    if(vidonly): vidWindow()
+
+    # Get connected to the printer.
+    print('Attempting to connect to printer at '+duet)
+    global printer
+    printer = DWA.DuetWebAPI('http://'+duet)
+    if (not printer.printerType()):
+        print('Device at '+duet+' either did not respond or is not a Duet V2 or V3 printer.')
+        exit(2)
+    printer = DWA.DuetWebAPI('http://'+duet)
+    print("Connected to a Duet V"+str(printer.printerType())+" printer at "+printer.baseURL())
+
+    print('')
     print('#########################################################################')
     print('# Important:                                                            #')
     print('# Your printer MUST be capable of mounting and parking every tool with  #')
@@ -225,6 +226,26 @@ def init():
     print('# Your "controlled point" can be anything. Tool changer pin is fine.    #')
     print('#########################################################################')
     print('')
+
+def vidWindow():
+    print('')
+    print('Video Window only selected with -vidonly')
+    print('Press enter to toggle crosshair vs circle finder.')
+    print('Press Ctrl+C to exit.')
+    txq.put([STFU])         # Tell subtask not to send us circle messages. 
+    txq.put([CRSH,True])    # Tell subtask to display a cross hair reticle. 
+    txq.put([ROTR])         # Tell subtask reset rotation. 
+    toggle = True
+    try:
+        while(1): 
+            x = input()
+            toggle = not toggle
+            txq.put([CRSH,toggle])    # Tell subtask to display a cross hair reticle. 
+    except KeyboardInterrupt:
+        txq.put([FOAD])
+        time.sleep(0.5)
+        exit()
+
 
 def createDetector(t1=40,t2=180, all=0.5, area=300):
         # Setup SimpleBlobDetector parameters.
