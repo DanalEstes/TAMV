@@ -21,6 +21,7 @@ import argparse
 import threading
 import queue
 
+
 try:
     import cv2
 except:
@@ -64,13 +65,15 @@ def init():
     parser = argparse.ArgumentParser(description='Program to allign multiple tools on Duet based printers, using machine vision.', allow_abbrev=False)
     parser.add_argument('-duet',type=str,nargs=1,help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.',required=True)
     parser.add_argument('-vidonly',action='store_true',help='Open video window and do nothing else.')
+    parser.add_argument('-picamera',action='store_true',help='Use pi camera instead of USB camera. ')
     parser.add_argument('-cp',type=float,nargs=2,default=[0.0,0.0],help="x y that will put 'controlled point' on carriage over camera.")
-    parser.add_argument('-repeat',type=int,nargs=1,default=1,help="Repeat entire alignment N times and report statistics")
+    parser.add_argument('-repeat',type=int,nargs=1,default=[1],help="Repeat entire alignment N times and report statistics")
     args=vars(parser.parse_args())
 
-    global duet, vidonly, cp, repeat
+    global duet, vidonly, picamera, cp, repeat
     duet     = args['duet'][0]
     vidonly  = args['vidonly']
+    picamera  = args['picamera']
     cp       = args['cp']
     repeat   = args['repeat'][0]
 
@@ -142,7 +145,7 @@ def vidWindow():
         exit()
 
 
-def createDetector(t1=40,t2=180, all=0.6, area=300):
+def createDetector(t1=20,t2=200, all=0.5, area=200):
         # Setup SimpleBlobDetector parameters.
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = t1;          # Change thresholds
@@ -365,9 +368,34 @@ def runVideoStream():
     XRET=0          # Draw a cross hair reticle.
     nocircle = 0    # Counter of frames with no circle.  
 
-
-    vs = cv2.VideoCapture(0)
     detector = createDetector()
+
+    if(picamera):
+        try:
+            from picamera.array import PiRGBArray
+            from picamera import PiCamera
+        except:
+            print()
+            print('Python library "picamera" not installed.')
+            print('Please run "sudo pip install picamera" and then try again.')
+            print('Press Ctrl+C to exit.')
+            exit()
+
+        try:
+            piCamera = PiCamera()
+            #camera.resolution = (640, 480)
+            piCamera.framerate = 15
+            rawCapture = PiRGBArray(piCamera)
+        except:
+            print()
+            print('Pi Camera did not respond.')
+            print('Be sure it is properly attached.')
+            print('Run "sudo raspi-config" and be sure Pi Camera is enabled. ')
+            print('Press Ctrl+C to exit.')
+            exit()            
+    else:
+        # Use USB camera if picamera not specifically requested. 
+        vs = cv2.VideoCapture(1)
 
     while True:
         # Process Queue messages before frames. 
@@ -389,8 +417,16 @@ def runVideoStream():
                     if ('area' in qmsg[1]): detector = createDetector(area=float((qmsg[1]).split()[1]))
                 except: 
                     print('Bad command or argument ')
- 
-        (grabbed, fg) = vs.read()
+        if(picamera):
+            rawCapture.truncate(0)
+            piCamera.capture(rawCapture, format="bgr", use_video_port=True)
+            fg = rawCapture.array
+            fg = cv2.medianBlur(fg,11)
+            fg = cv2.medianBlur(fg,5)
+        else:
+            (grabbed, fg) = vs.read()
+
+
         frame = imutils.rotate_bound(fg,rot)
         target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
 
@@ -410,6 +446,8 @@ def runVideoStream():
         if (XRET):
             frame = cv2.line(frame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1) 
             frame = cv2.line(frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1) 
+            #if(frame.shape[0] > 640):
+            #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
             cv2.imshow("Nozzle", frame)
             key = cv2.waitKey(1) # Required to get frames to display.
             continue
@@ -423,6 +461,8 @@ def runVideoStream():
             if (25 < (int(round(time.time() * 1000)) - rd)):
                 nocircle += 1
                 cv2.putText(frame, 'no circles found', (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+                #if(frame.shape[0] > 640):
+                #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
                 cv2.imshow("Nozzle", frame)
                 key = cv2.waitKey(1) # Required to get frames to display.
             continue
@@ -431,6 +471,8 @@ def runVideoStream():
                 #printKeypointXYR(keypoints)
                 cv2.putText(frame, 'too many circles '+str(lk), (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
                 frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                #if(frame.shape[0] > 640):
+                #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
                 cv2.imshow("Nozzle", frame)
                 key = cv2.waitKey(1) # Required to get frames to display.
             continue
@@ -445,10 +487,12 @@ def runVideoStream():
         # Note its radius and position
         ts =  "X{0:7.2f} Y{1:7.2f} R{2:7.2f}".format(xy[0],xy[1],r)
         xy = np.uint16(xy)
-        cv2.putText(frame, ts, (xy[0]-175, xy[1]+50), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 0, 255), 1)
+        cv2.putText(frame, ts, (xy[0]-175, xy[1]+50), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 0, 255), 2)
 
         # show the frame
 
+        #if(frame.shape[0] > 640):
+        #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow("Nozzle", frame)
         key = cv2.waitKey(1) # Required to get frames to display.
         rd = int(round(time.time() * 1000))
