@@ -14,8 +14,8 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
 
     mkdir TAMV
     cd TAMV
-    wget https://raw.githubusercontent.com/DanalEstes/TAMV/master/TAMV.py
-    wget https://raw.githubusercontent.com/DanalEstes/DuetWebAPI/master/DuetWebAPI.py
+    wget -N https://raw.githubusercontent.com/DanalEstes/TAMV/master/TAMV.py
+    wget -N https://raw.githubusercontent.com/DanalEstes/DuetWebAPI/master/DuetWebAPI.py
 
 ## Run
 
