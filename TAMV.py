@@ -10,7 +10,6 @@
 # Requires network connection to Duet based printer running Duet/RepRap V2 or V3
 #
 
-print("Startup may take a few moments: Loading libraries; some of them are very large.")
 import os
 import sys
 import imutils
@@ -21,21 +20,13 @@ import argparse
 import threading
 import queue
 
-
-try:
-    import cv2
-except:
-    print("Import for CV2 failed.  Please install openCV")
-    print("You may wish to use https://github.com/DanalEstes/PiInstallOpenCV")
-    raise
-
 try: 
     import DuetWebAPI as DWA
 except ImportError:
     print("Python Library Module 'DuetWebAPI.py' is required. ")
     print("Obtain from https://github.com/DanalEstes/DuetWebAPI ")
     print("Place in same directory as script, or in Python libpath.")
-    exit(2)
+    exit(8)
 
 if (os.environ.get('SSH_CLIENT')):
     print("This script MUST run on the graphics console, not an SSH session.")
@@ -63,19 +54,29 @@ def init():
     os.environ['QT_LOGGING_RULES'] ="qt5ct.debug=false"
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Program to allign multiple tools on Duet based printers, using machine vision.', allow_abbrev=False)
-    parser.add_argument('-duet',type=str,nargs=1,help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.',required=True)
+    parser.add_argument('-duet',type=str,nargs=1,default=['localhost'],help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.')
     parser.add_argument('-vidonly',action='store_true',help='Open video window and do nothing else.')
-    parser.add_argument('-picamera',action='store_true',help='Use pi camera instead of USB camera. ')
+    parser.add_argument('-camera',type=int,nargs=1,default=[0],help='Index of /dev/videoN device to be used.  Default 0. ')
     parser.add_argument('-cp',type=float,nargs=2,default=[0.0,0.0],help="x y that will put 'controlled point' on carriage over camera.")
     parser.add_argument('-repeat',type=int,nargs=1,default=[1],help="Repeat entire alignment N times and report statistics")
     args=vars(parser.parse_args())
 
-    global duet, vidonly, picamera, cp, repeat
+    global duet, vidonly, camera, cp, repeat
     duet     = args['duet'][0]
     vidonly  = args['vidonly']
-    picamera  = args['picamera']
+    camera    = args['camera'][0]
     cp       = args['cp']
     repeat   = args['repeat'][0]
+
+    print("Startup may take a few moments: Loading libraries; some of them are very large.")
+    try:
+        global cv2
+        import cv2
+    except:
+        print("Import for CV2 failed.  Please install openCV")
+        print("You may wish to use https://github.com/DanalEstes/PiInstallOpenCV")
+        exit(8)
+
 
     # Set up queues to talk to subthread. 
     global txq, rxq
@@ -369,33 +370,7 @@ def runVideoStream():
     nocircle = 0    # Counter of frames with no circle.  
 
     detector = createDetector()
-
-    if(picamera):
-        try:
-            from picamera.array import PiRGBArray
-            from picamera import PiCamera
-        except:
-            print()
-            print('Python library "picamera" not installed.')
-            print('Please run "sudo pip install picamera" and then try again.')
-            print('Press Ctrl+C to exit.')
-            exit()
-
-        try:
-            piCamera = PiCamera()
-            #camera.resolution = (640, 480)
-            piCamera.framerate = 15
-            rawCapture = PiRGBArray(piCamera)
-        except:
-            print()
-            print('Pi Camera did not respond.')
-            print('Be sure it is properly attached.')
-            print('Run "sudo raspi-config" and be sure Pi Camera is enabled. ')
-            print('Press Ctrl+C to exit.')
-            exit()            
-    else:
-        # Use USB camera if picamera not specifically requested. 
-        vs = cv2.VideoCapture(0)
+    vs = cv2.VideoCapture(camera)
 
     while True:
         # Process Queue messages before frames. 
@@ -417,16 +392,9 @@ def runVideoStream():
                     if ('area' in qmsg[1]): detector = createDetector(area=float((qmsg[1]).split()[1]))
                 except: 
                     print('Bad command or argument ')
-        if(picamera):
-            rawCapture.truncate(0)
-            piCamera.capture(rawCapture, format="bgr", use_video_port=True)
-            fg = rawCapture.array
-            fg = cv2.medianBlur(fg,11)
-            fg = cv2.medianBlur(fg,5)
-        else:
-            (grabbed, fg) = vs.read()
+        # End of Q message processing. 
 
-
+        (grabbed, fg) = vs.read()
         frame = imutils.rotate_bound(fg,rot)
         target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
 
@@ -436,31 +404,35 @@ def runVideoStream():
         keypoints = detector.detect(frame)
 
         # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
-        timestamp = datetime.datetime.now()
-        ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
-        cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
-        cv2.putText(frame, extraText, (int(target[0] - 25), int(target[1] + 50) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
-        cv2.putText(frame, 'Q', (frame.shape[1] - 22, 22), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
-        if(not OKTS): cv2.putText(frame, '-', (frame.shape[1] - 22, 22), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+        frame = putText(frame,'timestamp',offsety=99)
+        frame = putText(frame,'Q',offsetx=99,offsety=-99)
+        if(not OKTS): frame = putText(frame,'-',offsetx=99,offsety=-99)
+        #cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+        #cv2.putText(frame, extraText, (int(target[0] - 25), int(target[1] + 50) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+        #cv2.putText(frame, 'Q', (frame.shape[1] - 22, 22), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+        #if(not OKTS): cv2.putText(frame, '-', (frame.shape[1] - 22, 22), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
 
         if (XRET):
             frame = cv2.line(frame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1) 
             frame = cv2.line(frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1) 
+
             #if(frame.shape[0] > 640):
             #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
             cv2.imshow("Nozzle", frame)
             key = cv2.waitKey(1) # Required to get frames to display.
             continue
 
-        #if(nocircle> 25): 
-            #showBlobs(fg)
-            #nocircle = 0 
+        if(nocircle> 25): 
+            showBlobs(fg)
+            nocircle = 0 
+
 
         lk=len(keypoints)
         if (lk == 0):
             if (25 < (int(round(time.time() * 1000)) - rd)):
                 nocircle += 1
-                cv2.putText(frame, 'no circles found', (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+                frame = putText(frame,'No circles found',offsety=3)                
+                #cv2.putText(frame, 'no circles found', (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
                 #if(frame.shape[0] > 640):
                 #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
                 cv2.imshow("Nozzle", frame)
@@ -469,7 +441,8 @@ def runVideoStream():
         if (lk > 1):
             if (25 < (int(round(time.time() * 1000)) - rd)):
                 #printKeypointXYR(keypoints)
-                cv2.putText(frame, 'too many circles '+str(lk), (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
+                frame = putText(frame,'Too many circles found '+str(lk),offsety=3, color=(255,255,255))                
+                #cv2.putText(frame, 'too many circles '+str(lk), (int(target[0] - 75), int(target[1] + 30) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
                 frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
                 #if(frame.shape[0] > 640):
                 #    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
@@ -487,7 +460,8 @@ def runVideoStream():
         # Note its radius and position
         ts =  "X{0:7.2f} Y{1:7.2f} R{2:7.2f}".format(xy[0],xy[1],r)
         xy = np.uint16(xy)
-        cv2.putText(frame, ts, (xy[0]-175, xy[1]+50), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 0, 255), 2)
+        frame = putText(frame, ts, offsety=2, color=(0, 255, 0), stroke=2)                
+        #cv2.putText(frame, ts, (xy[0]-175, xy[1]+50), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 0, 255), 2)
 
         # show the frame
 
@@ -520,16 +494,31 @@ def showBlobs(im):
     # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
     frame = cv2.drawKeypoints(im, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
-    timestamp = datetime.datetime.now()
-    ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
-    cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,0.90, (0, 0, 255), 1)
-    cv2.putText(frame, "Blobs with less filters", (int(target[0] - 90), int(target[1] - 100 ) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (255, 0, 0), 1)
+    frame = putText(frame,'timestamp',offsety=99)
+    frame = putText(frame,'Blobs with less filters',offsety=4)
+    #cv2.putText(frame, "Blobs with less filters", (int(target[0] - 90), int(target[1] - 100 ) ), cv2.FONT_HERSHEY_SIMPLEX,0.90, (255, 0, 0), 1)
 
     # Show keypoints
     cv2.imshow("Blobs", frame)
     cv2.waitKey(1)
 
 
+def putText(frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offsets are in character box size in pixels. 
+    if (text == 'timestamp'): text = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
+    baseline  = 0
+    fontScale = 1
+    if (frame.shape[1] > 640): fontScale = stroke = 2
+    offpix = cv2.getTextSize('A',   cv2.FONT_HERSHEY_SIMPLEX ,fontScale, stroke)
+    textpix = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX ,fontScale, stroke)
+    offsety=max(offsety, (-frame.shape[0]/2 + offpix[0][1])/offpix[0][1]) # Let offsety -99 be top row
+    offsetx=max(offsetx, (-frame.shape[1]/2 + offpix[0][0])/offpix[0][0]) # Let offsetx -99 be left edge
+    offsety=min(offsety,  (frame.shape[0]/2 - offpix[0][1])/offpix[0][1]) # Let offsety  99 be bottom row. 
+    offsetx=min(offsetx,  (frame.shape[1]/2 - offpix[0][0])/offpix[0][0]) # Let offsetx  99 be right edge. 
+    cv2.putText(frame, text, 
+        (int(offsetx * offpix[0][0]) + int(frame.shape[1]/2) - int(textpix[0][0]/2)
+        ,int(offsety * offpix[0][1]) + int(frame.shape[0]/2) + int(textpix[0][1]/2)),
+        cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, stroke)
+    return(frame)
 
 
 
