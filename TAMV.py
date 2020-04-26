@@ -395,7 +395,7 @@ def runVideoStream():
             exit()            
     else:
         # Use USB camera if picamera not specifically requested. 
-        vs = cv2.VideoCapture(1)
+        vs = cv2.VideoCapture(0)
 
     while True:
         # Process Queue messages before frames. 
