@@ -1,7 +1,7 @@
 # TAMV
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
-* Runs on the Pi that has the USB camera (Sorry, no PiCam at this moment)
+* Runs on the Pi that has the USB or Pi camera 
 * Requires network connection to DUET RepRap V2 or V3 based printer.
 * This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
 * Requires OpenCV installed on the Pi.  
@@ -22,4 +22,4 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
     cd TAMV
     ./TAMV.py
 
-It will guide you from there. 
+It will guide you from there.   And/or run with -h for help. 
