@@ -38,6 +38,6 @@ ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
     cd TAMV
     ./ZTATP.py -touchplate X Y
 
-NOTE: Requires Wiring! Each nozzle must be wired to the GPIO specified (default is io5.in).  The touchplate must be grounded. Recommend about running with finger on power switch, in case a given touch does not stop. 
+NOTE: Requires Wiring! Each nozzle must be wired to the GPIO specified (default is io5.in, can be overriden on command line).  The touchplate must be grounded. Recommend about running with finger on power switch, in case a given touch does not stop. 
 
 It will guide you from there.   And/or run with -h for help. 
