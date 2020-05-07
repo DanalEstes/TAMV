@@ -23,3 +23,19 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
     ./TAMV.py
 
 It will guide you from there.   And/or run with -h for help. 
+
+# ZTATP
+ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
+
+* Requires network connection to DUET RepRap V2 or V3 based printer.
+* This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
+## Installation
+
+    See instructions above for TAMV.  It will be in the same directory. 
+
+## Run
+
+    cd TAMV
+    ./ZTATP.py -touchplate XY
+
+It will guide you from there.   And/or run with -h for help. 
