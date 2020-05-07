@@ -26,7 +26,7 @@ import argparse
 def init():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Program to allign multiple tools in Z on Duet based printers, using a touch plate.', allow_abbrev=False)
-    parser.add_argument('-duet',type=str,nargs=1,help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.',required=True)
+    parser.add_argument('-duet',type=str,nargs=1,default=['localhost'],help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.')
     #parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
     parser.add_argument('-touchplate',type=float,nargs=2,default=[0.0,0.0],help="x y of center of a 15x15mm touch plate.",required=True)
     parser.add_argument('-pin',type=str,nargs=2,default='!io5.in',help='input pin to which wires from nozzles are attached.')
@@ -59,8 +59,8 @@ def init():
     print('# hand before running ZTATP.  If the wiring is wrong, probing will not  #')
     print('# stop, and machine damage could occur.                                 #')
     print('#########################################################################')
-    print('')
-    # Tell user options in use. 
+    print('Press enter to proceed')
+    input()
     print()
     print("##################################")
     print("# Options in force for this run: #")
@@ -74,27 +74,27 @@ def probePlate():
     prt.resetEndstops()
     prt.gCode('T-1')                                        # Unmount any/all tools
     #prt.gCode('G32 G28 Z')
-    prt.gCode('G30 X'+str(tp[0])+' Y'+str(tp[1])+' S-1')    # The real purpose of this is to move the probe into position with its correct offsets. 
+    prt.gCode('G30 P0 X'+str(tp[0])+' Y'+str(tp[1])+' Z-99999 ')    # The real purpose of this is to move the probe into position with its correct offsets. 
     prt.gCode('G30 S-1')                                    # Now we can probe in such a way that Z is readable. 
     poffs = prt.getCoords()['Z']                            # Capture the Z position at initial point of contact
     print("Plate Offset = "+str(poffs))
-    prt.gCode('G91 G0 Z3 F1000 G90')                        # Lower bed to avoid collision
+    prt.gCode('G91 G0 Z5 F1000 G90')                        # Lower bed to avoid collision
     return(poffs)
 
 def probeTool(tn):
     prt.resetEndstops()
-    prt.gCode('M400')                               # Wait for planner to empty
+    prt.gCode('M400')                                # Wait for planner to empty
     prt.gCode('G10 P'+str(tn)+' Z0')                 # Remove z offsets from Tool 
+    prt.gCode('G91 G0 Z10 F1000 G90')                 # Lower bed to avoid collision
     prt.gCode('T'+str(tn))                           # Pick up Tool 
     # Z Axis
     prt.gCode('M558 K0 P9 C"nil"')                   # Undef existing probe
     prt.gCode('M558 K0 P5 C"'+pin+'" F200')          # Define nozzle<>bed wire as probe
-    prt.gCode('G91 G0 Z3 F1000 G90')                 # Lower bed to avoid collision
     prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000') # Move nozzle to spot above flat part of plate
     prt.gCode('G30 S-1')
-    toffs = prt.getCoords()
-    print("Tool Offset for tool "+str(tn)+" is "+str(toffs[tn][2]))
-    prt.gCode('G91 G0 Z3 F1000 G90')                 # Lower bed to avoid collision
+    toffs = prt.getCoords()['Z']
+    print("Tool Offset for tool "+str(tn)+" is "+str(toffs))
+    prt.gCode('G91 G0 Z10 F1000 G90')                 # Lower bed to avoid collision
     prt.gCode('M574 Z1 S1 P"nil"')
     prt.resetEndstops()
     #prt.resetAxisLimits()
@@ -116,10 +116,10 @@ prt.resetEndstops()
 
 # Display Results
 # Actually set G10 offsets
-print("Plate Offset = "+str(poffs['Z']))
+print("Plate Offset = "+str(poffs))
 print()
-for tn in range(len(toffs)):
-    print("Tool Offset for tool "+str(tn)+" is "+str(toffs[tn]['Z']))
+for tn in range(len(toolCoords)):
+    print("Tool Offset for tool "+str(tn)+" is "+str(toolCoords[tn]))
 print()
-for tn in range(len(toffs)):
-    print('G10 P'+str(tn)+' Z'+str(np.around((poffs['Z']-toffs[tn]['Z'])-0.1,2)))
+for tn in range(len(toolCoords)):
+    print('G10 P'+str(tn)+' Z'+str(np.around((poffs-toolCoords[tn])-0.1,2)))
