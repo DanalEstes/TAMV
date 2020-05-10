@@ -12,10 +12,9 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
 
 ## Installation
 
-    mkdir TAMV
-    cd TAMV
-    wget -N https://raw.githubusercontent.com/DanalEstes/TAMV/master/TAMV.py
-    wget -N https://raw.githubusercontent.com/DanalEstes/DuetWebAPI/master/DuetWebAPI.py
+    cd
+    git clone https://github.com/DanalEstes/TAMV
+    git clone https://github.com/DanalEstes/DuetWebAPI
 
 ## Run
 
