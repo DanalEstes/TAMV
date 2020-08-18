@@ -55,6 +55,12 @@ def init():
     print('# Your Z probe must be a probe, not an endstop.  It is OK to define a   #')
     print('# simple switch as a probe.                                             #')
     print('#                                                                       #')
+    print('# WARNING!! WARNING!!                                                   #')
+    print('# The probing sequence will assume a Z offset of 45mm for every tool.   #')
+    print('# During probing, any existing offsets will be temporarily cleared.     #')
+    print('# Before running this script, make sure all tools will not collide      #')
+    print('# with the build plate/probe plate with this 45 offset applied.         #')
+    print('#                                                                       #')
     print('# Each nozzle MUST be wired to the specified input.  Test the wiring by #')
     print('# hand before running ZTATP.  If the wiring is wrong, probing will not  #')
     print('# stop, and machine damage could occur.                                 #')
@@ -85,16 +91,17 @@ def probeTool(tn):
     prt.resetEndstops()
     prt.gCode('M400')                                # Wait for planner to empty
     prt.gCode('G10 P'+str(tn)+' Z0')                 # Remove z offsets from Tool 
-    prt.gCode('G91 G0 Z10 F1000 G90')                 # Lower bed to avoid collision
+    prt.gCode('G91 G0 Z45 F1000 G90')                 # Lower bed to avoid collision
     prt.gCode('T'+str(tn))                           # Pick up Tool 
     # Z Axis
+    # add code to switch pin based on RRF2 vs RRF3 definitions - RRF3 defaults to the original TAMV code
     prt.gCode('M558 K0 P9 C"nil"')                   # Undef existing probe
     prt.gCode('M558 K0 P5 C"'+pin+'" F200')          # Define nozzle<>bed wire as probe
     prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000') # Move nozzle to spot above flat part of plate
     prt.gCode('G30 S-1')
     toffs = prt.getCoords()['Z']
     print("Tool Offset for tool "+str(tn)+" is "+str(toffs))
-    prt.gCode('G91 G0 Z10 F1000 G90')                 # Lower bed to avoid collision
+    prt.gCode('G91 G0 Z45 F1000 G90')                 # Lower bed to avoid collision
     prt.gCode('M574 Z1 S1 P"nil"')
     prt.resetEndstops()
     #prt.resetAxisLimits()
