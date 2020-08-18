@@ -88,26 +88,36 @@ def probePlate():
     return(poffs)
 
 def probeTool(tn):
-    prt.resetEndstops()
-    prt.gCode('M400')                                # Wait for planner to empty
-    prt.gCode('G10 P'+str(tn)+' Z0')                 # Remove z offsets from Tool 
-    prt.gCode('G91 G0 Z45 F1000 G90')                 # Lower bed to avoid collision
-    prt.gCode('T'+str(tn))                           # Pick up Tool 
-    # Z Axis
+    prt.resetEndstops()                                         # return all endstops to natural state from config.g definitions
+    prt.gCode('M400')                                           # Wait for planner to empty
+    prt.gCode('G10 P'+str(tn)+' Z0')                            # Remove z offsets from Tool 
+    prt.gCode('G91 G0 Z45 F1000 G90')                           # Lower bed to avoid collision
+    prt.gCode('T'+str(tn))                                      # Pick up Tool number 'tn'
+    # Z Axis Probe setup
     # add code to switch pin based on RRF2 vs RRF3 definitions - RRF3 defaults to the original TAMV code
-    prt.gCode('M558 K0 P9 C"nil"')                   # Undef existing probe
-    prt.gCode('M558 K0 P5 C"'+pin+'" F200')          # Define nozzle<>bed wire as probe
-    prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000') # Move nozzle to spot above flat part of plate
-    prt.gCode('G30 S-1')
-    toffs = prt.getCoords()['Z']
-    print("Tool Offset for tool "+str(tn)+" is "+str(toffs))
-    prt.gCode('G91 G0 Z45 F1000 G90')                 # Lower bed to avoid collision
-    prt.gCode('M574 Z1 S1 P"nil"')
-    prt.resetEndstops()
+    # START -- Code for RRF3
+    prt.gCode('M558 K0 P9 C"nil"')                              # Undef existing probe
+    prt.gCode('M558 K0 P5 C"'+pin+'" F200')                     # Define nozzle<>bed wire as probe
+    # END -- Code for RRF3
+    # START -- Code for RRF2
+    # add some code here you lazy idiot.
+    # END -- Code for RRF2
+    prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000')      # Move nozzle to spot above flat part of plate
+    prt.gCode('G30 S-1')                                        # Initiate a probing sequence
+    toffs = prt.getCoords()['Z']                                # Fetch current Z coordinate from Duet controller
+    print("Tool Offset for tool "+str(tn)+" is "+str(toffs))    # Output offset to terminal for user to read
+    prt.gCode('G91 G0 Z45 F1000 G90')                           # Lower bed to avoid collision
+    # START -- Code for RRF3
+    prt.gCode('M574 Z1 S1 P"nil"')                              # Undef endstop for Z axis
+    # END -- Code for RRF3
+    # START -- Code for RRF2
+    # add some code here you lazy idiot.
+    # END -- Code for RRF3
+    prt.resetEndstops()                                         # return all endstops to natural state from config.g definitions
     #prt.resetAxisLimits()
-    prt.gCode('T-1')
-    prt.gCode('M400')
-    return(toffs)
+    prt.gCode('T-1')                                            # unload tool
+    prt.gCode('M400')                                           # wait until all movement has finished
+    return(toffs)                                               # return offsets and end function
 # End of probeTool function
 
 #
