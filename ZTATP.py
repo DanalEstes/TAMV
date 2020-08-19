@@ -29,7 +29,7 @@ def init():
     parser.add_argument('-duet',type=str,nargs=1,default=['localhost'],help='Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.')
     #parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
     parser.add_argument('-touchplate',type=float,nargs=2,default=[0.0,0.0],help="x y of center of a 15x15mm touch plate.",required=True)
-    parser.add_argument('-pin',type=str,nargs=2,default='!io5.in',help='input pin to which wires from nozzles are attached.')
+    parser.add_argument('-pin',type=str,nargs=2,default='!io5.in',help='input pin to which wires from nozzles are attached (only in RRF3).')
     args=vars(parser.parse_args())
 
     global duet, camera, tp, pin
@@ -84,35 +84,42 @@ def probePlate():
     prt.gCode('G30 S-1')                                    # Now we can probe in such a way that Z is readable. 
     poffs = prt.getCoords()['Z']                            # Capture the Z position at initial point of contact
     print("Plate Offset = "+str(poffs))
-    prt.gCode('G91 G0 Z5 F1000 G90')                        # Lower bed to avoid collision
+    prt.gCode('G91 G0 Z10 F1000 G90')                        # Lower bed to avoid collision
     return(poffs)
 
 def probeTool(tn):
     prt.resetEndstops()                                         # return all endstops to natural state from config.g definitions
     prt.gCode('M400')                                           # Wait for planner to empty
     prt.gCode('G10 P'+str(tn)+' Z0')                            # Remove z offsets from Tool 
-    prt.gCode('G91 G0 Z45 F1000 G90')                           # Lower bed to avoid collision
+    prt.gCode('G91 G0 Z45 F1000 G90')                           # Lower bed to avoid collision (move to +45 relative in Z)
     prt.gCode('T'+str(tn))                                      # Pick up Tool number 'tn'
     # Z Axis Probe setup
     # add code to switch pin based on RRF2 vs RRF3 definitions - RRF3 defaults to the original TAMV code
-    # START -- Code for RRF3
-    prt.gCode('M558 K0 P9 C"nil"')                              # Undef existing probe
-    prt.gCode('M558 K0 P5 C"'+pin+'" F200')                     # Define nozzle<>bed wire as probe
-    # END -- Code for RRF3
-    # START -- Code for RRF2
-    # add some code here you lazy idiot.
-    # END -- Code for RRF2
+    if (prt.printerType() == 3):
+        # START -- Code for RRF3
+        prt.gCode('M558 K0 P9 C"nil"')                              # Undef existing probe
+        prt.gCode('M558 K0 P5 C"'+pin+'" F200')                     # Define ( nozzle ) <--> ( probe plate ) as probe
+        # END -- Code for RRF3
+    if (prt.printerType() == 2):
+        # START -- Code for RRF2
+        # Define a normally-open (closes to ground when ACTIVE/TRIGGERED) probe connected between Z-Probe In and Ground (inverted logic to enable this behavior of NO switch)
+        prt.gCode('M558 P5 I1 F200')                             # Define ( nozzle ) <--> ( probe plate ) as probe (Z-Probe In pin connected to nozzle, probe plate is connected to ground)
+        # END -- Code for RRF2
+    
     prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000')      # Move nozzle to spot above flat part of plate
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
     toffs = prt.getCoords()['Z']                                # Fetch current Z coordinate from Duet controller
     print("Tool Offset for tool "+str(tn)+" is "+str(toffs))    # Output offset to terminal for user to read
     prt.gCode('G91 G0 Z45 F1000 G90')                           # Lower bed to avoid collision
-    # START -- Code for RRF3
-    prt.gCode('M574 Z1 S1 P"nil"')                              # Undef endstop for Z axis
-    # END -- Code for RRF3
-    # START -- Code for RRF2
-    # add some code here you lazy idiot.
-    # END -- Code for RRF3
+    if (prt.printerType() == 3):
+        # START -- Code for RRF3
+        prt.gCode('M574 Z1 S1 P"nil"')                              # Undef endstop for Z axis
+        # END -- Code for RRF3
+        #if (prt.printerType() == 2):
+        # START -- Code for RRF2
+        # no need to undefine endstops/probes in RRF2
+        # END -- Code for RRF3
+    
     prt.resetEndstops()                                         # return all endstops to natural state from config.g definitions
     #prt.resetAxisLimits()
     prt.gCode('T-1')                                            # unload tool
@@ -125,10 +132,16 @@ def probeTool(tn):
 #
 init()
 
+# Get probe plate Z offset by probing using default-defined probe for G30
 poffs = probePlate()
+
+# initialize output variables
 toolCoords = []
+
+# start probing sequence for each tool defined on the connected printer
 for t in range(prt.getNumTools()):
     toolCoords.append(probeTool(t))
+# restore all endstop definitions to the config.g defaults
 prt.resetEndstops()
 
 # Display Results
@@ -140,3 +153,6 @@ for tn in range(len(toolCoords)):
 print()
 for tn in range(len(toolCoords)):
     print('G10 P'+str(tn)+' Z'+str(np.around((poffs-toolCoords[tn])-0.1,2)))
+print()
+print("Tool offsets have been applied to the current printer.")
+print("Please modify your tool definitions in config.g to reflect these newly measured values for persistent storage.")
