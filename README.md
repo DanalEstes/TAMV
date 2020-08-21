@@ -1,5 +1,5 @@
-©2020 Danal Estes, all rights reserved. 
-This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal created for the community. 
+# ©2020 Danal Estes, all rights reserved.
+This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal Estes created for the community. 
 
 # TAMV
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
