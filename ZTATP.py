@@ -122,12 +122,12 @@ def probeTool(tn):
     if (prt.printerType() == 3):
         # START -- Code for RRF3
         prt.gCode('M558 K0 P9 C"nil"')                              # Undef existing probe
-        prt.gCode('M558 K0 P5 C"'+pin+'" F200')                     # Define ( nozzle ) <--> ( probe plate ) as probe
+        prt.gCode('M558 K0 P5 C"'+pin+'" F200 H50')                     # Define ( nozzle ) <--> ( probe plate ) as probe
         # END -- Code for RRF3
     if (prt.printerType() == 2):
         # START -- Code for RRF2
         # Define a normally-open (closes to ground when ACTIVE/TRIGGERED) probe connected between Z-Probe In and Ground (inverted logic to enable this behavior of NO switch)
-        prt.gCode('M558 P5 I1 F200')                             # Define ( nozzle ) <--> ( probe plate ) as probe (Z-Probe In pin connected to nozzle, probe plate is connected to ground)
+        prt.gCode('M558 P5 I1 F200 H50')                             # Define ( nozzle ) <--> ( probe plate ) as probe (Z-Probe In pin connected to nozzle, probe plate is connected to ground)
         # END -- Code for RRF2
     
     prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000')      # Move nozzle to spot above flat part of plate
