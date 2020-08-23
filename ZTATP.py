@@ -75,7 +75,12 @@ def init():
     print("# Options in force for this run: #")
     print("# printer    = {0:18s}#".format(duet))
     print("# touchplate = {0:6.2f} {1:6.2f}     #".format(tp[0],tp[1]))
-    print("# pin        = {0:18s}#".format(str(pin)))
+    if (prt.printerType() == 3):
+        print("# firmware   = V3.x.x            #")
+        print("# pin        = {0:18s}#".format(str(pin)))
+    if (prt.printerType() == 2):
+        print("# firmware   = V2.x.x            #")
+        print("# pin        = Z_PROBE_IN        #"
     print("##################################")
     print()    
 
