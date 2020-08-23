@@ -562,6 +562,9 @@ if (repeat > 1): repeatReport()
 # Tell subtask to exit
 txq.put([FOAD])
 
+print()
+print("Tool offsets have been applied to the current printer.")
+print("Please modify your tool definitions in config.g to reflect these newly measured values for persistent storage.")
 print('')
 print('If your camera is in a consistent location, next time you run TAMV, ')
 print('you can optionally supply -cp {0:1.3f} {1:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
