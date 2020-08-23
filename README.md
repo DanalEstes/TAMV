@@ -35,6 +35,15 @@ ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
 
     See instructions above for TAMV.  It will be in the same directory. 
 
+## Parameters
+optional arguments:
+  -h, --help            show help message and exit
+  -duet DUET            Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.
+  -touchplate TOUCHPLATE TOUCHPLATE
+                        x y of center of a 15x15mm touch plate (these can be decimal values)
+  -pin PIN PIN          input pin to which wires from nozzles are attached (only in RRF3)
+  -tool TOOL            set a run for an individual tool number
+
 ## Run
 
     cd TAMV
