@@ -38,7 +38,7 @@ def init():
     duet   = args['duet'][0]
     tp     = args['touchplate']
     pin    = args['pin']
-    tool   = args['tool'][0]
+    tool   = args['tool']
 
 
     # Get connected to the printer.
