@@ -552,6 +552,9 @@ for t in range(0,len(toolCoords[0])):
     x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[0][t]['X'],3)
     y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[0][t]['Y'],3)
     print("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+    while printer.getStatus() is not 'idle':
+        time.sleep(1)
+    printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
 print()
 
 if (repeat > 1): repeatReport()    
