@@ -50,6 +50,16 @@ def init():
         exit(2)
     print("Connected to a Duet V"+str(prt.printerType())+" printer at "+prt.baseURL())
 
+    if( tool is not - 1 ):
+        tool = tool[0]
+        if( tool > prt.getNumTools()-1 ):
+            print()
+            print('### ERROR IN PARAMETERS ###')
+            print('You have specified tool ' + str(tool) + ' for probing, but it does not exist.')
+            print('Your printer has '+str(prt.getNumTools())+' tools defined, so you must enter an index for tools between [0..' + str(prt.getNumTools()-1)+']')
+            print('Please check your input parameters and try again.')
+            exit(3)
+
     print('#########################################################################')
     print('# Important:                                                            #')
     print('# Your printer MUST be capable of mounting and parking every tool with  #')
@@ -80,7 +90,7 @@ def init():
         print("# pin        = {0:18s}#".format(str(pin)))
     if (prt.printerType() == 2):
         print("# firmware   = V2.x.x            #")
-        print("# pin        = Z_PROBE_IN        #"
+        print("# pin        = Z_PROBE_IN        #")
     print("##################################")
     print()    
 
