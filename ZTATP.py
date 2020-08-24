@@ -31,7 +31,7 @@ def init():
     #parser.add_argument('-camera',type=str,nargs=1,choices=['usb','pi'],default=['usb'])
     parser.add_argument('-touchplate',type=float,nargs=2,default=[0.0,0.0],help="x y of center of a 15x15mm touch plate.",required=True)
     parser.add_argument('-pin',type=str,nargs=2,default='!io5.in',help='input pin to which wires from nozzles are attached (only in RRF3).')
-    parser.add_argument('-tool',type=int,nargs=1,default=-1,help='(optional) set a run for an individual tool number')
+    parser.add_argument('-tool',type=int,nargs=1,default=-1,help='(optional) set a run for an individual tool number referenced by index')
     args=vars(parser.parse_args())
 
     global duet, camera, tp, pin, tool
