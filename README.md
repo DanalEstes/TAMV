@@ -16,8 +16,7 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
 ## Installation
 
     cd
-    git clone https://github.com/DanalEstes/TAMV
-    git clone https://github.com/DanalEstes/DuetWebAPI
+    git clone https://github.com/HaythamB/TAMV/
 
 ## Run
 
