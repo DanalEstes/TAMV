@@ -116,7 +116,7 @@ def probePlate():
     poffs = 0
 
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is not 'idle':
+    while prt.getStatus() is 'processing':
         time.sleep(1) 
     
     poffs = prt.getCoords()['Z']                            # Capture the Z position at initial point of contact
