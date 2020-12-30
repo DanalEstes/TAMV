@@ -215,8 +215,8 @@ def noiseEnhance( images = [] ):
 def createDetector(t1=1,t2=50, all=0.5, area=150):
     # Setup SimpleBlobDetector parameters.
     params = cv2.SimpleBlobDetector_Params()
-    params.minThreshold = t1;          # Change thresholds
-    params.maxThreshold = t2;
+    params.minThreshold = t1          # Change thresholds
+    params.maxThreshold = t2
     params.thresholdStep = 1
     params.filterByArea = True         # Filter by Area.
     params.minArea = area
@@ -228,10 +228,6 @@ def createDetector(t1=1,t2=50, all=0.5, area=150):
     params.maxConvexity = 1
     params.filterByInertia = True      # Filter by Inertia
     params.minInertiaRatio = 0.5
-    #ver = (cv2.__version__).split('.') # Create a detector with the parameters
-    #if int(ver[0]) < 3 :
-    #    detector = cv2.SimpleBlobDetector(params)
-    #else:
     detector = cv2.SimpleBlobDetector_create(params)
     return(detector)
 
@@ -372,37 +368,35 @@ def eachTool(tool,rep, get, show, CPCoords):
                     print("Found Center of Image at offset coordinates ",printer.getCoords())
                     c=printer.getCoords()
                     c['MPP'] = mpp
-                    toolEndTime = time.time()
-                    print( 'Alignment for tool ' + str(tool) + ' took ' + str(int(toolEndTime-toolStartTime)) + ' seconds' )
+                    c['time'] = time.time() - toolStartTime
                     return(c)
             avg = [0,0]
             count = 0
 
-def repeatReport():
+def repeatReport(toolCoordsInput,repeatInput=1):
     ###################################################################################
     # Report on repeated executions
     ###################################################################################
     print()
-    print('Repeatability statistics for '+str(repeat)+' repeats:')
+    print('Repeatability statistics for '+str(repeatInput)+' repeats:')
     print('+-----------------------------------------------------------------------------------------------------+')
     print('|   |                           X                   |                   Y                   |  Time   |')
     print('| T |  MPP  |   Avg   |   Max   |   Min   |  StdDev |   Avg   |   Max   |   Min   |  StdDev | Seconds |')
     repeatStartTime = time.time()
     for t in range(printer.getNumTools()):
-        perToolStart = time.time()
         #  | 0 | 123   | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 |
         print('| {0:1.0f} '.format(t),end='')
-        print('| {0:3.3f} '.format(np.around(np.average([toolCoords[i][t]['MPP'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.average([toolCoords[i][t]['X'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.max([toolCoords[i][t]['X'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.min([toolCoords[i][t]['X'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.std([toolCoords[i][t]['X'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.average([toolCoords[i][t]['Y'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.max([toolCoords[i][t]['Y'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.min([toolCoords[i][t]['Y'] for i in range(repeat)]),3)),end='')
-        print('| {0:7.3f} '.format(np.around(np.std([toolCoords[i][t]['Y'] for i in range(repeat)]),3)),end='')
-        perToolEnd = time.time()
-        print('| {0:7.3f} '.format((perToolEnd-perToolStart)),end='')
+        print('| {0:3.3f} '.format(np.around(np.average([toolCoordsInput[i][t]['MPP'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.average([toolCoordsInput[i][t]['X'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.max([toolCoordsInput[i][t]['X'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.min([toolCoordsInput[i][t]['X'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.std([toolCoordsInput[i][t]['X'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.average([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.max([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.min([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
+        print('| {0:7.3f} '.format(np.around(np.std([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
+        # HBHBHBHBH
+        #print('| {0:7.3f} '.format((perToolEnd-perToolStart)),end='')
     repeatEndTime = time.time()
     print('+-----------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
@@ -421,7 +415,7 @@ def runVideoStream(get, show, rotationInput):
     state = 0 # State machine for figuring out image rotation to carriage XY move mapping.
     rot = 0 # Amount of rotation of image.
     count=0
-    rd = 0; 
+    rd = 0 
     qmsg = [0,'']  
     extraText = ''
     mono=0
@@ -529,7 +523,6 @@ def runVideoStream(get, show, rotationInput):
 
 def putText(frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offsets are in character box size in pixels. 
     if (text == 'timestamp'): text = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
-    baseline  = 0
     fontScale = 1
     if (frame.shape[1] > 640): fontScale = stroke = 2
     offpix = cv2.getTextSize('A',   cv2.FONT_HERSHEY_SIMPLEX ,fontScale, stroke)
@@ -556,10 +549,11 @@ def main():
         (getter, shower, CPCoords) = controlledPoint(getter, shower)                   # Command line -cp not supplied, find with help of user and camera. 
     else:
         CPCoords = {'X':cp[0], 'Y':cp[1]}   # Load -cp command line arg into dict like printerGetCoords
-    #
+    
+    # Make sure no tools are loaded to start
     printer.gCode("T-1 ")
-    #exit(-1)
-    # Now look at each tool.
+    
+    # Now look at each tool and find alignment centers
     alignmentStartTime = time.time()
     toolCoords = []
     for r in range(0,repeat):
@@ -576,17 +570,23 @@ def main():
     # End of all vision, etc.  Now calculate and report.
     ###################################################################################
     print()
+    alignmentText = ''
     for t in range(0,len(toolCoords[0])):
         toolOffsets = printer.getG10ToolOffset(t)
         x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[0][t]['X'],3)
         y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[0][t]['Y'],3)
-        print("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+        alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+        print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0]['time'])) + ' seconds.' )
         while printer.getStatus() != 'idle':
             time.sleep(1)
         #printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+    # display G10 offset statements on terminal screen
+    print( 'Here are the G10 offset g-code commands to run for your printer to apply these offsets:')
+    print( alignmentText )
     print()
 
-    if (repeat > 1): repeatReport()    
+    if (repeat > 1): 
+        repeatReport(toolCoords, repeat)    
 
 
     print()
