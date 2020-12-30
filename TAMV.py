@@ -576,7 +576,7 @@ def main():
         x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[0][t]['X'],3)
         y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[0][t]['Y'],3)
         alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y)
-        print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0]['time'])) + ' seconds.' )
+        print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds.' )
         while printer.getStatus() != 'idle':
             time.sleep(1)
         #printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
