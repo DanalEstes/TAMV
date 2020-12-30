@@ -398,7 +398,6 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print()
     print('+-----------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
-    print('Repeatability testing took {0:7.3f} seconds.'.format((repeatEndTime-repeatStartTime)),end='')
 
 ###################################################################################
 # This method runs in a separate thread, to own the camera, 
