@@ -556,11 +556,10 @@ def main():
     toolCoords = []
     for r in range(0,repeat):
         toolCoords.append([])
-        #HBHBHBHBBH
         for t in range(printer.getNumTools()):
             toolCoords[r].append(eachTool(t,r,getter,shower, CPCoords))
-    alignmentEndTime = time.time()
-    print( 'Calibration for all tools took ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
+        alignmentEndTime = time.time()
+        print( 'Calibration for all tools took ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
     print("Unmounting last tool")
     printer.gCode("T-1 ")
 
@@ -573,7 +572,7 @@ def main():
         toolOffsets = printer.getG10ToolOffset(t)
         x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[0][t]['X'],3)
         y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[0][t]['Y'],3)
-        alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y)
+        alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y) + '\n'
         print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds.' )
         while printer.getStatus() != 'idle':
             time.sleep(1)
