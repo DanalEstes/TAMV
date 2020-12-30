@@ -394,7 +394,7 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print('| {0:7.3f} '.format(np.around(np.max([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
         print('| {0:7.3f} '.format(np.around(np.min([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
         print('| {0:7.3f} '.format(np.around(np.std([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
-        print('| {0:7.3f} '.format([toolCoordsInput[i][t]['time']),end='')
+        print('| {0:7.3f} '.format(toolCoordsInput[i][t]['time']),end='')
         print()
     print('+-----------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
