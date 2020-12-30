@@ -382,7 +382,6 @@ def repeatReport(toolCoordsInput,repeatInput=1):
     print('+-----------------------------------------------------------------------------------------------------+')
     print('|   |                           X                   |                   Y                   |  Time   |')
     print('| T |  MPP  |   Avg   |   Max   |   Min   |  StdDev |   Avg   |   Max   |   Min   |  StdDev | Seconds |')
-    repeatStartTime = time.time()
     for t in range(printer.getNumTools()):
         #  | 0 | 123   | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 | 123.456 |
         print('| {0:1.0f} '.format(t),end='')
@@ -395,9 +394,8 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print('| {0:7.3f} '.format(np.around(np.max([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
         print('| {0:7.3f} '.format(np.around(np.min([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
         print('| {0:7.3f} '.format(np.around(np.std([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
-        # HBHBHBHBH
-        #print('| {0:7.3f} '.format((perToolEnd-perToolStart)),end='')
-    repeatEndTime = time.time()
+        print('| {0:7.3f} '.format([toolCoordsInput[i][t]['time']),end='')
+        print()
     print('+-----------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
     print('Repeatability testing took {0:7.3f} seconds.'.format((repeatEndTime-repeatStartTime)),end='')
