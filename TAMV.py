@@ -299,8 +299,8 @@ def eachTool(tool,rep, get, show, CPCoords):
     print('')
     print("Mounting tool T{0:d} for repeat pass {1:d}. ".format(tool,rep+1))
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
-    printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
+    printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     print('Sleeping for 7 seconds to allow tool to position itself' )
     time.sleep(7)
     if(tool == 0):
