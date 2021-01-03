@@ -437,7 +437,7 @@ def runVideoStream(get, show, rotationInput):
         # init state for enhancer
         noiseTempFrames = []
         noiseFrameCounter = 0
-        while noiseFrameCounter < 10:
+        while noiseFrameCounter < 5:
             # capture frame
             cleanFrame = get.frame
             cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
