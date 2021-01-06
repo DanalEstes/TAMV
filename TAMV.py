@@ -53,8 +53,8 @@ class VideoGet:
 
     def __init__(self, src=0):
         self.stream = cv2.VideoCapture(src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
         self.stream.set(cv2.CAP_PROP_FPS,28)
         
         (self.grabbed, self.frame) = self.stream.read()
@@ -186,7 +186,7 @@ def vidWindow(vidGetter, vidShower):
     
     toggle = True
     xy     = [0,0]
-    target = [640/2, 480/2]
+    target = [320/2, 240/2]
     rotation = 0
     try:
         while(1): 
@@ -194,8 +194,8 @@ def vidWindow(vidGetter, vidShower):
             (xy, target, rotation) = runVideoStream(vidGetter,vidShower, rotation)
             continue
     except KeyboardInterrupt:
-        print( 'Exiting after parking tools.' )
-        printer.gCode("T-1 ")
+        #print( 'Exiting after parking tools.' )
+        #printer.gCode("T-1 ")
         return
 
 
@@ -218,7 +218,7 @@ def noiseEnhance( images = [] ):
     #average = hisEqulColor(average)
 
 # blob detector parameters and setup
-def createDetector(t1=1,t2=100, all=0.5, area=150):
+def createDetector(t1=1,t2=50, all=0.5, area=250):
     # Setup SimpleBlobDetector parameters.
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = t1          # Change thresholds
@@ -233,7 +233,7 @@ def createDetector(t1=1,t2=100, all=0.5, area=150):
     params.minConvexity = 0.8
     params.maxConvexity = 1
     params.filterByInertia = True      # Filter by Inertia
-    params.minInertiaRatio = 0.5
+    params.minInertiaRatio = 0.8
     detector = cv2.SimpleBlobDetector_create(params)
     return(detector)
 
@@ -286,7 +286,7 @@ def eachTool(tool,rep, get, show, CPCoords):
 
     avg=[0,0]
     guess  = [1,1];  # Millimeters.
-    target = [640/2, 480/2] # Pixels. Will be recalculated from frame size.
+    target = [320/2, 240/2] # Pixels. Will be recalculated from frame size.
     drctn  = [-1,-1]  # Either 1 or -1, which we must figure out from the initial moves
     xy     = [0,0]
     oldxy  = xy
@@ -313,6 +313,8 @@ def eachTool(tool,rep, get, show, CPCoords):
         print('#########################################################################')
 
     # loop over the frames from the video stream
+    smallMoves = 0
+    largeMoves = 0
     while True:
         (xy, target, rotation) = runVideoStream(get,show, rotation)
         # Found one and only one circle.  Process it.
@@ -321,7 +323,7 @@ def eachTool(tool,rep, get, show, CPCoords):
         avg[0] += xy[0]
         avg[1] += xy[1]
         count += 1
-        if (count > 5):
+        if (count > 14):
             avg[0] /= count
             avg[1] /= count
             avg = np.around(avg,3)
@@ -329,7 +331,7 @@ def eachTool(tool,rep, get, show, CPCoords):
                 # Finding Rotation: Collected frames before first move.
                 print("Initiating a small X move to calibrate camera to carriage rotation.")
                 oldxy = xy
-                printer.gCode("G91 G1 X-0.5 G90 ")
+                printer.gCode("G91 G1 X-1 G90 ")
                 state += 1
                 #rotation = 0
                 continue
@@ -338,10 +340,10 @@ def eachTool(tool,rep, get, show, CPCoords):
                 # Finding Rotation: Move made, see if it aligns with carriage.
                 if (abs(int(oldxy[0])-int(xy[0])) > 2+abs(int(oldxy[1])-int(xy[1]))):
                     print("Found X movement via rotation, will now calibrate camera to carriage direction.")
-                    mpp = 0.5/float(vectDist(xy,oldxy))
+                    mpp = np.around(1/float(vectDist(xy,oldxy)),3) 
                     print("MM per Pixel discovered = {0:7.4f}".format(mpp) )
-                    ppm = float(vectDist(xy,oldxy))/0.5
-                    print("Pixel per MM discovered = {0:7.4f}".format(ppm) )
+                    ppm = np.around(float(vectDist(xy,oldxy))/1,3)
+                    print("Pixel per MM discovered = {0:7.0f}".format(ppm) )
                     state += 1
                     oldxy = xy
                     drctn = [1,1]
@@ -350,25 +352,29 @@ def eachTool(tool,rep, get, show, CPCoords):
                     # can't find shit, start over
                     print("Camera to carriage movement axis incompatiabile... will rotate image and calibrate again.")
                     rotation = (rotation + 90) % 360
-                    state = 0
+                    state = 1
                     continue
 
-            elif (state == 2): 
-                # Incrementally attempt to center the nozzle.
-
+            elif (state == 2):                
                 for j in [0,1]:
                     # Are we going the wrong way?  Depends on camera orientation.
                     if (abs(target[j]-oldxy[j]) < abs(target[j]-xy[j])):  
                         print("Detected movement away from target, now reversing "+'XY'[j])
                         # If we are getting further away, reverse!
-                        drctn[j] = -drctn[j]   
-
-                    guess[j] = np.around((target[j]-xy[j])/(ppm*2),3)
+                        drctn[j] = -drctn[j]
+                    if( abs(target[j]-xy[j]) > (ppm) ):
+                        guess[j] = np.around((target[j]-xy[j])/(ppm*2),3)
+                        largeMoves += 1
+                    #elif(abs(target[j]-xy[j]) > 0):
+                    #    guess[j] = np.around((target[j]-xy[j])/(ppm*2),3)
+                    else:
+                        guess[j] = np.around((target[j]-xy[j])/(ppm*2),3)
+                        smallMoves += 1
                     # Force a direction
                     guess[j] = guess[j] * drctn[j]
                 # Move it a bit
-                printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
-                print("G91 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
+                printer.gCode("G91 G53 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
+                print("G91 G53 G1 X{0:-1.3f} Y{1:-1.3f} G90 ".format(guess[0],guess[1]))
                 oldxy = xy
                 if ((np.around(guess[0],3) == 0.0) and (np.around(guess[1],3) == 0.0)):
                     # Gotcha! Process coordinates for offset calculations
@@ -376,6 +382,7 @@ def eachTool(tool,rep, get, show, CPCoords):
                     c=printer.getCoords()
                     c['MPP'] = mpp
                     c['time'] = time.time() - toolStartTime
+                    print( "Large: " + str(largeMoves) + " Small: " + str(smallMoves))
                     return(c)
             avg = [0,0]
             count = 0
@@ -406,6 +413,15 @@ def repeatReport(toolCoordsInput,repeatInput=1):
     print('+-----------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
 
+def adjust_gamma(image, gamma=1.2):
+    # build a lookup table mapping the pixel values [0, 255] to
+    # their adjusted gamma values
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255
+        for i in np.arange(0, 256)]).astype("uint8")
+    # apply gamma correction using the lookup table
+    return cv2.LUT(image, table)
+
 ###################################################################################
 # This method runs in a separate thread, to own the camera, 
 # present video stream to X11 window, 
@@ -419,7 +435,7 @@ def runVideoStream(get, show, rotationInput):
     state = 0 # State machine for figuring out image rotation to carriage XY move mapping.
     rot = 0 # Amount of rotation of image.
     count=0
-    rd = 0 
+    rd = int(round(time.time()*1000))
     qmsg = [0,'']  
     extraText = ''
     mono=0
@@ -429,10 +445,21 @@ def runVideoStream(get, show, rotationInput):
     detector = createDetector()
     while True:
         # capture first clean frame for display
-        #cleanFrame = get.frame
-        #cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
+        cleanFrame = get.frame
+        cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
         #show.frame = cleanFrame
-        
+        gammaInput = 1.2
+        frame = adjust_gamma(cleanFrame, gammaInput)
+        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+        yuvPlanes = cv2.split(yuv)
+        yuvPlanes[0] = cv2.GaussianBlur(yuvPlanes[0],(7,7),6)
+        yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35,1)
+        edgeDetectedFrame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
+        frame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
+        target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
+        # run nozzle detection for keypoints
+        keypoints = detector.detect(frame)
+        '''
         #  Noise reduction processing
         # init state for enhancer
         noiseTempFrames = []
@@ -442,8 +469,8 @@ def runVideoStream(get, show, rotationInput):
             cleanFrame = get.frame
             cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
             # normalize Y channel
-            #frame = hisEqulColor(cleanFrame)
-            frame = cleanFrame
+            frame = hisEqulColor(cleanFrame)
+            #frame = cleanFrame
             # convert to float for enhance operation
             imageObject = frame.astype(np.float)
             # add to conversion stack
@@ -452,19 +479,21 @@ def runVideoStream(get, show, rotationInput):
 
         # collected enough frames, run noise reduction
         enhancedOutput = noiseEnhance( noiseTempFrames )
-        enhancedOutput = hisEqulColor(enhancedOutput.astype(np.uint8))
+        #enhancedOutput = hisEqulColor(enhancedOutput.astype(np.uint8))
         # balance out the contrast for a nicer output
-        cleanFrame = cv2.normalize(cleanFrame, None, 0, 255, cv2.NORM_MINMAX)
+        cleanFrame = cv2.normalize(cleanFrame, None, 10, 255, cv2.NORM_MINMAX)
         # run Canny edge detection on enhanced output
-        edgeDetectedFrame = cv2.Canny(enhancedOutput.astype(np.uint8), 1, 250, apertureSize=3, L2gradient=False)
+        edgeDetectedFrame = cv2.Canny(enhancedOutput.astype(np.uint8), 20, 200, apertureSize=3, L2gradient=False)
         
         # convert edge detection image to BGR for horizontal stack
         edgeDetectedFrame = cv2.cvtColor(edgeDetectedFrame,cv2.COLOR_GRAY2BGR)
 
         # run additional edge noise enhancement through morphology functions
-        dimension = 3
+        dimension = 2
         kernel = np.ones((dimension,dimension), np.uint8)
         edgeDetectedFrame = cv2.dilate(edgeDetectedFrame, kernel, iterations=1)
+        dimension = 3
+        kernel = np.ones((dimension,dimension), np.uint8)
         edgeDetectedFrame = cv2.erode(edgeDetectedFrame, kernel, iterations=1)
         # rotate image as dictated by distance moved on image
         #frame = imutils.rotate_bound(edgeDetectedFrame,rotationInput)
@@ -473,6 +502,7 @@ def runVideoStream(get, show, rotationInput):
         target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
         # run nozzle detection for keypoints
         keypoints = detector.detect(edgeDetectedFrame)
+        '''
         # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
         # place the cleanFrame capture into display to avoid showing edge detection and other confusing images
         #cleanFrame = cv2.normalize(frame, None, 0, 255, cv2.NORM_MINMAX)
@@ -493,7 +523,7 @@ def runVideoStream(get, show, rotationInput):
 
         lk=len(keypoints)
         if (lk == 0):
-            if (25 < (int(round(time.time() * 100)) - rd)):
+            if (25 < (int(round(time.time() * 1000)) - rd)):
                 #print('No circles found')
                 nocircle += 1
                 frame = putText(frame,'No circles found',offsety=3)
@@ -520,7 +550,7 @@ def runVideoStream(get, show, rotationInput):
         # Found one and only one circle.  Put it on the frame.
         nocircle = 0 
         xy = np.around(keypoints[0].pt)
-        r = np.around(keypoints[0].size/2)            
+        r = np.around(keypoints[0].size/2)
         # draw the blobs that look circular
         frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # Note its radius and position
@@ -546,6 +576,9 @@ def putText(frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offse
     if (text == 'timestamp'): text = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
     fontScale = 1
     if (frame.shape[1] > 640): fontScale = stroke = 2
+    if (frame.shape[1] < 640):
+        fontScale = 0.8
+        stroke = 1
     offpix = cv2.getTextSize('A',   cv2.FONT_HERSHEY_SIMPLEX ,fontScale, stroke)
     textpix = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX ,fontScale, stroke)
     offsety=max(offsety, (-frame.shape[0]/2 + offpix[0][1])/offpix[0][1]) # Let offsety -99 be top row
@@ -604,8 +637,9 @@ def main():
         toolOffsets = printer.getG10ToolOffset(t)
         x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[0][t]['X'],3)
         y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[0][t]['Y'],3)
+        mpp = str(toolCoords[0][t]['MPP'])
         alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y) + '\n'
-        print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds.' )
+        print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds. (MPP=' + mpp + ')' )
         while printer.getStatus() != 'idle':
             time.sleep(1)
         #printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
@@ -619,9 +653,9 @@ def main():
 
 
     print()
-    print("Tool offsets have been applied to the current printer.")
-    print("Please modify your tool definitions in config.g to reflect these newly measured values for persistent storage.")
-    print('')
+    #print("Tool offsets have been applied to the current printer.")
+    #print("Please modify your tool definitions in config.g to reflect these newly measured values for persistent storage.")
+    #print('')
     print('If your camera is in a consistent location, next time you run TAMV, ')
     print('you can optionally supply -cp {0:1.3f} {1:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
     print('Adding this will cause TAMV to skip all interaction, and attempt to align all tools on its own.')

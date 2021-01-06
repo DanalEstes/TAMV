@@ -52,6 +52,8 @@ class DuetWebAPI:
         return(self._base_url)
 
     def getCoords(self):
+        while self.getStatus() not in 'idle':
+            time.sleep(0.2)
         if (self.pt == 2):
             URL=(f'{self._base_url}'+'/rr_status?type=2')
             r = self.requests.get(URL)
@@ -75,6 +77,31 @@ class DuetWebAPI:
             for i in range(0,len(ja)):
                 ret[ ja[i]['letter'] ] = ja[i]['userPosition']
             return(ret)
+        
+    def getCoordsAbs(self):
+        if (self.pt == 2):
+            URL=(f'{self._base_url}'+'/rr_status?type=2')
+            r = self.requests.get(URL)
+            j = self.json.loads(r.text)
+            jc=j['coords']['machine']
+            an=j['axisNames']
+            ret=self.json.loads('{}')
+            for i in range(0,len(jc)):
+                ret[ an[i] ] = jc[i]
+            return(ret)
+        '''if (self.pt == 3):
+            URL=(f'{self._base_url}'+'/machine/status')
+            r = self.requests.get(URL)
+            j = self.json.loads(r.text)
+            ja=j['move']['axes']
+            #d=j['move']['drives']
+            #ad=self.json.loads('{}')
+            #for i in range(0,len(ja)):
+            #    ad[ ja[i]['letter'] ] = ja[i]['drives'][0]
+            ret=self.json.loads('{}')
+            for i in range(0,len(ja)):
+                ret[ ja[i]['letter'] ] = ja[i]['userPosition']
+            return(ret)'''
 
     def getLayer(self):
         if (self.pt == 2):
