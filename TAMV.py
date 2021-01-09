@@ -24,8 +24,8 @@ from threading import Thread
 
 # set resolution for webcam capture
 global resolutionWidth, resolutionHeight
-resolutionWidth = 320
-resolutionHeight = 240
+resolutionWidth = 640
+resolutionHeight = 480
 
 # load DuetWebAPI
 try: 
@@ -60,8 +60,8 @@ class VideoGet:
 
     def __init__(self, src=0):
         self.stream = cv2.VideoCapture(src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, resolutionWidth)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, resolutionHeight)
         self.stream.set(cv2.CAP_PROP_FPS,28)
         print("Init Video: " + str(resolutionWidth) + "x" + str(resolutionHeight))
         
@@ -74,8 +74,8 @@ class VideoGet:
 
     def get(self):
         while not self.stopped:
-            self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, resolutionWidth)
-            self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, resolutionHeight)
+            #self.stream.set(cv2.CAP_PROP_FRAME_WIDTH,resolutionWidth)
+            #self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, resolutionHeight)
             if not self.grabbed:
                 self.stop()
             else:
@@ -391,7 +391,7 @@ def eachTool(tool,rep, get, show, CPCoords, transMatrix=None):
         avg[0] += xy[0]
         avg[1] += xy[1]
         count += 1
-        if (count > 20 ):
+        if (count > 14 ):
             avg[0] /= count
             avg[1] /= count
             avg = np.around(avg,3)
@@ -409,6 +409,7 @@ def eachTool(tool,rep, get, show, CPCoords, transMatrix=None):
                 cameraCoords.append((xy[0],xy[1]))
                 # move carriage +1 in X
                 printer.gCode("G91 G1 X1 F12000 G90 ")
+                time.sleep(1)
                 state = 1
                 continue
             elif( state >= 1 and state < iterations):
@@ -441,16 +442,16 @@ def eachTool(tool,rep, get, show, CPCoords, transMatrix=None):
                 guess[0]= np.around(newCenter[0],3)
                 guess[1]= np.around(newCenter[1],3)
                 printer.gCode("G90 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(guess[0],guess[1]))
-                while printer.getStatus() not in 'idle': time.sleep(0.2) 
+                time.sleep(1)
                 state = 200
                 continue
             elif (state == 200):
-                time.sleep(1)
+                #time.sleep(1)
                 # nozzle detected, frame rotation is set, start
                 cx,cy = normalize_coords(xy)
                 v = [cx**2, cy**2, cx*cy, cx, cy, 0]
                 # get machine coordinates
-                while printer.getStatus() not in 'idle': time.sleep(0.2)
+                time.sleep(0.5)
                 machine_coordinates = printer.getCoords()
                 offsets = -1*(0.55*transform.T @ v)
                 offsets[0] = np.around(offsets[0],3)
@@ -459,6 +460,7 @@ def eachTool(tool,rep, get, show, CPCoords, transMatrix=None):
                 # Move it a bit
                 printer.gCode( "M564 S1" )
                 printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
+                time.sleep(1)
                 print("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                 oldxy = xy
                 if ( offsets[0] == 0.0 and offsets[1] == 0.0 ):
