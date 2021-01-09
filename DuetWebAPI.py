@@ -17,6 +17,8 @@ class DuetWebAPI:
     import requests
     import json
     import sys
+    import time
+    import datetime
     pt = 0
     _base_url = ''
 
@@ -52,8 +54,8 @@ class DuetWebAPI:
         return(self._base_url)
 
     def getCoords(self):
-        while self.getStatus() not in 'idle':
-            time.sleep(0.2)
+        #while self.getStatus() not in 'idle':
+        #    time.sleep(0.2)
         if (self.pt == 2):
             URL=(f'{self._base_url}'+'/rr_status?type=2')
             r = self.requests.get(URL)
