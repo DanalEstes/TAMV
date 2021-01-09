@@ -22,6 +22,11 @@ import math
 
 from threading import Thread
 
+# set resolution for webcam capture
+global resolutionWidth, resolutionHeight
+resolutionWidth = 320
+resolutionHeight = 240
+
 # load DuetWebAPI
 try: 
     import DuetWebAPI as DWA
@@ -58,6 +63,7 @@ class VideoGet:
         self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
         self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
         self.stream.set(cv2.CAP_PROP_FPS,28)
+        print("Init Video: " + str(resolutionWidth) + "x" + str(resolutionHeight))
         
         (self.grabbed, self.frame) = self.stream.read()
         self.stopped = False
@@ -68,6 +74,8 @@ class VideoGet:
 
     def get(self):
         while not self.stopped:
+            self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, resolutionWidth)
+            self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, resolutionHeight)
             if not self.grabbed:
                 self.stop()
             else:
@@ -92,7 +100,9 @@ class VideoShow:
 
     def show(self,title="Output"):
         while not self.stopped:
-            cv2.imshow(title, self.frame)
+            cv2.namedWindow("TAMV", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("TAMV", resolutionWidth, resolutionHeight)
+            cv2.imshow("TAMV", self.frame)
             if cv2.waitKey(1) == ord("q"):
                 self.stopped = True
 
@@ -134,9 +144,12 @@ def init():
     
     try:
         # set up video capture thread
-        video_getter = VideoGet(camera).start()
+        video_getter = VideoGet(camera)
+        video_getter.start()
+        print("Video Get: " + str(video_getter.frame.shape[1]) + "x" + str(video_getter.frame.shape[0]))
         tempFrame = video_getter.frame
         video_shower = VideoShow(tempFrame).start()
+        print("Video: " + str(tempFrame.shape[1]) + "x" + str(tempFrame.shape[0]))
         # Video only mode
         if(vidonly):
             vidWindow(video_getter,video_shower)
@@ -204,7 +217,7 @@ def vidWindow(vidGetter, vidShower):
     
     toggle = True
     xy     = [0,0]
-    target = [320/2, 240/2]
+    target = [resolutionWidth/2, resolutionHeight/2]
     rotation = 0
     try:
         while(1): 
@@ -310,7 +323,7 @@ def getDistance( x1, y1, x0, y0 ):
     return np.around(retVal,3)
 
 def normalize_coords(coords):
-    xdim, ydim = 320, 240
+    xdim, ydim = resolutionWidth, resolutionHeight
     return (coords[0] / xdim - 0.5, coords[1] / ydim - 0.5)
 
 def least_square_mapping(calibration_points):
@@ -327,12 +340,12 @@ def least_square_mapping(calibration_points):
     transform = np.linalg.lstsq(A, real_coords, rcond = None)
     return transform[0], transform[1].mean()
 
-def eachTool(tool,rep, get, show, CPCoords):
+def eachTool(tool,rep, get, show, CPCoords, transMatrix=None):
     toolStartTime = time.time()
-
+    
     avg=[0,0]
     guess  = [1,1];  # Millimeters.
-    target = [320/2, 240/2] # Pixels. Will be recalculated from frame size.
+    target = [resolutionWidth/2, resolutionHeight/2] # Pixels. Will be recalculated from frame size.
     drctn  = [-1,-1]  # Either 1 or -1, which we must figure out from the initial moves
     xy     = [0,0]
     oldxy  = xy
@@ -342,6 +355,10 @@ def eachTool(tool,rep, get, show, CPCoords):
     rd = 0;
     machine_coordinates = CPCoords
     iterations = 10
+    # transofrmation matrix already calculated and passed as parameter, jump straight to nozzle alignemnt
+    if( transMatrix is not None ):
+        transform = transMatrix
+        state = 200
 
     print('')
     print('')
@@ -349,8 +366,8 @@ def eachTool(tool,rep, get, show, CPCoords):
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
     printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
     printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
-    print('Sleeping for 7 seconds to allow tool to position itself' )
-    time.sleep(7)
+    print('Sleeping to allow tool to position itself' )
+    while printer.getStatus() not in 'idle': time.sleep(0.2)
     if(tool == 0):
         print('#########################################################################')
         print('# If tool does not appear in window, adjust G10 Tool offsets to be      #')
@@ -374,14 +391,14 @@ def eachTool(tool,rep, get, show, CPCoords):
         avg[0] += xy[0]
         avg[1] += xy[1]
         count += 1
-        if (count > 28):
+        if (count > 20 ):
             avg[0] /= count
             avg[1] /= count
             avg = np.around(avg,3)
             
             if (state == 0):  
                 # Finding Rotation: Collected frames before first move.
-                print("Calibrating camera step 1.. determining over 10 random positions")
+                print("Calibrating camera step 1/2: Determining camera transformation matrix by measuring 10 random positions.")
                 oldxy = xy
                 # get machine coordinates
                 while printer.getStatus() not in 'idle': time.sleep(0.2)
@@ -392,7 +409,6 @@ def eachTool(tool,rep, get, show, CPCoords):
                 cameraCoords.append((xy[0],xy[1]))
                 # move carriage +1 in X
                 printer.gCode("G91 G1 X1 F12000 G90 ")
-                while printer.getStatus() not in 'idle': time.sleep(0.2)
                 state = 1
                 continue
             elif( state >= 1 and state < iterations):
@@ -407,11 +423,12 @@ def eachTool(tool,rep, get, show, CPCoords):
                 offsetY = np.around(np.random.uniform(-0.5,0.5),3)
                 printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) + "  F12000 G90 ")
                 while printer.getStatus() not in 'idle': time.sleep(0.2)
+                # force a sleep to allow printer to move to next position for capture
+                time.sleep(1)
                 state += 1
                 continue
             elif( state == iterations ):
-                print("Calibrating camera step 2/2.. Moving to calculated center of nozzle.")
-                print( "Next TAMV will creep towards center of frame slowly" )
+                print("Camera calibration completed, calibrating nozzle offset.")
                 oldxy = xy
                 # get machine coordinates
                 while printer.getStatus() not in 'idle': time.sleep(0.2)
@@ -452,7 +469,7 @@ def eachTool(tool,rep, get, show, CPCoords):
                     c=printer.getCoords()
                     #c['MPP'] = mpp
                     c['time'] = time.time() - toolStartTime
-                    return(c)
+                    return(c, transform)
                 else:
                     state = 200
                     continue
@@ -577,7 +594,7 @@ def runVideoStream(get, show, rotationInput):
         # draw the blobs that look circular
         frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # Note its radius and position
-        ts =  "X{0:7.2f} Y{1:7.2f} R{2:7.2f}".format(xy[0],xy[1],r)
+        ts =  "X{0:7.3f} Y{1:7.3f} R{2:3.2f}".format(xy[0],xy[1],r)
         xy = np.uint16(xy)
         frame = putText(frame, ts, offsety=2, color=(0, 255, 0), stroke=2)                
 
@@ -639,13 +656,19 @@ def main():
     # Now look at each tool and find alignment centers
     alignmentStartTime = time.time()
     toolCoords = []
+    transformationMatrix = None
     for r in range(0,repeat):
         toolCoords.append([])
         for t in range(printer.getNumTools()):
             toolStartTime = time.time()
-            toolCoords[r].append(eachTool(t,r,getter,shower, CPCoords))
+            _result, transformationMatrix = eachTool(t,r,getter,shower, CPCoords, transformationMatrix)
+            toolCoords[r].append(_result)
             toolEndTime = time.time()
             print( 'Tool ' + str(t) + ' ran in ' + str(int(toolEndTime-toolStartTime))+ ' seconds.')
+            toolOffsets = printer.getG10ToolOffset(t)
+            x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[r][t]['X'],3)
+            y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
+            printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
         alignmentEndTime = time.time()
         print( 'Calibration for all tools took ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
     print("Unmounting last tool")
@@ -665,7 +688,7 @@ def main():
         print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds. ')#(MPP=' + mpp + ')' )
         while printer.getStatus() != 'idle':
             time.sleep(1)
-        #printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+        printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
     # display G10 offset statements on terminal screen
     print( 'Here are the G10 offset g-code commands to run for your printer to apply these offsets:')
     print( alignmentText )
