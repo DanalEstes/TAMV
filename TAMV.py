@@ -47,11 +47,11 @@ try:
     global cv2
     import cv2
     print( "openCV ("+cv2.__version__+") libraries have been loaded.")
-    print()
+    print('')
 except:
     print("Import for CV2 failed.  Please install openCV")
     print("You may wish to use https://github.com/DanalEstes/PiInstallOpenCV")
-    print()
+    print('')
     exit(8)
 
 # threaded video frame get class
@@ -137,11 +137,11 @@ def init():
     printer = DWA.DuetWebAPI('http://'+duet)
     if (not printer.printerType()):
         print('Device at '+duet+' either did not respond or is not a Duet V2 or V3 printer.')
-        print()
+        print('')
         exit(2)
     printer = DWA.DuetWebAPI('http://'+duet)
     print("Connected to a Duet V"+str(printer.printerType())+" printer at "+printer.baseURL())
-    print()
+    print('')
     
     try:
         # set up video capture thread
@@ -285,7 +285,7 @@ def printKeypointXYR(keypoints):
 def controlledPoint(get,show):
     printer.gCode("T-1 ")   # Un Mount any/all tools
     # Get user to position the first tool over the camera.
-    print()
+    print('')
     print('Setting up controlled point for offset calculation')
     print('#########################################################################')
     print('# We recommend setting up the center of your Z probe in the frame.      #')
@@ -306,12 +306,12 @@ def controlledPoint(get,show):
         return (get, show)  
             
     except KeyboardInterrupt:
-        print()
+        print('')
         print("Capturing raw position of the control point.")
         while printer.getStatus() not in 'idle': time.sleep(0.2)
         CPCoords = printer.getCoords()
         print("Controlled Point X{0:-1.3f} Y{1:-1.3f} ".format(CPCoords['X'],CPCoords['Y']))
-        print()
+        print('')
         return (get, show, CPCoords)
     except:
         raise
@@ -368,7 +368,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
     printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     print('Waiting for machine to position itself at controlled point..' )
-    print()
+    print('')
     while printer.getStatus() not in 'idle': time.sleep(0.2)
     if(tool == 0 and rep == 0):
         print('#########################################################################')
@@ -378,7 +378,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
         print('# If no circles are found, try slight jogs in Z, changing lighting,     #')
         print('# and cleaning the nozzle.                                              #')
         print('#########################################################################')
-        print()
+        print('')
     # loop over the frames from the video stream
     spaceCoords = []
     cameraCoords = []
@@ -435,7 +435,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                 continue
             elif( state == iterations ):
                 print('\r{}% done...'.format(int(state*10)))
-                print()
+                print('')
                 print('mm per pixel calulcated: ' + str(mpp))
                 print("Camera calibration completed, now calibrating nozzle offsets..")
                 oldxy = xy
@@ -476,7 +476,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                 if ( offsets[0] == 0.0 and offsets[1] == 0.0 ):
                     # Process coordinates for offset calculations
                     print('\r Nozzle move #{}...'.format(int(movesCounter-1)))
-                    print()
+                    print('')
                     # get machine coordinates
                     while printer.getStatus() not in 'idle': time.sleep(0.2)
                     c=printer.getCoords()
@@ -494,7 +494,7 @@ def repeatReport(toolCoordsInput,repeatInput=1):
     ###################################################################################
     # Report on repeated executions
     ###################################################################################
-    print()
+    print('')
     print('Repeatability statistics for '+str(repeatInput)+' repeats:')
     print('+---------------------------------------------------------------------------------------------------------------------------+')
     print('|   |                             X                             |                        Y                        |  Time   |')
@@ -516,7 +516,7 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print('| {0:6.3f}  '.format(np.around(np.std([toolCoordsInput[i][t]['Y'] for i in range(repeatInput)]),3)),end='')
         print('| {0:6.3f}  '.format(yrange),end='')
         print('| {0:7.3f} '.format(np.around(np.average([toolCoordsInput[i][t]['time'] for i in range(repeatInput)]),3)),end='|')
-        print()
+        print('')
     print('+---------------------------------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
 
@@ -658,10 +658,10 @@ def main():
         CPCoords = {'X':cp[0], 'Y':cp[1]}   # Load -cp command line arg into dict like printerGetCoords
     
     # Make sure no tools are loaded to start
-    print()
+    print('')
     print( 'Unloading tools from machine carriage.')
     printer.gCode("T-1 ")
-    print()
+    print('')
     
     # Now look at each tool and find alignment centers
     alignmentStartTime = time.time()
@@ -681,16 +681,16 @@ def main():
             y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
             printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
         alignmentEndTime = time.time()
-        print()
+        print('')
         print( 'Total calibration time so far: ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
-    print()
+    print('')
     print("Unmounting last tool")
     printer.gCode("T-1 ")
 
     ###################################################################################
     # End of all vision, etc.  Now calculate and report.
     ###################################################################################
-    print()
+    print('')
     alignmentText = ''
     for t in range(0,len(toolCoords[0])):
         toolOffsets = printer.getG10ToolOffset(t)
@@ -703,16 +703,16 @@ def main():
             time.sleep(2)
         printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
     # display G10 offset statements on terminal screen
-    print()
+    print('')
     print( 'Here are the G10 offset g-code commands to run for your printer to apply these offsets:')
     print( alignmentText )
-    print()
+    print('')
 
     if (repeat > 1): 
         print('Calibration control point at X{0:1.3f} Y{1:1.3f} '.format(CPCoords['X'],CPCoords['Y']))
         repeatReport(toolCoords, repeat)  
 
-    print()
+    print('')
     print("Tool offsets have been applied to the current printer.")
     print("Please modify your tool definitions in config.g to reflect these newly measured values for persistent storage.")
     print('')
