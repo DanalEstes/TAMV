@@ -100,8 +100,8 @@ class VideoShow:
 
     def show(self,title="Output"):
         while not self.stopped:
-            cv2.namedWindow("TAMV", cv2.WINDOW_NORMAL)
-            cv2.resizeWindow("TAMV", resolutionWidth, resolutionHeight)
+            #cv2.namedWindow("TAMV", cv2.WINDOW_NORMAL)
+            #cv2.resizeWindow("TAMV", resolutionWidth, resolutionHeight)
             cv2.imshow("TAMV", self.frame)
             if cv2.waitKey(1) == ord("q"):
                 self.stopped = True
