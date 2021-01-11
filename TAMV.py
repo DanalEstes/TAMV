@@ -19,6 +19,7 @@ import time
 import numpy as np
 import argparse
 import math
+import csv
 
 from threading import Thread
 
@@ -123,6 +124,7 @@ def init():
     parser.add_argument('-repeat',type=int,nargs=1,default=[1],help="Repeat entire alignment N times and report statistics")
     parser.add_argument('-xray',action='store_true',help='Display edge detection output for troubleshooting.')
     parser.add_argument('-loose',action='store_true',help='Run circle detection algorithm with less stringent parameters to help detect worn nozzles.')
+    parser.add_argument('-export',action='store_true',help='Export repeat raw data to output.csv when done.')
     args=vars(parser.parse_args())
 
     global duet, vidonly, camera, cp, repeat, video_getter, video_shower, xray, loose
@@ -133,6 +135,7 @@ def init():
     repeat   = args['repeat'][0]
     xray  = args['xray']
     loose  = args['loose']
+    export = args['export']
 
     # Get connected to the printer.
     print('Attempting to connect to printer at '+duet)
@@ -509,6 +512,14 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print('')
     print('+---------------------------------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
+    if( export ):
+        try:
+            with open('./output.csv', 'w') as myfile:
+            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+            wr.writerow(str(toolCoordsInput))
+        except OSError:
+            print( 'ERROR: Cannot create data export file!')
+            return
 
 def adjust_gamma(image, gamma=1.2):
     # build a lookup table mapping the pixel values [0, 255] to
