@@ -13,6 +13,9 @@
 # Note: You MUST define Z with a PROBE in config.g.  Even if it is really an endstop switch, it is OK to define that as a probe. 
 #
 
+import datetime
+import time
+
 try: 
     import DuetWebAPI as DWA
 except ImportError:
