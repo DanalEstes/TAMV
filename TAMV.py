@@ -220,7 +220,7 @@ def vidWindow(vidGetter, vidShower):
     rotation = 0
     try:
         while(1): 
-            (xy, target, rotation) = runVideoStream(vidGetter,vidShower, rotation)
+            (xy, target, rotation, tempCoordinates) = runVideoStream(vidGetter,vidShower, rotation)
             continue
     except KeyboardInterrupt:
         #print( 'Exiting after parking tools.' )
@@ -311,7 +311,6 @@ def controlledPoint(get,show):
     except KeyboardInterrupt:
         print('')
         print("Capturing raw position of the control point.")
-        while printer.getStatus() not in 'idle': time.sleep(0.2)
         CPCoords = printer.getCoords()
         print("Controlled Point X{0:-1.3f} Y{1:-1.3f} ".format(CPCoords['X'],CPCoords['Y']))
         print('')
@@ -351,6 +350,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     toolStartTime = time.time()
     
     avg=[0,0]
+    location = {'X':0,'Y':0}
     guess  = [1,1]  # Millimeters.
     xy     = [0,0]
     oldxy  = xy
@@ -373,7 +373,6 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     printer.gCode("M400")
     print('Waiting for machine to position itself at controlled point..' )
     print('')
-    #while printer.getStatus() not in 'idle': time.sleep(1)
     if(tool == 0 and rep == 0):
         print('#########################################################################')
         print('# If tool does not appear in window, adjust G10 Tool offsets to be      #')
@@ -391,7 +390,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     while True:
         printer.gCode("M400")
         if printer.getStatus() in 'idle':
-            (xy, target, rotation) = runVideoStream(get,show, rotation)
+            (xy, target, rotation, machineCoordinates) = runVideoStream(get,show, rotation)
             # Found one and only one circle.  Process it.
 
             # Keep track of center of circle and average across many circles
@@ -402,43 +401,34 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                 avg[0] /= count
                 avg[1] /= count
                 avg = np.around(avg,3)
-                
+                # refresh positional variables to debounce movements
+                (xy, target, rotation, machineCoordinates) = runVideoStream(get,show, rotation)
                 if (state == 0):  
                     # Finding Rotation: Collected frames before first move.
                     print("Calibrating camera step 1/2: Determining camera transformation matrix by measuring 10 random positions.")
                     oldxy = xy
-                    # get machine coordinates
-                    #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    machine_coordinates = printer.getCoords()
                     spaceCoords = []
                     cameraCoords = []
-                    spaceCoords.append( (machine_coordinates['X'],machine_coordinates['Y']) )
+                    spaceCoords.append( (machineCoordinates['X'],machineCoordinates['Y']) )
                     cameraCoords.append((xy[0],xy[1]))
                     # move carriage +1 in X
                     print('\r{}% done...'.format(int(state*10)), end='', flush=True)
                     printer.gCode("G91 G1 X1 F12000 G90 ")
                     printer.gCode("M400")
-                    time.sleep(2)
                     state = 1
                     continue
                 elif( state >= 1 and state < iterations):
                     print('\r{}% done...'.format(int(state*10)), end='', flush=True)
-                    if( state == 3 ):
+                    if( state == 1 ):
                         mpp = np.around(1/getDistance(oldxy[0],oldxy[1],xy[0],xy[1]),4)
                     oldxy = xy
-                    # get machine coordinates
-                    #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    machine_coordinates = printer.getCoords()
-                    spaceCoords.append( (machine_coordinates['X'],machine_coordinates['Y']) )
+                    spaceCoords.append( (machineCoordinates['X'],machineCoordinates['Y']) )
                     cameraCoords.append((xy[0],xy[1]))
-                    # move carriage +1 in X
+                    # move carriage a random amount in X&Y to collect datapoints for transform matrix
                     offsetX = np.around(np.random.uniform(-0.5,0.5),3)
                     offsetY = np.around(np.random.uniform(-0.5,0.5),3)
                     printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) + "  F12000 G90 ")
                     printer.gCode("M400")
-                    #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    # force a sleep to allow printer to move to next position for capture
-                    time.sleep(2)
                     state += 1
                     continue
                 elif( state == iterations ):
@@ -447,10 +437,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     print('mm per pixel calulcated: ' + str(mpp))
                     print("Camera calibration completed, now calibrating nozzle offsets..")
                     oldxy = xy
-                    # get machine coordinates
-                    #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    machine_coordinates = printer.getCoords()
-                    spaceCoords.append( (machine_coordinates['X'],machine_coordinates['Y']) )
+                    spaceCoords.append( (machineCoordinates['X'],machineCoordinates['Y']) )
                     cameraCoords.append((xy[0],xy[1]))
                     transform_input = [(spaceCoords[i], normalize_coords(camera)) for i, camera in enumerate(cameraCoords)]
                     transform, residual = least_square_mapping(transform_input)
@@ -459,19 +446,14 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     guess[1]= np.around(newCenter[1],3)
                     printer.gCode("G90 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(guess[0],guess[1]))
                     printer.gCode("M400")
-                    time.sleep(2)
                     state = 200
                     continue
                 elif (state == 200):
                     print('\r Nozzle move #{}...'.format(int(movesCounter)), end='', flush=True)
                     movesCounter += 1
-                    time.sleep(2)
                     # nozzle detected, frame rotation is set, start
                     cx,cy = normalize_coords(xy)
                     v = [cx**2, cy**2, cx*cy, cx, cy, 0]
-                    # get machine coordinates
-                    time.sleep(0.5)
-                    machine_coordinates = printer.getCoords()
                     offsets = -1*(0.55*transform.T @ v)
                     offsets[0] = np.around(offsets[0],3)
                     offsets[1] = np.around(offsets[1],3)
@@ -480,17 +462,13 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     printer.gCode( "M564 S1" )
                     printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                     printer.gCode("M400")
-                    time.sleep(2)
-                    #print("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                     oldxy = xy
                     if ( offsets[0] == 0.0 and offsets[1] == 0.0 ):
                         # Process coordinates for offset calculations
                         print('\r Nozzle move #{}...'.format(int(movesCounter-1)))
                         print('')
-                        # get machine coordinates
-                        #while printer.getStatus() not in 'idle': time.sleep(0.2)
                         printer.gCode("M400")
-                        c=printer.getCoords()
+                        c=machineCoordinates
                         c['MPP'] = mpp
                         c['time'] = time.time() - toolStartTime
                         print("Found Center of Image at offset coordinates X"+str(c['X'])+' Y'+str(c['Y']))
@@ -499,6 +477,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                         state = 200
                         continue
                 avg = [0,0]
+                location = {'X':0,'Y':0}
                 count = 0
 
 def repeatReport(toolCoordsInput,repeatInput=1):
@@ -553,10 +532,8 @@ def runVideoStream(get, show, rotationInput):
     detector = createDetector()
     
     while True:
-        printer.gCode("M400")
-        checkCoords2 = printer.getCoords()
-        if checkCoords2['X'] != printer.getCoords()['X'] and checkCoords2['Y'] != printer.getCoords()['Y']:
-            continue
+        # capture tool location in machine space before processing
+        toolCoordinates = printer.getCoords()
         # capture first clean frame for display
         cleanFrame = get.frame
         #cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
@@ -617,7 +594,7 @@ def runVideoStream(get, show, rotationInput):
         # draw the blobs that look circular
         frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # Note its radius and position
-        ts =  "X{0:7.3f} Y{1:7.3f} R{2:3.2f}".format(xy[0],xy[1],r)
+        ts =  "U{0:7.3f} V{1:7.3f} R{2:3.2f}".format(xy[0],xy[1],r)
         xy = np.uint16(xy)
         frame = putText(frame, ts, offsety=2, color=(0, 255, 0), stroke=2)                
 
@@ -632,10 +609,8 @@ def runVideoStream(get, show, rotationInput):
         #end the loop
         break
 
-    # grab some frames to clear buffer
-    for i in range( 1, 6 ): garbage = get.frame
     # and tell our parent.
-    return (xy,target,rotationInput)
+    return (xy, target, rotationInput, toolCoordinates)
 
 def putText(frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offsets are in character box size in pixels. 
     if (text == 'timestamp'): text = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
@@ -717,8 +692,7 @@ def main():
         mpp = str(toolCoords[0][t]['MPP'])
         alignmentText += "G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y) + '\n'
         print( 'Alignment for tool ' + str(t) + ' took ' + str(int(toolCoords[0][t]['time'])) + ' seconds. (MPP=' + mpp + ')' )
-        #while printer.getStatus() != 'idle': time.sleep(2)
-        printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+        #printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
     # display G10 offset statements on terminal screen
     print('')
     print( 'Here are the G10 offset g-code commands to run for your printer to apply these offsets:')
