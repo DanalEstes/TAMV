@@ -70,11 +70,8 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             ja=j['move']['axes']
-            #d=j['move']['drives']
-            #ad=self.json.loads('{}')
-            #for i in range(0,len(ja)):
-            #    ad[ ja[i]['letter'] ] = ja[i]['drives'][0]
             ret=self.json.loads('{}')
             for i in range(0,len(ja)):
                 ret[ ja[i]['letter'] ] = ja[i]['userPosition']
@@ -91,19 +88,16 @@ class DuetWebAPI:
             for i in range(0,len(jc)):
                 ret[ an[i] ] = jc[i]
             return(ret)
-        '''if (self.pt == 3):
+        if (self.pt == 3):
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             ja=j['move']['axes']
-            #d=j['move']['drives']
-            #ad=self.json.loads('{}')
-            #for i in range(0,len(ja)):
-            #    ad[ ja[i]['letter'] ] = ja[i]['drives'][0]
             ret=self.json.loads('{}')
             for i in range(0,len(ja)):
-                ret[ ja[i]['letter'] ] = ja[i]['userPosition']
-            return(ret)'''
+                ret[ ja[i]['letter'] ] = ja[i]['machinePosition']
+            return(ret)
 
     def getLayer(self):
         if (self.pt == 2):
@@ -116,6 +110,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             s = j['job']['layer']
             if (s == None): s=0
             return(s)
@@ -125,6 +120,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             ja=j['move']['axes']
             jt=j['tools']
             ret=self.json.loads('{}')
@@ -157,6 +153,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             return(len(j['move']['extruders']))
 
     def getNumTools(self):
@@ -170,6 +167,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             return(len(j['tools']))
 
     def getStatus(self):
@@ -187,6 +185,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r = self.requests.get(URL)
             j = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             return(j['state']['status'])
 
     def gCode(self,command):
@@ -221,6 +220,7 @@ class DuetWebAPI:
             URL=(f'{self._base_url}'+'/machine/status')
             r  = self.requests.get(URL)
             j  = self.json.loads(r.text)
+            if 'result' in j: j = j['result']
             jsa=j['sensors']['analog']
             return(jsa)
 
