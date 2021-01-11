@@ -80,7 +80,7 @@ class VideoGet:
                 self.stop()
             else:
                 (garbagegrabbed, garbageframe) = self.stream.read()
-                (garbagegrabbed, garbageframe) = self.stream.read()
+                #(garbagegrabbed, garbageframe) = self.stream.read()
                 (self.grabbed, self.frame) = self.stream.read()
 
     def stop(self):
@@ -390,9 +390,6 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     
     while True:
         printer.gCode("M400")
-        checkCoords = printer.getCoords()
-        if checkCoords['X'] != printer.getCoords()['X'] and checkCoords['Y'] != printer.getCoords()['Y']:
-            continue
         if printer.getStatus() in 'idle':
             (xy, target, rotation) = runVideoStream(get,show, rotation)
             # Found one and only one circle.  Process it.
@@ -412,11 +409,6 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     oldxy = xy
                     # get machine coordinates
                     #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    while True:
-                        checkCoords = printer.getCoords()
-                        if checkCoords['X'] != printer.getCoords()['X'] and checkCoords['Y'] != printer.getCoords()['Y']:
-                            continue
-                        break
                     machine_coordinates = printer.getCoords()
                     spaceCoords = []
                     cameraCoords = []
@@ -426,7 +418,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     print('\r{}% done...'.format(int(state*10)), end='', flush=True)
                     printer.gCode("G91 G1 X1 F12000 G90 ")
                     printer.gCode("M400")
-                    #time.sleep(2)
+                    time.sleep(2)
                     state = 1
                     continue
                 elif( state >= 1 and state < iterations):
@@ -436,11 +428,6 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     oldxy = xy
                     # get machine coordinates
                     #while printer.getStatus() not in 'idle': time.sleep(0.2)
-                    while True:
-                        checkCoords3 = printer.getCoords()
-                        if checkCoords3['X'] != printer.getCoords()['X'] and checkCoords3['Y'] != printer.getCoords()['Y']:
-                            continue
-                        break
                     machine_coordinates = printer.getCoords()
                     spaceCoords.append( (machine_coordinates['X'],machine_coordinates['Y']) )
                     cameraCoords.append((xy[0],xy[1]))
@@ -451,7 +438,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     printer.gCode("M400")
                     #while printer.getStatus() not in 'idle': time.sleep(0.2)
                     # force a sleep to allow printer to move to next position for capture
-                    #time.sleep(2)
+                    time.sleep(2)
                     state += 1
                     continue
                 elif( state == iterations ):
@@ -472,23 +459,18 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     guess[1]= np.around(newCenter[1],3)
                     printer.gCode("G90 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(guess[0],guess[1]))
                     printer.gCode("M400")
-                    #time.sleep(2)
+                    time.sleep(2)
                     state = 200
                     continue
                 elif (state == 200):
                     print('\r Nozzle move #{}...'.format(int(movesCounter)), end='', flush=True)
                     movesCounter += 1
-                    #time.sleep(2)
+                    time.sleep(2)
                     # nozzle detected, frame rotation is set, start
                     cx,cy = normalize_coords(xy)
                     v = [cx**2, cy**2, cx*cy, cx, cy, 0]
                     # get machine coordinates
-                    #time.sleep(0.5)
-                    #while True:
-                    #    checkCoords = printer.getCoords()
-                    #    if checkCoords['X'] != printer.getCoords()['X'] and checkCoords['Y'] != printer.getCoords()['Y']:
-                    #        continue
-                    #    break
+                    time.sleep(0.5)
                     machine_coordinates = printer.getCoords()
                     offsets = -1*(0.55*transform.T @ v)
                     offsets[0] = np.around(offsets[0],3)
@@ -498,7 +480,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     printer.gCode( "M564 S1" )
                     printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                     printer.gCode("M400")
-                    #time.sleep(2)
+                    time.sleep(2)
                     #print("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                     oldxy = xy
                     if ( offsets[0] == 0.0 and offsets[1] == 0.0 ):
@@ -508,11 +490,6 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                         # get machine coordinates
                         #while printer.getStatus() not in 'idle': time.sleep(0.2)
                         printer.gCode("M400")
-                        #while True:
-                        #    checkCoords = printer.getCoords()
-                        #    if checkCoords['X'] != printer.getCoords()['X'] and checkCoords['Y'] != printer.getCoords()['Y']:
-                        #        continue
-                        #    break
                         c=printer.getCoords()
                         c['MPP'] = mpp
                         c['time'] = time.time() - toolStartTime
