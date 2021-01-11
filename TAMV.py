@@ -127,7 +127,7 @@ def init():
     parser.add_argument('-export',action='store_true',help='Export repeat raw data to output.csv when done.')
     args=vars(parser.parse_args())
 
-    global duet, vidonly, camera, cp, repeat, video_getter, video_shower, xray, loose
+    global duet, vidonly, camera, cp, repeat, video_getter, video_shower, xray, loose, export
     duet     = args['duet'][0]
     vidonly  = args['vidonly']
     camera    = args['camera'][0]
@@ -515,8 +515,8 @@ def repeatReport(toolCoordsInput,repeatInput=1):
     if( export ):
         try:
             with open('./output.csv', 'w') as myfile:
-            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-            wr.writerow(str(toolCoordsInput))
+                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+                wr.writerow(str(toolCoordsInput))
         except OSError:
             print( 'ERROR: Cannot create data export file!')
             return
