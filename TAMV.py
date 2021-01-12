@@ -514,9 +514,22 @@ def repeatReport(toolCoordsInput,repeatInput=1):
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
     if( export ):
         try:
-            with open('./output.csv', 'w') as myfile:
-                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-                wr.writerow(str(toolCoordsInput))
+            fileData = "{\"tools\":["
+            for tool in range(printer.getNumTools()):
+                fileData += "{\"toolNumber\":\""+str(tool)+"\","
+                fileData += "\"runs\":["
+                for run in range(repeatInput):
+                    fileData += "{\"run\":\""+str(run)+"\","
+                    fileData += "\"X\":\"" + str(toolCoordsInput[run][tool]['X']) + "\","
+                    fileData += "\"Y\":\"" + str(toolCoordsInput[run][tool]['Y']) + "\","
+                    fileData += "\"MPP\":\"" + str(toolCoordsInput[run][tool]['MPP']) + "\""
+                    if run == repeatInput-1: fileData += "}]"
+                    else: fileData += "},"
+                if tool == printer.getNumTools()-1: fileData += "}]"
+                else: fileData += "},"
+            fileData += "}"
+            with open("output.json","w") as text_file:
+                print(fileData, file=text_file)
         except OSError:
             print( 'ERROR: Cannot create data export file!')
             return
