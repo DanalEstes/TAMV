@@ -105,8 +105,8 @@ def probePlate():
     prt.gCode('G90 G1 X'+str(tp[0])+' Y'+str(tp[1])+' Z50 ')    # The real purpose of this is to move the probe into position with its correct offsets. 
     prt.gCode('M400')                                       # wait for buffer to clear
      # wait for probing setup moves to complete before prompting for probe plate
-    while prt.getStatus() is not 'idle':
-        time.sleep(1)
+    #while prt.getStatus() is not 'idle':
+    #    time.sleep(1)
     print( 'The toolhead is parked in your designated XY position for probing.' )
     input( 'Please place the probe plate in the correct position on the bed and press ENTER to start.' )
     print( 'Probing touch plate...' )
@@ -119,8 +119,8 @@ def probePlate():
     poffs = 0
 
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is 'processing':
-        time.sleep(1) 
+    #while prt.getStatus() is 'processing':
+    #    time.sleep(1) 
     
     poffs = prt.getCoords()['Z']                            # Capture the Z position at initial point of contact
     print("Touch plate offset = "+str(poffs))                     # Display captured offset to terminal
@@ -152,16 +152,16 @@ def probeTool(tn):
     prt.gCode('M558 F300')                                      # set probing speed fast
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is 'processing':
-        time.sleep(1) 
+    #while prt.getStatus() is 'processing':
+    #    time.sleep(1) 
     print('First pass offset for tool ' + str(tn) + ': ' + str(prt.getCoords()['Z']) )
     prt.gCode('G91 G1 Z5 G90')                                  # move bed away from probe for second pass
     prt.gCode('M558 F50')                                       # set probing speed fast
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
 
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is 'processing':
-        time.sleep(1) 
+    #while prt.getStatus() is 'processing':
+    #    time.sleep(1) 
 
     toffs = prt.getCoords()['Z']                                # Fetch current Z coordinate from Duet controller
     print("Final offset for tool "+str(tn)+": "+str(toffs))    # Output offset to terminal for user to read
@@ -216,8 +216,8 @@ if (tool == -1):
         finalOffset = (poffs-toolCoords[tn])-0.1
         print('G10 P'+str(tn)+' Z{:0.3f}'.format(finalOffset))
         # wait for probing to complete before setting offsets
-        while prt.getStatus() is 'processing':
-            time.sleep(1) 
+        #while prt.getStatus() is 'processing':
+        #    time.sleep(1) 
         prt.gCode('G10 P'+str(tn)+' Z{:0.3f}'.format(finalOffset))
 else:
     print("Final offset for tool "+str(tool)+": "+str(toolCoords[0]))
@@ -225,8 +225,8 @@ else:
     finalOffset = (poffs-toolCoords[0])-0.1
     print('G10 P'+str(tool)+' Z{:0.3f}'.format(finalOffset))
     # wait for probing to complete before setting offsets
-    while prt.getStatus() is 'processing':
-        time.sleep(1) 
+    #while prt.getStatus() is 'processing':
+    #    time.sleep(1) 
     prt.gCode('G10 P'+str(tool)+' Z{:0.3f}'.format(finalOffset))
 print()
 print("Tool offsets have been applied to the current printer.")
