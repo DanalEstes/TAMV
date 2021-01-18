@@ -152,7 +152,7 @@ def probeTool(tn):
     prt.gCode('M558 F300')                                      # set probing speed fast
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is not 'idle':
+    while prt.getStatus() is 'processing':
         time.sleep(1) 
     print('First pass offset for tool ' + str(tn) + ': ' + str(prt.getCoords()['Z']) )
     prt.gCode('G91 G1 Z5 G90')                                  # move bed away from probe for second pass
@@ -160,7 +160,7 @@ def probeTool(tn):
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
 
     # wait for probing to complete before fetching offsets
-    while prt.getStatus() is not 'idle':
+    while prt.getStatus() is 'processing':
         time.sleep(1) 
 
     toffs = prt.getCoords()['Z']                                # Fetch current Z coordinate from Duet controller
@@ -216,7 +216,7 @@ if (tool == -1):
         finalOffset = (poffs-toolCoords[tn])-0.1
         print('G10 P'+str(tn)+' Z{:0.3f}'.format(finalOffset))
         # wait for probing to complete before setting offsets
-        while prt.getStatus() is not 'idle':
+        while prt.getStatus() is 'processing':
             time.sleep(1) 
         prt.gCode('G10 P'+str(tn)+' Z{:0.3f}'.format(finalOffset))
 else:
@@ -225,7 +225,7 @@ else:
     finalOffset = (poffs-toolCoords[0])-0.1
     print('G10 P'+str(tool)+' Z{:0.3f}'.format(finalOffset))
     # wait for probing to complete before setting offsets
-    while prt.getStatus() is not 'idle':
+    while prt.getStatus() is 'processing':
         time.sleep(1) 
     prt.gCode('G10 P'+str(tool)+' Z{:0.3f}'.format(finalOffset))
 print()
