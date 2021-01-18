@@ -642,7 +642,7 @@ def runVideoStream(get, show, rotationInput):
             if (25 < (int(round(time.time() * 1000)) - rd)):
                 print('Too many circles found')
                 show.text = "Too many circles found. Please stop and clean the nozzle."
-                printKeypointXYR(keypoints)
+                #printKeypointXYR(keypoints)
                 frame = putText(frame,'Too many circles found '+str(lk),offsety=3, color=(255,255,255))                
                 frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
                 if( xray ):
