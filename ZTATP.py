@@ -129,7 +129,8 @@ def probePlate():
 
 def probeTool(tn):
     print()
-    print( 'Probing tool ' + str(tn) + '...' )
+    print( 'Probing tool ' + str(tn) + '..')
+    print( 'ZTATP will prompt you to connect your lead once the tool is positioned over the touch plate.' )
     prt.resetEndstops()                                         # return all endstops to natural state from config.g definitions
     prt.gCode('M400')                                           # Wait for planner to empty
     prt.gCode('G10 P'+str(tn)+' Z0')                            # Remove z offsets from Tool 
@@ -149,6 +150,7 @@ def probeTool(tn):
         # END -- Code for RRF2
     
     prt.gCode('G0 X'+str(tp[0])+' Y'+str(tp[1])+' F10000')      # Move nozzle to spot above flat part of plate
+    input('Connect probe lead to tool ' + str(tn) + ' and press ENTER to continue.')
     prt.gCode('M558 F300')                                      # set probing speed fast
     prt.gCode('G30 S-1')                                        # Initiate a probing sequence
     # wait for probing to complete before fetching offsets
@@ -195,11 +197,9 @@ if (tool == -1):
     print( 'Running a probing sequence for all tools.')
     # start probing sequence for each tool defined on the connected printer
     for t in range(prt.getNumTools()):
-        input('Connect probe lead to tool ' + str(t) + ' and press ENTER to continue.')
         toolCoords.append(probeTool(t))
 else:
     print('Running a probing sequence for only tool '+ str(tool) )
-    input('Connect probe lead to tool '+str(tool)+' and press ENTER to continue.')
     toolCoords.append(probeTool(tool))
 # restore all endstop definitions to the config.g defaults
 prt.resetEndstops()
