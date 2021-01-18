@@ -134,17 +134,19 @@ def init():
     parser.add_argument('-xray',action='store_true',help='Display edge detection output for troubleshooting.')
     parser.add_argument('-loose',action='store_true',help='Run circle detection algorithm with less stringent parameters to help detect worn nozzles.')
     parser.add_argument('-export',action='store_true',help='Export repeat raw data to output.csv when done.')
+    parser.add_argument('-alternate',action='store_true',help='Try alternative nozzle detection method')
     args=vars(parser.parse_args())
 
-    global duet, vidonly, camera, cp, repeat, xray, loose, export
-    duet     = args['duet'][0]
-    vidonly  = args['vidonly']
+    global duet, vidonly, camera, cp, repeat, xray, loose, export, alternate
+    duet      = args['duet'][0]
+    vidonly   = args['vidonly']
     camera    = args['camera'][0]
-    cp       = args['cp']
-    repeat   = args['repeat'][0]
-    xray  = args['xray']
-    loose  = args['loose']
-    export = args['export']
+    cp        = args['cp']
+    repeat    = args['repeat'][0]
+    xray      = args['xray']
+    loose     = args['loose']
+    export    = args['export']
+    alternate = args['alternate']
 
     # Get connected to the printer.
     print('Attempting to connect to printer at '+duet)
@@ -220,7 +222,7 @@ def vidWindow(vidGetter, vidShower):
             continue
     except KeyboardInterrupt:
         print( 'Exiting after parking tools.' )
-        printer.gCode("T-1 ")
+        #printer.gCode("T-1 ")
         return
     except Exception as cpe1:
         print( 'Unknown error.' )
@@ -360,6 +362,18 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     count=0
     machine_coordinates = CPCoords
     iterations = 10
+    calibrationCoordinates = [
+        [0,-0.5],
+        [0.294,-0.405],
+        [0.476,-0.155],
+        [0.476,0.155],
+        [0.294,0.405],
+        [0,0.5],
+        [-0.294,0.405],
+        [-0.476,0.155],
+        [-0.476,-0.155],
+        [-0.294,-0.405],
+        ]
     # transofrmation matrix already calculated and passed as parameter, jump straight to nozzle alignemnt
     if( transMatrix is not None ):
         transform = transMatrix
@@ -418,23 +432,27 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     cameraCoords.append((xy[0],xy[1]))
                     # move carriage +1 in X
                     print('\r{}% done...'.format(int(state*10)), end='', flush=True)
-                    printer.gCode("G91 G1 X1 F12000 G90 ")
-                    printer.gCode("M400")
+                    offsetX = calibrationCoordinates[0][0]
+                    offsetY = calibrationCoordinates[0][1]
+                    printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) +" F3000 G90 ")
                     state = 1
                     continue
                 elif( state >= 1 and state < iterations):
                     print('\r{}% done...'.format(int(state*10)), end='', flush=True)
                     show.text = "Calibrating camera rotation: {}% done".format(int(state*10))
                     if( state == 1 ):
-                        mpp = np.around(1/getDistance(oldxy[0],oldxy[1],xy[0],xy[1]),4)
+                        mpp = np.around(0.5/getDistance(oldxy[0],oldxy[1],xy[0],xy[1]),4)
                     oldxy = xy
                     spaceCoords.append( (machineCoordinates['X'],machineCoordinates['Y']) )
                     cameraCoords.append((xy[0],xy[1]))
+                    # return carriage to relative center of movement
+                    offsetX = -1*offsetX
+                    offsetY = -1*offsetY
+                    printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) +" F3000 G90 ")
                     # move carriage a random amount in X&Y to collect datapoints for transform matrix
-                    offsetX = np.around(np.random.uniform(-0.5,0.5),3)
-                    offsetY = np.around(np.random.uniform(-0.5,0.5),3)
-                    printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) + "  F12000 G90 ")
-                    printer.gCode("M400")
+                    offsetX = calibrationCoordinates[state][0]
+                    offsetY = calibrationCoordinates[state][1]
+                    printer.gCode("G91 G1 X" + str(offsetX) + " Y" + str(offsetY) +" F3000 G90 ")
                     state += 1
                     continue
                 elif( state == iterations ):
@@ -567,19 +585,32 @@ def runVideoStream(get, show, rotationInput):
         toolCoordinates = printer.getCoords()
         # capture first clean frame for display
         cleanFrame = get.frame
-        #cleanFrame = imutils.rotate_bound(cleanFrame,rotationInput)
-        #show.frame = cleanFrame
-        gammaInput = 1.2
-        frame = adjust_gamma(cleanFrame, gammaInput)
-        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
-        yuvPlanes = cv2.split(yuv)
-        yuvPlanes[0] = cv2.GaussianBlur(yuvPlanes[0],(7,7),6)
-        yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35,1)
-        edgeDetectedFrame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
-        frame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
-        target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
-        # run nozzle detection for keypoints
-        keypoints = detector.detect(frame)
+        # apply nozzle detection algorithm
+        if not alternate:
+            # Detection algorithm 1:
+            #    gamma correction -> use Y channel from YUV -> GaussianBlur (7,7),6 -> adaptive threshold
+            gammaInput = 1.2
+            frame = adjust_gamma(cleanFrame, gammaInput)
+            yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+            yuvPlanes = cv2.split(yuv)
+            yuvPlanes[0] = cv2.GaussianBlur(yuvPlanes[0],(7,7),6)
+            yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35,1)
+            edgeDetectedFrame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
+            target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]
+            # run nozzle detection for keypoints
+            keypoints = detector.detect(frame)
+        else:
+            # Detection algorithm 2
+            #    use B channel from BGR -> medianBlur (3) -> equalize histogram -> GaussianBlur (7,7),6
+            edgeDetectedFrame = cv2.split(cleanFrame)[0]
+            edgeDetectedFrame = cv2.medianBlur( edgeDetectedFrame, 3 )
+            cv2.equalizeHist(edgeDetectedFrame, edgeDetectedFrame)
+            edgeDetectedFrame = cv2.GaussianBlur( edgeDetectedFrame, (7,7), 6 )
+            edgeDetectedFrame = cv2.cvtColor(edgeDetectedFrame,cv2.COLOR_GRAY2BGR)
+            target = [int(np.around(edgeDetectedFrame.shape[1]/2)),int(np.around(edgeDetectedFrame.shape[0]/2))]
+            # run nozzle detection for keypoints
+            keypoints = detector.detect(edgeDetectedFrame)
         
         # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
         # place the cleanFrame capture into display to avoid showing edge detection and other confusing images
