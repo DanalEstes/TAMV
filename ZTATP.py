@@ -120,7 +120,7 @@ def probePlate():
 
     # wait for probing to complete before fetching offsets
     #while prt.getStatus() is 'processing':
-    #    time.sleep(1) 
+    time.sleep(2) 
     
     poffs = prt.getCoords()['Z']                            # Capture the Z position at initial point of contact
     print("Touch plate offset = "+str(poffs))                     # Display captured offset to terminal
@@ -161,7 +161,7 @@ def probeTool(tn):
 
     # wait for probing to complete before fetching offsets
     #while prt.getStatus() is 'processing':
-    #    time.sleep(1) 
+    time.sleep(2) 
 
     toffs = prt.getCoords()['Z']                                # Fetch current Z coordinate from Duet controller
     print("Final offset for tool "+str(tn)+": "+str(toffs))    # Output offset to terminal for user to read
