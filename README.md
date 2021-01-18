@@ -19,25 +19,25 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
     git clone https://github.com/HaythamB/TAMV/
 
 ## Run
-usage: TAMV.py [-h] [-duet DUET] [-vidonly] [-camera CAMERA] [-cp CP CP]
-               [-repeat REPEAT] [-xray] [-loose] [-export] [-alternate]
-
-Program to allign multiple tools on Duet based printers, using machine vision.
-
-optional arguments:
-  -h, --help      show this help message and exit
-  -duet DUET      Name or IP address of Duet printer. You can use
-                  -duet=localhost if you are on the embedded Pi on a Duet3.
-  -vidonly        Open video window and do nothing else.
-  -camera CAMERA  Index of /dev/videoN device to be used. Default 0.
-  -cp CP CP       x y that will put 'controlled point' on carriage over
-                  camera.
-  -repeat REPEAT  Repeat entire alignment N times and report statistics
-  -xray           Display edge detection output for troubleshooting.
-  -loose          Run circle detection algorithm with less stringent
-                  parameters to help detect worn nozzles.
-  -export         Export repeat raw data to output.csv when done.
-  -alternate      Try alternative nozzle detection method
+    usage: TAMV.py [-h] [-duet DUET] [-vidonly] [-camera CAMERA] [-cp CP CP]
+                   [-repeat REPEAT] [-xray] [-loose] [-export] [-alternate]
+    
+    Program to allign multiple tools on Duet based printers, using machine vision.
+    
+    optional arguments:
+      -h, --help      show this help message and exit
+      -duet DUET      Name or IP address of Duet printer. You can use
+                      -duet=localhost if you are on the embedded Pi on a Duet3.
+      -vidonly        Open video window and do nothing else.
+      -camera CAMERA  Index of /dev/videoN device to be used. Default 0.
+      -cp CP CP       x y that will put 'controlled point' on carriage over
+                      camera.
+      -repeat REPEAT  Repeat entire alignment N times and report statistics
+      -xray           Display edge detection output for troubleshooting.
+      -loose          Run circle detection algorithm with less stringent
+                      parameters to help detect worn nozzles.
+      -export         Export repeat raw data to output.csv when done.
+      -alternate      Try alternative nozzle detection method
  
 
 # ZTATP
