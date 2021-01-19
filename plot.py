@@ -85,6 +85,7 @@ def parseData( rawData ):
 def main():
     # parse command line arguments
     dataFilename = init()
+    
 
     # set up color and colormap arrays
     colorMap = ["Greens","Oranges","Blues", "Reds"] #["Blues", "Reds","Greens","Oranges"]
@@ -110,7 +111,10 @@ def main():
     # Row 0: scatter plot with standard deviation box
     # Row 1: histogram of X axis data
     # Row 2: histogram of Y axis data
+    #plt.switch_backend('QT5Agg') #default on my system
+    
     fig, axes = plt.subplots(ncols=3,nrows=numTools,constrained_layout=False)
+    
 
     for i, data in enumerate(toolData):
         # create a color array the length of the number of tools in the data
@@ -129,7 +133,8 @@ def main():
         # x&y std deviation box
         x_sigma = np.around(np.std(data[0]),3)
         y_sigma = np.around(np.std(data[1]),3)
-        axes[i][0].add_patch(patches.Rectangle((-1*x_sigma,-1*y_sigma), 2*x_sigma, 2*y_sigma, color="red",fill=False, linestyle='dotted'))
+        axes[i][0].add_patch(patches.Rectangle((-1*x_sigma,-1*y_sigma), 2*x_sigma, 2*y_sigma, color="green",fill=False, linestyle='dotted'))
+        axes[i][0].add_patch(patches.Rectangle((-2*x_sigma,-2*y_sigma), 4*x_sigma, 4*y_sigma, color="red",fill=False, linestyle='-.'))
         
         # scatter plot for tool data
         axes[i][0].scatter(data[0], data[1], c=color, cmap=colorMap[i])
@@ -166,9 +171,19 @@ def main():
         y_count = int(sum( p == True for p in ((data[1] >= (y_mean - y_sigma)) & (data[1] <= (y_mean + y_sigma))) )/len(data[1])*100)
         # annotate std dev values
         annotation_text = "Xσ: " + str(x_sigma) + " ("+str(x_count) + "%)"
-        if x_count < 68: annotation_text += " -- check axis!"
+        if x_count < 68:
+            x_count = int(sum( p == True for p in ((data[0] >= (x_mean - 2*x_sigma)) & (data[0] <= (x_mean + 2*x_sigma))) )/len(data[0])*100) 
+            annotation_text += " --> 2σ: " + str(x_count) + "%"
+            if x_count < 95:
+                annotation_text += " -- check axis!"
+            else: annotation_text += " -- OK"
         annotation_text += "\nYσ: " + str(y_sigma) + " ("+str(y_count) + "%)"
-        if y_count < 68: annotation_text += " -- check axis!"
+        if y_count < 68: 
+            y_count = int(sum( p == True for p in ((data[1] >= (y_mean - 2*y_sigma)) & (data[1] <= (y_mean + 2*y_sigma))) )/len(data[1])*100) 
+            annotation_text += " --> 2σ: " + str(y_count) + "%"
+            if y_count < 95:
+                annotation_text += " -- check axis!"
+            else: annotation_text += " -- OK"
         axes[i][0].annotate(annotation_text, (10,10),xycoords='axes pixels')
         # # place title for graph
         axes[i][0].set_ylabel("Tool " + str(i) + "\nY")
@@ -180,9 +195,9 @@ def main():
             axes[i][0].set_title('Scatter Plot')
             axes[i][1].set_title('Histogram')
             axes[i][2].set_title('2D Histogram')
-    
-    
     plt.tight_layout()
+    #figManager = plt.get_current_fig_manager()
+    #figManager.window.showMaximized()
     plt.show()
     
 
