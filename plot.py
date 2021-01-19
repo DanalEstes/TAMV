@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 from matplotlib.ticker import FormatStrFormatter
+import matplotlib
 import numpy as np
 import math
 
@@ -16,7 +17,7 @@ def init():
     
     args=vars(parser.parse_args())
     inputFilename = args['filename'][0]
-
+    matplotlib.use('Qt5Agg',force=True)
     return( inputFilename )
 
 def loadDataFile( filename="./output.json" ):
@@ -111,7 +112,7 @@ def main():
     # Row 0: scatter plot with standard deviation box
     # Row 1: histogram of X axis data
     # Row 2: histogram of Y axis data
-    #plt.switch_backend('QT5Agg') #default on my system
+    plt.switch_backend('QT4Agg') 
     
     fig, axes = plt.subplots(ncols=3,nrows=numTools,constrained_layout=False)
     
@@ -196,8 +197,8 @@ def main():
             axes[i][1].set_title('Histogram')
             axes[i][2].set_title('2D Histogram')
     plt.tight_layout()
-    #figManager = plt.get_current_fig_manager()
-    #figManager.window.showMaximized()
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
     plt.show()
     
 

@@ -13,6 +13,13 @@ TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
 P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWindows (graphic) setup. Badly. 
 
+## Preparation steps
+TAMV, ZTATP, and their associated plot functions utilize Python3+, and some additional libraries for GUI elements and processing. If you have some errors while running the code, consider running the following commands to install missing modules.
+    sudo apt-get update
+    sudo apt-get upgrade
+    sudo apt-get install python3-matplotlib
+    sudo apt-get install python3-pyqt5
+
 ## Installation
 
     cd
