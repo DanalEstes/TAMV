@@ -15,6 +15,7 @@ P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWi
 
 ## Preparation steps
 TAMV, ZTATP, and their associated plot functions utilize Python3+, and some additional libraries for GUI elements and processing. If you have some errors while running the code, consider running the following commands to install missing modules.
+
     sudo apt-get update
     sudo apt-get upgrade
     sudo apt-get install python3-matplotlib
