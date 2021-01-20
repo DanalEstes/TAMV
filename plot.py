@@ -175,14 +175,14 @@ def main():
         if x_count < 68:
             x_count = int(sum( p == True for p in ((data[0] >= (x_mean - 2*x_sigma)) & (data[0] <= (x_mean + 2*x_sigma))) )/len(data[0])*100) 
             annotation_text += " --> 2σ: " + str(x_count) + "%"
-            if x_count < 95:
+            if x_count < 95 and x_sigma*2 > 0.1:
                 annotation_text += " -- check axis!"
             else: annotation_text += " -- OK"
         annotation_text += "\nYσ: " + str(y_sigma) + " ("+str(y_count) + "%)"
         if y_count < 68: 
             y_count = int(sum( p == True for p in ((data[1] >= (y_mean - 2*y_sigma)) & (data[1] <= (y_mean + 2*y_sigma))) )/len(data[1])*100) 
             annotation_text += " --> 2σ: " + str(y_count) + "%"
-            if y_count < 95:
+            if y_count < 95 and y_sigma*2 > 0.1:
                 annotation_text += " -- check axis!"
             else: annotation_text += " -- OK"
         axes[i][0].annotate(annotation_text, (10,10),xycoords='axes pixels')

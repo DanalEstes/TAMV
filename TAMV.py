@@ -386,7 +386,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
     printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
     printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
-    printer.gCode("M400")
+    #printer.gCode("M400")
     print('Waiting for machine to position itself at controlled point..' )
     print('')
     if(tool == 0 and rep == 0):
@@ -404,7 +404,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     movesCounter = 0
     
     while True:
-        printer.gCode("M400")
+        #printer.gCode("M400")
         if printer.getStatus() in 'idle':
             (xy, target, rotation, machineCoordinates, radius) = runVideoStream(get,show, rotation)
             # Found one and only one circle.  Process it.
@@ -471,7 +471,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     guess[0]= np.around(newCenter[0],3)
                     guess[1]= np.around(newCenter[1],3)
                     printer.gCode("G90 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(guess[0],guess[1]))
-                    printer.gCode("M400")
+                    #printer.gCode("M400")
                     state = 200
                     continue
                 elif (state == 200):
@@ -494,7 +494,7 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                         # Process coordinates for offset calculations
                         print('\r Nozzle move #{}...'.format(int(movesCounter-1)))
                         print('')
-                        printer.gCode("M400")
+                        #printer.gCode("M400")
                         c=machineCoordinates
                         c['MPP'] = mpp
                         c['time'] = time.time() - toolStartTime
@@ -701,7 +701,7 @@ def putText(frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offse
 # End of method definitions
 # Start of Main Code
 ###################################################################################
-def main(video_shower, video_getter):
+def main(video_shower, video_getter, printer):
     try:
         if(vidonly):
             vidWindow(video_getter,video_shower)
@@ -727,16 +727,42 @@ def main(video_shower, video_getter):
         for r in range(0,repeat):
             toolCoords.append([])
             for t in range(printer.getNumTools()):
-                toolStartTime = time.time()
-                _result, transformationMatrix,mpp = eachTool(t,r,video_getter,video_shower, CPCoords, transformationMatrix, mpp)
-                toolCoords[r].append(_result)
-                toolEndTime = time.time()
-                print( 'Tool ' + str(t) + ' ran in ' + str(int(toolEndTime-toolStartTime))+ ' seconds.')
-                toolOffsets = printer.getG10ToolOffset(t)
-                x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[r][t]['X'],3)
-                y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
-                printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
-                video_shower.text = "Offset for T{0:d}: X{1:1.3f} Y{2:1.3f}".format(t,x,y)
+                connectionAlive = True
+                try:
+                    while connectionAlive:
+                        toolStartTime = time.time()
+                        _result, transformationMatrix,mpp = eachTool(t,r,video_getter,video_shower, CPCoords, transformationMatrix, mpp)
+                        toolCoords[r].append(_result)
+                        toolEndTime = time.time()
+                        print( 'Tool ' + str(t) + ' ran in ' + str(int(toolEndTime-toolStartTime))+ ' seconds.')
+                        toolOffsets = printer.getG10ToolOffset(t)
+                        x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[r][t]['X'],3)
+                        y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
+                        printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+                        video_shower.text = "Offset for T{0:d}: X{1:1.3f} Y{2:1.3f}".format(t,x,y)
+                        connectionAlive = False
+                except ConnectionResetError as cr1:
+                    # Duet disconnected, reconnect
+                    userInput = input('Connection dropped, retry?')
+                    if userInput in ['Y','y']:
+                        printer = DWA.DuetWebAPI('http://'+duet)
+                        connectionAlive = True
+                        oolStartTime = time.time()
+                        _result, transformationMatrix,mpp = eachTool(t,r,video_getter,video_shower, CPCoords, transformationMatrix, mpp)
+                        toolCoords[r].append(_result)
+                        toolEndTime = time.time()
+                        print( 'Tool ' + str(t) + ' ran in ' + str(int(toolEndTime-toolStartTime))+ ' seconds.')
+                        toolOffsets = printer.getG10ToolOffset(t)
+                        x = np.around((CPCoords['X'] + toolOffsets['X']) - toolCoords[r][t]['X'],3)
+                        y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
+                        printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
+                        video_shower.text = "Offset for T{0:d}: X{1:1.3f} Y{2:1.3f}".format(t,x,y)
+                        continue
+                    else:
+                        print( "Terminating TAMV run due to disconnection." )
+                        return(video_shower, video_getter)
+                        
+                    
             alignmentEndTime = time.time()
             print('')
             print( 'Total calibration time so far: ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
@@ -780,7 +806,7 @@ def main(video_shower, video_getter):
     except Exception as e1:
         #video_shower.stop()
         #video_getter.stop()
-        print("Error.")
+        print("Uknown error in main function!")
         print(e1)
         return(video_shower, video_getter)
 
@@ -808,7 +834,7 @@ if __name__ == "__main__":
         #cv2.namedWindow("TAMV",cv2.WINDOW_AUTOSIZE)
         #cv2.imshow("TAMV",video_shower.frame)
         #cv2.displayOverlay("TAMV",video_shower.text )
-        (video_shower, video_getter) = main(video_shower, video_getter)
+        (video_shower, video_getter) = main(video_shower, video_getter, printer)
     except Exception as v1:
         print( 'ERROR: Video capture failed' )
         print( v1 )
