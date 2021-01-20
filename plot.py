@@ -186,6 +186,8 @@ def main():
                 annotation_text += " -- check axis!"
             else: annotation_text += " -- OK"
         axes[i][0].annotate(annotation_text, (10,10),xycoords='axes pixels')
+        axes[i][0].annotate('σ',(1.1*x_sigma,-1.1*y_sigma),xycoords='data',color='green')
+        axes[i][0].annotate('2σ',(1.1*2*x_sigma,-1.1*2*y_sigma),xycoords='data',color='red')
         # # place title for graph
         axes[i][0].set_ylabel("Tool " + str(i) + "\nY")
         axes[i][0].set_xlabel("X")
