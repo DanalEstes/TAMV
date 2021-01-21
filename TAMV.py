@@ -730,6 +730,7 @@ def main(video_shower, video_getter, printer):
                 connectionAlive = True
                 try:
                     while connectionAlive:
+                        printer.gCode("T-1 ")
                         toolStartTime = time.time()
                         _result, transformationMatrix,mpp = eachTool(t,r,video_getter,video_shower, CPCoords, transformationMatrix, mpp)
                         toolCoords[r].append(_result)
@@ -741,7 +742,7 @@ def main(video_shower, video_getter, printer):
                         printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
                         video_shower.text = "Offset for T{0:d}: X{1:1.3f} Y{2:1.3f}".format(t,x,y)
                         connectionAlive = False
-                except ConnectionResetError as cr1:
+                except Exception as cr1:
                     # Duet disconnected, reconnect
                     userInput = input('Connection dropped, retry?')
                     if userInput in ['Y','y']:
