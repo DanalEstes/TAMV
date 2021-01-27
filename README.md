@@ -5,9 +5,9 @@ This fork is a modification for Jubilee printers running RRF2 and RRF3 and serve
 1. blob detection parameters tweaked to better detect rounder blobs of a certain size (helps reduce false positives)
 2. image filter used for blob detection is now based on a threshold image that produces proper edges for shapes (or at least more consistent ones), and doesn't use color information for filtering (improves detection)
 3. nozzle alignment uses a rotation matrix via a least-squares approximation of the mapping between camera space and machine space
-4. Camera defaults to 640x480 resolution to speed up processing times and provide consistent accuracy
-5. Video frame capture and frame display are offloaded to their own threads to speed up processing
-6. added flags: '-xray' (shows the edge detection frame to help troubleshoot); '-loose': uses a less restrictive roundness in blob detection that aids in nozzle detection sometimes; '-export': exports JSON of repeat alignment runs to allow us to plot data and store it somewhere; '-alternate': a community-developed alternative for nozzle detection that seems to work better when using a webcam for nozzle detection
+4. camera feed defaults to 640x480 resolution to speed up processing times and provide consistent accuracy
+5. video frame capture and frame display are offloaded to their own threads to speed up processing (not thread-safe, but works well and doesn't cause memory leaks)
+6. added new TAMV flags: '-xray' (shows the edge detection frame to help troubleshoot); '-loose': uses a less restrictive roundness in blob detection that aids in nozzle detection sometimes; '-export': exports JSON of repeat alignment runs to allow us to plot data and store it somewhere; '-alternate': a community-developed alternative for nozzle detection that seems to work better when using a webcam for nozzle detection
 7. added "plot.py" which makes those nice graphs that help us visualize what's happening on the machine during TAMV runs
 
 # TAMV
