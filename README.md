@@ -1,6 +1,15 @@
 # ©2020 Danal Estes, all rights reserved.
 This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal Estes created for the community. 
 
+# Major changes to this fork (Why should I use this version of TAMV?)
+1. blob detection parameters tweaked to better detect rounder blobs of a certain size (helps reduce false positives)
+2. image filter used for blob detection is now based on a threshold image that produces proper edges for shapes (or at least more consistent ones), and doesn't use color information for filtering (improves detection)
+3. nozzle alignment uses a rotation matrix via a least-squares approximation of the mapping between camera space and machine space
+4. Camera defaults to 640x480 resolution to speed up processing times and provide consistent accuracy
+5. Video frame capture and frame display are offloaded to their own threads to speed up processing
+6. added flags: '-xray' (shows the edge detection frame to help troubleshoot); '-loose': uses a less restrictive roundness in blob detection that aids in nozzle detection sometimes; '-export': exports JSON of repeat alignment runs to allow us to plot data and store it somewhere; '-alternate': a community-developed alternative for nozzle detection that seems to work better when using a webcam for nozzle detection
+7. added "plot.py" which makes those nice graphs that help us visualize what's happening on the machine during TAMV runs
+
 # TAMV
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
@@ -10,6 +19,7 @@ TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 * Requires OpenCV installed on the Pi.  
   * See https://github.com/DanalEstes/installOpenCV for one way to install OpenCV
 * MUST run on the graphic console, not SSH.  This can be physical, VNC, or any combination of the two.
+* Always use soft diffused lighting when running TAMV (a diffused LED ring works great). This is the most important factor to get it to detect nozzles consistently and reliably without any fuss.
 
 P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWindows (graphic) setup. Badly. 
 
