@@ -1,6 +1,8 @@
 # ©2020 Danal Estes, all rights reserved.
 This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal Estes created for the community. 
 
+# DISCLAIMER: this will work on Duet 2 boards running RRF2, or Duet 3 boards running RRF 3+. Duet 2 with RRF 3 is still not fully functional.
+
 # Major changes to this fork (Why should I use this version of TAMV?)
 1. blob detection parameters tweaked to better detect rounder blobs of a certain size (helps reduce false positives)
 2. image filter used for blob detection is now based on a threshold image that produces proper edges for shapes (or at least more consistent ones), and doesn't use color information for filtering (improves detection)
