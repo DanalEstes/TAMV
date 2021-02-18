@@ -65,6 +65,7 @@ ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
 
 * Requires network connection to DUET RepRap V2 or V3 based printer.
 * This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
+* Warning: RRF 2&3 have a **hardcoded offset of 0.7mm applied to Z-probes** which you must over-ride in your config.g file. If you don't fix this issue, your offsets will be calculated 0.7mm too close to your print surface **and this will result in damage to your printer!** A simple G31 Z0 at the end of your config.g file (or whatever Z offset applies to your probe) is sufficient to fix this issue. A later release of ZTATP will automatically handle this issue, but for now, it is a manual fix.
 ## Installation
 
     See instructions above for TAMV.  It will be in the same directory. 
