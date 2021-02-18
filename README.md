@@ -1,6 +1,8 @@
 # ©2020 Danal Estes, all rights reserved.
 This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal Estes created for the community. 
 
+# DISCLAIMER: this will work on Duet 2 boards running RRF2, or Duet 3 boards running RRF 3+. Duet 2 with RRF 3 is still not fully functional.
+
 # Major changes to this fork (Why should I use this version of TAMV?)
 1. blob detection parameters tweaked to better detect rounder blobs of a certain size (helps reduce false positives)
 2. image filter used for blob detection is now based on a threshold image that produces proper edges for shapes (or at least more consistent ones), and doesn't use color information for filtering (improves detection)
@@ -63,6 +65,7 @@ ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
 
 * Requires network connection to DUET RepRap V2 or V3 based printer.
 * This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
+* Warning: RRF 2&3 have a **hardcoded offset of 0.7mm applied to Z-probes** which you must over-ride in your config.g file. If you don't fix this issue, your offsets will be calculated 0.7mm too close to your print surface **and this will result in damage to your printer!** A simple G31 Z0 at the end of your config.g file (or whatever Z offset applies to your probe) is sufficient to fix this issue. A later release of ZTATP will automatically handle this issue, but for now, it is a manual fix.
 ## Installation
 
     See instructions above for TAMV.  It will be in the same directory. 
