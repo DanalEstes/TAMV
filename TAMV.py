@@ -51,6 +51,7 @@ try:
 except:
     print("Import for CV2 failed.  Please install openCV")
     print("You may wish to use https://github.com/DanalEstes/PiInstallOpenCV")
+    print("Or you could even try a sudo apt install python3-opencv")
     print('')
     exit(8)
 
@@ -135,9 +136,10 @@ def init():
     parser.add_argument('-loose',action='store_true',help='Run circle detection algorithm with less stringent parameters to help detect worn nozzles.')
     parser.add_argument('-export',action='store_true',help='Export repeat raw data to output.csv when done.')
     parser.add_argument('-alternate',action='store_true',help='Try alternative nozzle detection method')
+    parser.add_argument('-speedy',action='store_true',help='Set travel moves to 200mm/s at 2000mm/s2 acceleration')
     args=vars(parser.parse_args())
 
-    global duet, vidonly, camera, cp, repeat, xray, loose, export, alternate
+    global duet, vidonly, camera, cp, repeat, xray, loose, export, alternate, speedy
     duet      = args['duet'][0]
     vidonly   = args['vidonly']
     camera    = args['camera'][0]
@@ -147,6 +149,7 @@ def init():
     loose     = args['loose']
     export    = args['export']
     alternate = args['alternate']
+    speedy    = args['speedy']
 
     # Get connected to the printer.
     print('Attempting to connect to printer at '+duet)
@@ -384,8 +387,15 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
     show.text = "Mounting tool T{0:d} for repeat pass {1:d}. ".format(tool,rep+1)
     print('')
     printer.gCode("T{0:d} ".format(tool))           # Mount correct tool
-    printer.gCode("G1 F5000 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
-    printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
+    printer.gCode("M400")
+    if speedy:
+        printer.gCode("G1 F13200 Y{0:1.3f} ".format(np.around(CPCoords['Y'],3)))     # Position Tool in Frame
+        printer.gCode("G4 P500")
+        printer.gCode("G1 F13200 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools.
+    else:
+        printer.gCode("G1 F5000 Y{0:1.3f} G4 P500 G1 F5000 X{1:1.3f}".format(np.around(CPCoords['Y'],3),np.around(CPCoords['X'],3) ))     # Position Tool in Frame
+        #printer.gCode("G4 P500")
+        #printer.gCode("G1 F5000 X{0:1.3f} ".format(np.around(CPCoords['X'],3)))     # X move first to avoid hitting parked tools. 
     #printer.gCode("M400")
     print('Waiting for machine to position itself at controlled point..' )
     print('')
@@ -423,6 +433,9 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                 show.text = "(X,Y): ({0:3.3f}, {1:3.3f}) / (U,V,R): ({2:3.0f}, {3:3.0f}, {4:2.0f})".format(machineCoordinates['X'],machineCoordinates['Y'],xy[0],xy[1],radius)
                 if (state == 0):  
                     # Finding Rotation: Collected frames before first move.
+                    # Adjust jerk and movement parameters for a smoother calibration
+                    # HBHBHB printer.gCode("M566 X300 Y300 Z50")
+                    # HBHBHB printer.gCode("M201 X1000 Y1000")
                     print("Calibrating camera step 1/2: Determining camera transformation matrix by measuring 10 random positions.")
                     show.text = "Calibrating camera rotation: {}% done".format(int(state*10))
                     oldxy = xy
@@ -471,6 +484,8 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     guess[0]= np.around(newCenter[0],3)
                     guess[1]= np.around(newCenter[1],3)
                     printer.gCode("G90 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(guess[0],guess[1]))
+                    # reset printer jerk and acceleration
+                    printer.resetAdvancedMovement()
                     #printer.gCode("M400")
                     state = 200
                     continue
@@ -487,7 +502,10 @@ def eachTool(tool, rep, get, show, CPCoords, transMatrix=None, mpp=0):
                     
                     # Move it a bit
                     printer.gCode( "M564 S1" )
-                    printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
+                    if speedy:
+                        printer.gCode("M204 P2000 T2000 G91 G1 X{0:-1.3f} Y{1:-1.3f} F13200 G90 ".format(offsets[0],offsets[1]))
+                    else:
+                        printer.gCode("G91 G1 X{0:-1.3f} Y{1:-1.3f} F1000 G90 ".format(offsets[0],offsets[1]))
                     #printer.gCode("M400")
                     oldxy = xy
                     if ( offsets[0] == 0.0 and offsets[1] == 0.0 ):
@@ -537,6 +555,7 @@ def repeatReport(toolCoordsInput,repeatInput=1):
         print('')
     print('+---------------------------------------------------------------------------------------------------------------------------+')
     print('Note: Repeatability cannot be better than one pixel, see Millimeters per Pixel, above.')
+    # HBHBHB TODO: Add option for export if not selected at command line call
     if( export ):
         try:
             fileData = "{\"tools\":["
@@ -716,6 +735,10 @@ def main(video_shower, video_getter, printer):
         print('')
         print( 'Unloading tools from machine carriage.')
         printer.gCode("T-1")
+        if speedy:
+            printer.gCode("G1 F13200")
+            printer.gCode("M204 P2000 T2000")
+            
         print('')
         
         # Now look at each tool and find alignment centers
@@ -724,6 +747,12 @@ def main(video_shower, video_getter, printer):
         transformationMatrix = None
         mpp = 0
         video_shower.text = "Calibrating camera rotation..."
+        # slow down Z jerk to improve repeatability
+        # HBHBHB
+        # printer.gCode("M566 Z10")
+        # printer.gCode("M201 Z50")
+        # printer.gCode("M203 Z120")
+        # HBHBHB
         for r in range(0,repeat):
             toolCoords.append([])
             for t in range(printer.getNumTools()):
@@ -741,11 +770,17 @@ def main(video_shower, video_getter, printer):
                         y = np.around((CPCoords['Y'] + toolOffsets['Y']) - toolCoords[r][t]['Y'],3)
                         printer.gCode("G10 P{0:d} X{1:1.3f} Y{2:1.3f} ".format(t,x,y))
                         video_shower.text = "Offset for T{0:d}: X{1:1.3f} Y{2:1.3f}".format(t,x,y)
+                        # HBHBHB
+                        #printer.gCode("M566 Z10")
+                        #printer.gCode("M201 Z50")
+                        #printer.gCode("M203 Z120")
+                        # HBHBHB
                         connectionAlive = False
                 except Exception as cr1:
                     # Duet disconnected, reconnect
-                    userInput = input('Connection dropped, retry?')
-                    if userInput in ['Y','y']:
+                    #userInput = input('Connection dropped, retry?')
+                    if True: #userInput in ['Y','y']:
+                        print('Connection dropped. Retrying.')
                         printer = DWA.DuetWebAPI('http://'+duet)
                         connectionAlive = True
                         oolStartTime = time.time()
@@ -768,8 +803,9 @@ def main(video_shower, video_getter, printer):
             print('')
             print( 'Total calibration time so far: ' + str(int(alignmentEndTime - alignmentStartTime)) + ' seconds.' )
         print('')
-        print("Unmounting last tool")
+        print("Unmounting last tool and resetting config file defaults..")
         printer.gCode("T-1 ")
+        printer.resetAdvancedMovement()
 
         ###################################################################################
         # End of all vision, etc.  Now calculate and report.
@@ -809,6 +845,9 @@ def main(video_shower, video_getter, printer):
         #video_getter.stop()
         print("Uknown error in main function!")
         print(e1)
+        import traceback
+        exc_info = sys.exc_info()
+        traceback.print_exception(*exc_info)
         return(video_shower, video_getter)
 
 if __name__ == "__main__":
