@@ -58,12 +58,12 @@ class DuetWebAPI:
     def getCoords(self):
         import time
         try:
-            sessionURL = (f'{self._base_url}'+'/rr_connect?password=')
-            r = self.requests.get(sessionURL,timeout=8)
-            if not r.ok:
-                print('Error in getStatus session: ', r)
-            buffer_size = 0
             if (self.pt == 2):
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                if not r.ok:
+                    print('Error in getStatus session: ', r)
+                buffer_size = 0
                 while buffer_size < 150:
                     bufferURL = (f'{self._base_url}'+'/rr_gcode')
                     buffer_request = self.requests.get(bufferURL,timeout=8)
@@ -197,12 +197,12 @@ class DuetWebAPI:
     def getStatus(self):
         import time
         try:
-            sessionURL = (f'{self._base_url}'+'/rr_connect?password=')
-            r = self.requests.get(sessionURL,timeout=8)
-            if not r.ok:
-                print('Error in getStatus session: ', r)
-            buffer_size = 0
             if (self.pt == 2):
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                if not r.ok:
+                    print('Error in getStatus session: ', r)
+                buffer_size = 0
                 while buffer_size < 150:
                     bufferURL = (f'{self._base_url}'+'/rr_gcode')
                     buffer_request = self.requests.get(bufferURL,timeout=8)
@@ -241,11 +241,11 @@ class DuetWebAPI:
             print('Error in getStatus: ',e1 )
 
     def gCode(self,command):
-        import time
-        sessionURL = (f'{self._base_url}'+'/rr_connect?password=')
-        r = self.requests.get(sessionURL,timeout=8)
-        buffer_size = 0
         if (self.pt == 2):
+            import time
+            sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+            r = self.requests.get(sessionURL,timeout=8)
+            buffer_size = 0
             while buffer_size < 150:
                 bufferURL = (f'{self._base_url}'+'/rr_gcode')
                 buffer_request = self.requests.get(bufferURL,timeout=8)
@@ -275,12 +275,12 @@ class DuetWebAPI:
             return(r.status_code)
     
     def gCodeBatch(self,commands):
-        import time
-        sessionURL = (f'{self._base_url}'+'/rr_connect?password=')
-        r = self.requests.get(sessionURL,timeout=8)
-        buffer_size = 0
         for command in commands:
             if (self.pt == 2):
+                import time
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                buffer_size = 0
                 while buffer_size < 150:
                     bufferURL = (f'{self._base_url}'+'/rr_gcode')
                     buffer_request = self.requests.get(bufferURL,timeout=8)
