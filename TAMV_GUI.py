@@ -813,6 +813,11 @@ class App(QMainWindow):
     def __init__(self, parent=None):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
+        
+        screen = self.primaryScreen()
+        size = screen.size()
+        print('Screen: ', screen.name(), ' W:', size.width(),' H:', size.height())
+        #self.showFullScreen()
         self.setStyleSheet(
             '\
             QPushButton {\
@@ -940,6 +945,9 @@ class App(QMainWindow):
         self.debug_button = QPushButton('Debug Information')
         self.debug_button.clicked.connect(self.displayDebug)
         self.debug_button.setObjectName('debug')
+        # Exit
+        self.exit_button = QPushButton('Quit')
+        self.exit_button.clicked.connect(lambda: exit())
         
         # OTHER ELEMENTS
         # Repeat spinbox
@@ -970,6 +978,7 @@ class App(QMainWindow):
         grid.addWidget(self.image_label,3,1,4,4)
         grid.addWidget(self.jogpanel_button,3,5,1,1)
         grid.addWidget(self.info_panel,4,5,1,-1)
+        grid.addWidget(self.exit_button,5,5,1,1)
         grid.addWidget(self.debug_button,6,5,1,1)
         # FOURTH ROW
         grid.addWidget(self.cp_button,7,1,1,1)
