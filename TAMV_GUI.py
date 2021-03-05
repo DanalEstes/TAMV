@@ -823,8 +823,8 @@ class App(QMainWindow):
         # 800x600 display - fullscreen app
         if int(screen.width()) >= 800 and int(screen.height()) >= 550 and int(screen.height() < 600):
             print('800x600 desktop detected')
-            display_width = 560
-            display_height = 420
+            display_width = 512
+            display_height = 384
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(0,0,700,500)
@@ -832,8 +832,8 @@ class App(QMainWindow):
         # 848x480 display - fullscreen app
         elif int(screen.width()) >= 800 and int(screen.height()) < 550:
             print('848x480 desktop detected')
-            display_width = 560
-            display_height = 420
+            display_width = 448
+            display_height = 336
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(0,0,700,400)
