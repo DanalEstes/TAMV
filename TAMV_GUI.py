@@ -386,12 +386,12 @@ class CalibrateNozzles(QThread):
     display_crosshair = pyqtSignal(str)
     resume_video = pyqtSignal()
     calibration_complete = pyqtSignal()
-    xray_flag = pyqtSignal()
+    #xray_flag = pyqtSignal()
     
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=250, minCircularity=0.8,numTools=0,cycles=1):
         super(QThread,self).__init__(parent=parent)
         self.xray = False
-        self.xray_flag.connect(self.toggleXray)
+        #self.xray_flag.connect(self.toggleXray)
         self.detect_th1 = th1
         self.detect_th2 = th2
         self.detect_thstep = thstep
@@ -411,7 +411,10 @@ class CalibrateNozzles(QThread):
             self.change_pixmap_signal.emit(self.cv_img)
     
     def toggleXray(self):
-        self.xray = not self.xray
+        if self.xray:
+            self.xray = False
+        else: self.xray = True
+
 
     def run(self):
         self.createDetector()
@@ -832,7 +835,7 @@ class App(QMainWindow):
     def __init__(self, parent=None):
         super().__init__()
 
-        self.xray_flag = pyqtSignal()
+        #self.xray_flag = pyqtSignal()
 
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
@@ -1339,6 +1342,7 @@ class App(QMainWindow):
         self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
         self.detect_thread.resume_video.connect(self.startVideo)
         self.detect_thread.calibration_complete.connect(self.applyCalibration)
+        #self.xray_flag.connect(self.detect_thread.toggleXray)
         
         
         
@@ -1347,10 +1351,13 @@ class App(QMainWindow):
 
     def toggle_xray(self):
         try:
-            if self.detect_thread.isRunning():
-                self.xray_flag.emit()
-        except Exception:
+            if self.detect_thread:
+                print('Xray toggled.')
+                self.detect_thread.toggleXray()
+        except Exception as e1:
             self.updateStatusbar('Detection thread not running.')
+            print( 'Detection thread error in XRAY: ')
+            print(e1)
 
     @pyqtSlot(str)
     def updateStatusbar(self, statusCode ):
