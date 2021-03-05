@@ -822,13 +822,14 @@ class App(QMainWindow):
         
 
         if int(screen.width()) >= 700 and int(screen.width()) < 900:
+            print('Small screen display!')
             self.setWindowFlag(Qt.FramelessWindowHint)
-            #self.showFullScreen()
-            self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(750,550),screen))
+            self.showFullScreen()
+            self.setGeometry(0,0,700,500)
         else: self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(800,600),screen))
         app_screen = self.frameGeometry()
-        app_screen.moveCenter(screen.center())
-        self.move(app_screen.topLeft())
+        #app_screen.moveCenter(screen.center())
+        #self.move(app_screen.topLeft())
         print('Screen - W:', screen.width(),' H:', screen.height())
         print('App - W:', app_screen.width(), ' H:', app_screen.height())
 
@@ -963,7 +964,7 @@ class App(QMainWindow):
         self.debug_button.setObjectName('debug')
         # Exit
         self.exit_button = QPushButton('Quit')
-        self.exit_button.clicked.connect(lambda: exit())
+        self.exit_button.clicked.connect(lambda: quit())
         
         # OTHER ELEMENTS
         # Repeat spinbox
