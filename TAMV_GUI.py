@@ -815,7 +815,7 @@ class App(QMainWindow):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
-        self.resize( 800, 600 )
+        
         screen = QDesktopWidget().availableGeometry()
         app_screen = self.frameGeometry()
 
@@ -826,6 +826,7 @@ class App(QMainWindow):
         if screen.width() >= 800 and screen.width() < 900:
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
+        self.resize( 800, 600 )
         self.setStyleSheet(
             '\
             QPushButton {\
