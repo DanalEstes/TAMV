@@ -814,7 +814,8 @@ class App(QMainWindow):
     def __init__(self, parent=None):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
-        
+        self.setWindowTitle('TAMV')
+        self.resize( 800, 600 )
         screen = QDesktopWidget().availableGeometry()
         app_screen = self.frameGeometry()
 
@@ -894,11 +895,12 @@ class App(QMainWindow):
             '
         )
         self.loadUserParameters()
+        
+        # Menubar
         #self._createActions()
         #self._createMenuBar()
         #self._connectActions()
-        self.setWindowTitle('TAMV')
-        self.resize( 800, 600 )
+        
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
         
