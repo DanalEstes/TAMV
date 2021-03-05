@@ -32,7 +32,8 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QCheckBox,
     QInputDialog,
-    QMessageBox
+    QMessageBox,
+    QDesktopWidget
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint
@@ -814,10 +815,15 @@ class App(QMainWindow):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         
-        screen = self.primaryScreen()
-        size = screen.size()
-        print('Screen: ', screen.name(), ' W:', size.width(),' H:', size.height())
-        #self.showFullScreen()
+        screen = QDesktopWidget().availableGeometry()
+        app_screen = self.frameGeometry()
+
+        app_screen.moveCenter(screen.center())
+        self.move(app_screen.topLeft())
+
+        print('W:', screen.width(),' H:', screen.height())
+        if screen.width() >= 800 and screen.width() < 900:
+            self.showFullScreen()
         self.setStyleSheet(
             '\
             QPushButton {\
