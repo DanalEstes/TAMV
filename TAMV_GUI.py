@@ -819,9 +819,11 @@ class App(QMainWindow):
         self.setWindowTitle('TAMV')
         global display_width, display_height
         screen = QDesktopWidget().availableGeometry()
-        
+        self.small_display = False
+        # HANDLE DIFFERENT DISPLAY SIZES
         # 800x600 display - fullscreen app
         if int(screen.width()) >= 800 and int(screen.height()) >= 550 and int(screen.height() < 600):
+            self.small_display = True
             print('800x600 desktop detected')
             display_width = 512
             display_height = 384
@@ -831,6 +833,7 @@ class App(QMainWindow):
             app_screen = self.frameGeometry()
         # 848x480 display - fullscreen app
         elif int(screen.width()) >= 800 and int(screen.height()) < 550:
+            self.small_display = True
             print('848x480 desktop detected')
             display_width = 448
             display_height = 336
@@ -840,19 +843,15 @@ class App(QMainWindow):
             app_screen = self.frameGeometry()
         # larger displays - normal window
         else:
+            self.small_display = False
             display_width = 640
             display_height = 480
             self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(800,600),screen))
             app_screen = self.frameGeometry()
             app_screen.moveCenter(screen.center())
             self.move(app_screen.topLeft())
-        
-        
-        print('Screen - W:', screen.width(),' H:', screen.height())
-        print('App - W:', app_screen.width(), ' H:', app_screen.height())
-        print('Image - W:', display_width, ' H:',display_height)
 
-
+        # SET UP STYLESHEETS FOR GUI ELEMENTS
         self.setStyleSheet(
             '\
             QPushButton {\
@@ -957,14 +956,17 @@ class App(QMainWindow):
         # Connect
         self.connection_button = QPushButton('Connect..')
         self.connection_button.clicked.connect(self.connectToPrinter)
+        self.connection_button.setFixedWidth(170)
         # Disconnect
         self.disconnection_button = QPushButton('STOP / DISCONNECT')
         self.disconnection_button.clicked.connect(self.disconnectFromPrinter)
+        self.disconnection_button.setFixedWidth(170)
         self.disconnection_button.setObjectName('terminate')
         self.disconnection_button.setDisabled(True)
         # Controlled point
         self.cp_button = QPushButton('Set Controlled Point..')
         self.cp_button.clicked.connect(self.controlledPoint)
+        self.cp_button.setFixedWidth(170)
         #self.cp_button.setStyleSheet(style_disabled)
         self.cp_button.setDisabled(True)
         # Calibration
@@ -972,7 +974,7 @@ class App(QMainWindow):
         self.calibration_button.clicked.connect(self.runCalibration)
         #self.calibration_button.setStyleSheet(style_disabled)
         self.calibration_button.setDisabled(True)
-        self.calibration_button.setFixedWidth(350)
+        self.calibration_button.setFixedWidth(170)
         # Jog Panel
         self.jogpanel_button = QPushButton('Jog Panel')
         self.jogpanel_button.clicked.connect(self.displayJogPanel)
