@@ -934,8 +934,8 @@ class App(QMainWindow):
         
         # create the label that holds the image
         self.image_label = OverlayLabel()
-        self.image_label.setFixedSize( 640, 480 )
-        pixmap = QPixmap( 640,480 )
+        self.image_label.setFixedSize( display_width, display_height )
+        pixmap = QPixmap( display_width, display_height )
         self.image_label.setPixmap(pixmap)
         
         # create a status bar
