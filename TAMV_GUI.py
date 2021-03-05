@@ -704,7 +704,10 @@ class CalibrateNozzles(QThread):
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
                         self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
-                        self.parent().info_panel.setText(self.parent().info_panel.text() + ' -- T' + str(tool) + ' ('+str( np.around(final_x, 2) )+', ' + str( np.around(final_y,2) ) + ')<br>')
+                        
+                        self.offsets_table.setItem(tool,0,QTableWidgetItem(str(np.around(final_x, 2))))
+                        self.offsets_table.setItem(tool,1,QTableWidgetItem(str(np.around(final_y, 2))))
+                        
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
                         return(_return, self.transform_matrix, self.mpp)
                     else:
@@ -924,9 +927,6 @@ class App(QMainWindow):
             QInputDialog QDialogButtonBox > QPushButton:hover:!pressed, QDialog QPushButton:hover:!pressed {\
                 background-color: #27ae60;\
             }\
-            QLabel#info_panel {\
-                font: 12px;\
-            }\
             '
         )
 
@@ -1011,9 +1011,6 @@ class App(QMainWindow):
         self.repeatSpinBox.setMinimum(1)
         self.repeatSpinBox.setSingleStep(1)
         self.repeatSpinBox.setDisabled(True)
-        # Info panel
-        self.info_panel = QLabel('<i>Not connected to a printer.</i>')
-        self.info_panel.setObjectName('info_panel')
         # Offsets table
         self.offsets_box = QGroupBox("Tool Offsets")
         self.offsets_box.setMaximumWidth(170)
@@ -1287,7 +1284,6 @@ class App(QMainWindow):
         self.connection_status.setText('Disconnected.')
         self.connection_status.setStyleSheet(style_red)
         
-        self.info_panel.setText('<i>Not connected to a printer.</i>')
         self.cp_label.setText('<b>CP:</b> <i>undef</i>')
         self.cp_label.setStyleSheet(style_red)
         
