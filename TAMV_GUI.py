@@ -717,8 +717,8 @@ class CalibrateNozzles(QThread):
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
                         self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
                         
-                        self.offsets_table.setItem(tool,0,QTableWidgetItem(str(np.around(final_x, 2))))
-                        self.offsets_table.setItem(tool,1,QTableWidgetItem(str(np.around(final_y, 2))))
+                        self.parent().offsets_table.setItem(tool,0,QTableWidgetItem(str(np.around(final_x, 2))))
+                        self.parent().offsets_table.setItem(tool,1,QTableWidgetItem(str(np.around(final_y, 2))))
                         
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
                         return(_return, self.transform_matrix, self.mpp)
@@ -1352,7 +1352,7 @@ class App(QMainWindow):
     def toggle_xray(self):
         try:
             if self.detect_thread:
-                print('Xray toggled.')
+                #print('Xray toggled.')
                 self.detect_thread.toggleXray()
         except Exception as e1:
             self.updateStatusbar('Detection thread not running.')
