@@ -1000,6 +1000,7 @@ class App(QMainWindow):
         # Exit
         self.exit_button = QPushButton('Quit')
         self.exit_button.clicked.connect(lambda: quit())
+        self.exit_button.setFixedWidth(170)
         
         # OTHER ELEMENTS
         # Repeat spinbox
