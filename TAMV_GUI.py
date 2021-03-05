@@ -821,7 +821,7 @@ class App(QMainWindow):
         screen = QDesktopWidget().availableGeometry()
         app_screen = self.frameGeometry()
 
-        if screen.width() >= 800 and screen.width() < 900:
+        if screen.width() >= 700 and screen.width() < 900:
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(750,550),screen))
