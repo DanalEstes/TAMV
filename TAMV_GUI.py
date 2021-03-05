@@ -920,6 +920,9 @@ class App(QMainWindow):
             QInputDialog QDialogButtonBox > QPushButton:hover:!pressed, QDialog QPushButton:hover:!pressed {\
                 background-color: #27ae60;\
             }\
+            QLabel#info_panel {\
+                font: 12px;\
+            }\
             '
         )
         self.loadUserParameters()
@@ -1003,6 +1006,7 @@ class App(QMainWindow):
 
         # Info panel
         self.info_panel = QLabel('<i>Not connected to a printer.</i>')
+        self.info_panel.setObjectName('info_panel')
 
         # create a grid box layout
         grid = QGridLayout()
@@ -1011,7 +1015,7 @@ class App(QMainWindow):
         # add elements to grid
         # FIRST ROW
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
-        grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignRight)
+        grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
         # THIRD ROW
