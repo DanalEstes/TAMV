@@ -77,6 +77,8 @@ class DuetWebAPI:
                     if buffer_size < 150:
                         print(buffer_size)
                         time.sleep(0.6)
+                while self.getStatus() not in "idle":
+                    time.sleep(0.5)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
                 r = self.requests.get(URL,timeout=8)
                 j = self.json.loads(r.text)
@@ -239,6 +241,7 @@ class DuetWebAPI:
                 return(j['state']['status'])
         except Exception as e1:
             print('Error in getStatus: ',e1 )
+            return 'Error'
 
     def gCode(self,command):
         if (self.pt == 2):
