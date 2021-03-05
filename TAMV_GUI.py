@@ -1016,6 +1016,7 @@ class App(QMainWindow):
         self.info_panel.setObjectName('info_panel')
         # Offsets table
         self.offsets_box = QGroupBox("Tool Offsets")
+        self.offsets_box.setMaximumWidth(170)
         self.offsets_table = QTableWidget()
         self.offsets_table.setColumnCount(2)
         self.offsets_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
