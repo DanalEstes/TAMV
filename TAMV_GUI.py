@@ -819,13 +819,14 @@ class App(QMainWindow):
         self.setWindowTitle('TAMV')
         
         screen = QDesktopWidget().availableGeometry()
-        app_screen = self.frameGeometry()
+        
 
-        if screen.width() >= 700 and screen.width() < 900:
+        if int(screen.width()) >= 700 and int(screen.width()) < 900:
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(750,550),screen))
         else: self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(800,600),screen))
+        app_screen = self.frameGeometry()
         app_screen.moveCenter(screen.center())
         self.move(app_screen.topLeft())
         print('Screen - W:', screen.width(),' H:', screen.height())
