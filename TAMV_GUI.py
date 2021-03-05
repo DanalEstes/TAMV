@@ -823,10 +823,12 @@ class App(QMainWindow):
         self.move(app_screen.topLeft())
 
         print('W:', screen.width(),' H:', screen.height())
+        self.resize( 800, 600 )
         if screen.width() >= 800 and screen.width() < 900:
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
-        self.resize( 800, 600 )
+            self.resize( 780, 550 )
+        
         self.setStyleSheet(
             '\
             QPushButton {\
