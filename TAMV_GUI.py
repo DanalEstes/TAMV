@@ -37,7 +37,7 @@ from PyQt5.QtWidgets import (
     QStyle,
 
 )
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
 
 import os
@@ -817,6 +817,7 @@ class App(QMainWindow):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
+        self.setWindowIcon(QIcon('jubilee.png'))
         global display_width, display_height
         screen = QDesktopWidget().availableGeometry()
         self.small_display = False
@@ -979,9 +980,11 @@ class App(QMainWindow):
         self.jogpanel_button = QPushButton('Jog Panel')
         self.jogpanel_button.clicked.connect(self.displayJogPanel)
         self.jogpanel_button.setDisabled(True)
+        self.jogpanel_button.setFixedWidth(170)
         # Debug Info
         self.debug_button = QPushButton('Debug Information')
         self.debug_button.clicked.connect(self.displayDebug)
+        self.debug_button.setFixedWidth(170)
         self.debug_button.setObjectName('debug')
         # Exit
         self.exit_button = QPushButton('Quit')
@@ -1016,7 +1019,8 @@ class App(QMainWindow):
         grid.addWidget(self.image_label,3,1,4,4)
         grid.addWidget(self.jogpanel_button,3,5,1,1)
         grid.addWidget(self.info_panel,4,5,1,-1)
-        grid.addWidget(self.exit_button,5,5,1,1)
+        if self.small_display:
+            grid.addWidget(self.exit_button,5,5,1,1)
         grid.addWidget(self.debug_button,6,5,1,1)
         # FOURTH ROW
         grid.addWidget(self.cp_button,7,1,1,1)
