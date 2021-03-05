@@ -166,12 +166,12 @@ class CPDialog(QDialog):
         buttons_layout = QGridLayout()
 
         # X
-        self.button_x1 = QPushButton("-1")
-        self.button_x2 = QPushButton("-0.1")
-        self.button_x3 = QPushButton("-0.01")
-        self.button_x4 = QPushButton("+0.01")
-        self.button_x5 = QPushButton("+0.1")
-        self.button_x6 = QPushButton("+1")
+        self.button_x1 = QPushButton('-1')
+        self.button_x2 = QPushButton('-0.1')
+        self.button_x3 = QPushButton('-0.01')
+        self.button_x4 = QPushButton('+0.01')
+        self.button_x5 = QPushButton('+0.1')
+        self.button_x6 = QPushButton('+1')
         # set X sizes
         self.button_x1.setFixedSize(60,60) 
         self.button_x2.setFixedSize(60,60)
@@ -197,12 +197,12 @@ class CPDialog(QDialog):
         buttons_layout.addWidget(self.button_x6,0,6)
 
         # Y
-        self.button_y1 = QPushButton("-1")
-        self.button_y2 = QPushButton("-0.1")
-        self.button_y3 = QPushButton("-0.01")
-        self.button_y4 = QPushButton("+0.01")
-        self.button_y5 = QPushButton("+0.1")
-        self.button_y6 = QPushButton("+1")
+        self.button_y1 = QPushButton('-1')
+        self.button_y2 = QPushButton('-0.1')
+        self.button_y3 = QPushButton('-0.01')
+        self.button_y4 = QPushButton('+0.01')
+        self.button_y5 = QPushButton('+0.1')
+        self.button_y6 = QPushButton('+1')
         # set X sizes
         self.button_y1.setFixedSize(60,60)
         self.button_y2.setFixedSize(60,60)
@@ -228,12 +228,12 @@ class CPDialog(QDialog):
         buttons_layout.addWidget(self.button_y6,1,6)
 
         # Z
-        self.button_z1 = QPushButton("-1")
-        self.button_z2 = QPushButton("-0.1")
-        self.button_z3 = QPushButton("-0.01")
-        self.button_z4 = QPushButton("+0.01")
-        self.button_z5 = QPushButton("+0.1")
-        self.button_z6 = QPushButton("+1")
+        self.button_z1 = QPushButton('-1')
+        self.button_z2 = QPushButton('-0.1')
+        self.button_z3 = QPushButton('-0.01')
+        self.button_z4 = QPushButton('+0.01')
+        self.button_z5 = QPushButton('+0.1')
+        self.button_z6 = QPushButton('+1')
         # set X sizes
         self.button_z1.setFixedSize(60,60) 
         self.button_z2.setFixedSize(60,60)
@@ -259,7 +259,7 @@ class CPDialog(QDialog):
         buttons_layout.addWidget(self.button_z6,2,6)
 
         #self.macro_field = QLineEdit()
-        #self.button_macro = QPushButton("Run macro")
+        #self.button_macro = QPushButton('Run macro')
         #buttons_layout.addWidget(self.button_macro,3,1,2,1)
         #buttons_layout.addWidget(self.macro_field,3,2,1,-1)
 
@@ -415,7 +415,7 @@ class CalibrateNozzles(QThread):
                     self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                     self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                     # Wait for moves to complete
-                    while self.parent().printer.getStatus() not in "idle":
+                    while self.parent().printer.getStatus() not in 'idle':
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
                             self.change_pixmap_signal.emit(self.cv_img)
@@ -518,7 +518,7 @@ class CalibrateNozzles(QThread):
             # draw the blobs that look circular
             self.frame = cv2.drawKeypoints(self.frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             # Note its radius and position
-            ts =  "U{0:3.0f} V{1:3.0f} R{2:2.0f}".format(xy[0],xy[1],r)
+            ts =  'U{0:3.0f} V{1:3.0f} R{2:2.0f}'.format(xy[0],xy[1],r)
             xy = np.uint16(xy)
             self.frame = self.putText(self.frame, ts, offsety=2, color=(0, 255, 0), stroke=2)
             # show the frame
@@ -697,7 +697,7 @@ class CalibrateNozzles(QThread):
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
                         self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
-                        self.parent().info_panel.setText(self.parent().info_panel.text() + ' -- T' + str(tool) + ' ('+str( np.around(final_x, 2) )+', ' + str( np.around(final_y,2) ) + ') ')
+                        self.parent().info_panel.setText(self.parent().info_panel.text() + ' -- T' + str(tool) + ' ('+str( np.around(final_x, 2) )+', ' + str( np.around(final_y,2) ) + ')<br>')
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
                         return(_return, self.transform_matrix, self.mpp)
                     else:
@@ -739,7 +739,7 @@ class CalibrateNozzles(QThread):
         self._running = False
         self.parent().printer.gCode('T-1')
         self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']) + ' Y' + str(self.parent().cp_coords['Y']))
-        while self.parent().printer.getStatus() not in "idle":
+        while self.parent().printer.getStatus() not in 'idle':
             sleep(1)
         self.cap.release()
         self.resume_video.emit()
@@ -780,12 +780,12 @@ class CalibrateNozzles(QThread):
         # their adjusted gamma values
         invGamma = 1.0 / gamma
         table = np.array([((i / 255.0) ** invGamma) * 255
-            for i in np.arange(0, 256)]).astype("uint8")
+            for i in np.arange(0, 256)]).astype('uint8')
         # apply gamma correction using the lookup table
         return cv2.LUT(image, table)
 
     def putText(self, frame,text,color=(0, 0, 255),offsetx=0,offsety=0,stroke=1):  # Offsets are in character box size in pixels. 
-        if (text == 'timestamp'): text = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
+        if (text == 'timestamp'): text = datetime.datetime.now().strftime('%m-%d-%Y %H:%M:%S')
         fontScale = 1
         if (frame.shape[1] > 640): fontScale = stroke = 2
         if (frame.shape[1] < 640):
@@ -830,11 +830,24 @@ class App(QMainWindow):
                 background-color: #ae2776;\
                 border: 1px solid #aaaaaa;\
             }\
-            QPushButton#active {\
+            QPushButton:enabled {\
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton:enabled {\
+            QPushButton#debug {\
+                background-color: blue;\
+                color: white;\
+            }\
+            QPushButton#debug:hover {\
+                background-color: green;\
+                color: white;\
+            }\
+            QPushButton#debug:pressed {\
+                background-color: #ae2776;\
+                border-style: inset;\
+                color: white;\
+            }\
+            QPushButton#active {\
                 background-color: green;\
                 color: white;\
             }\
@@ -870,10 +883,10 @@ class App(QMainWindow):
             '
         )
         self.loadUserParameters()
-        self._createActions()
-        self._createMenuBar()
-        self._connectActions()
-        self.setWindowTitle("TAMV")
+        #self._createActions()
+        #self._createMenuBar()
+        #self._connectActions()
+        self.setWindowTitle('TAMV')
         self.resize( 800, 600 )
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
@@ -901,28 +914,32 @@ class App(QMainWindow):
 
         # BUTTONS
         # Connect
-        self.connection_button = QPushButton("Connect..")
+        self.connection_button = QPushButton('Connect..')
         self.connection_button.clicked.connect(self.connectToPrinter)
         # Disconnect
-        self.disconnection_button = QPushButton("STOP / DISCONNECT")
+        self.disconnection_button = QPushButton('STOP / DISCONNECT')
         self.disconnection_button.clicked.connect(self.disconnectFromPrinter)
         self.disconnection_button.setObjectName('terminate')
         self.disconnection_button.setDisabled(True)
         # Controlled point
-        self.cp_button = QPushButton("Set Controlled Point..")
+        self.cp_button = QPushButton('Set Controlled Point..')
         self.cp_button.clicked.connect(self.controlledPoint)
         #self.cp_button.setStyleSheet(style_disabled)
         self.cp_button.setDisabled(True)
         # Calibration
-        self.calibration_button = QPushButton("Start Tool Alignment")
+        self.calibration_button = QPushButton('Start Tool Alignment')
         self.calibration_button.clicked.connect(self.runCalibration)
         #self.calibration_button.setStyleSheet(style_disabled)
         self.calibration_button.setDisabled(True)
         self.calibration_button.setFixedWidth(350)
         # Jog Panel
-        self.jogpanel_button = QPushButton("Jog Panel")
+        self.jogpanel_button = QPushButton('Jog Panel')
         self.jogpanel_button.clicked.connect(self.displayJogPanel)
         self.jogpanel_button.setDisabled(True)
+        # Debug Info
+        self.debug_button = QPushButton('Debug Information')
+        self.debug_button.clicked.connect(self.displayDebug)
+        self.debug_button.setObjectName('debug')
         
         # OTHER ELEMENTS
         # Repeat spinbox
@@ -947,16 +964,18 @@ class App(QMainWindow):
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
         grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignRight)
         # SECOND ROW
-        grid.addWidget(self.info_panel,2,1,1,-1)
+        
         # THIRD ROW
         # main image viewer
-        grid.addWidget(self.image_label,3,1,1,4)
+        grid.addWidget(self.image_label,3,1,4,4)
         grid.addWidget(self.jogpanel_button,3,5,1,1)
+        grid.addWidget(self.info_panel,4,5,1,-1)
+        grid.addWidget(self.debug_button,6,5,1,1)
         # FOURTH ROW
-        grid.addWidget(self.cp_button,4,1,1,1)
-        grid.addWidget(self.calibration_button,4,2,1,1)
-        grid.addWidget(self.repeat_label,4,3,1,1)
-        grid.addWidget(self.repeatSpinBox,4,4,1,1)
+        grid.addWidget(self.cp_button,7,1,1,1)
+        grid.addWidget(self.calibration_button,7,2,1,1)
+        grid.addWidget(self.repeat_label,7,3,1,1)
+        grid.addWidget(self.repeatSpinBox,7,4,1,1)
 
         
         # set the grid layout as the widgets layout
@@ -978,7 +997,7 @@ class App(QMainWindow):
             display_height = int( camera_settings['display_height'] )
             display_width = int( camera_settings['display_width'] )
             video_src = camera_settings['video_src']
-            if len(video_src) == 1: video_src = int(video_src)
+            if len(str(video_src)) == 1: video_src = int(video_src)
             printer_settings = options['printer'][0]
             self.printerURL = printer_settings['address']
         except FileNotFoundError:
@@ -1008,7 +1027,7 @@ class App(QMainWindow):
     def _createMenuBar(self):
         menuBar = self.menuBar()
         # Creating menus using a QMenu object
-        fileMenu = QMenu("&File", self)
+        fileMenu = QMenu('&File', self)
         menuBar.addMenu(fileMenu)
         fileMenu.addAction(self.debugAction)
         fileMenu.addAction(self.cameraAction)
@@ -1016,7 +1035,7 @@ class App(QMainWindow):
     def _createActions(self):
         # Creating action using the first constructor
         self.debugAction = QAction(self)
-        self.debugAction.setText("&Debug info")
+        self.debugAction.setText('&Debug info')
         self.cameraAction = QAction(self)
         self.cameraAction.setText('&Camera settings')
     
@@ -1040,7 +1059,7 @@ class App(QMainWindow):
     def displayJogPanel(self):
         try:
             local_status = self.printer.getStatus()
-            if local_status == "idle":
+            if local_status == 'idle':
                 jogPanel = CPDialog(parent=self,summary='Control printer movement using this panel.',title='Jog Control')
                 if jogPanel.exec_():
                     None
@@ -1074,7 +1093,7 @@ class App(QMainWindow):
         except Exception:
             self.printerURL = 'http://localhost'
 
-        text, ok = QInputDialog.getText(self, "Machine URL","Machine IP address or hostname: ", QLineEdit.Normal, self.printerURL)
+        text, ok = QInputDialog.getText(self, 'Machine URL','Machine IP address or hostname: ', QLineEdit.Normal, self.printerURL)
 
         if ok and text != '':
             self.printerURL = text
@@ -1094,7 +1113,7 @@ class App(QMainWindow):
             offset_text += '<br>'
             for i in range(self.num_tools):
                 current_tool = self.printer.getG10ToolOffset(i)
-                offset_text += ' -- T' + str(i) + ' (' + str(current_tool['X']) + ', ' + str(current_tool['Y']) + ')'#+ ', ' + str(current_tool['Z']) + ')'
+                offset_text += ' -- T' + str(i) + ' (' + str(current_tool['X']) + ', ' + str(current_tool['Y']) + ')<br>'
                 if (i+1)%3 == 0: offset_text+='<br>'
             self.info_panel.setText(offset_text)
             self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
@@ -1147,8 +1166,8 @@ class App(QMainWindow):
         # prompt for user to apply results
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText("Do you want to apply the new offsets to your machine?")
-        msgBox.setWindowTitle("Calibration Results")
+        msgBox.setText('Do you want to apply the new offsets to your machine?')
+        msgBox.setWindowTitle('Calibration Results')
         msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
         returnValue = msgBox.exec()
@@ -1182,7 +1201,7 @@ class App(QMainWindow):
         self.disconnection_button.setDisabled(True)
         self.calibration_button.setDisabled(True)
         self.cp_button.setDisabled(True)
-        self.cp_button.setText("Set Controlled Point..")
+        self.cp_button.setText('Set Controlled Point..')
         self.jogpanel_button.setDisabled(True)
         
         self.connection_status.setText('Disconnected.')
@@ -1286,7 +1305,7 @@ class App(QMainWindow):
         p = convert_to_Qt_format.scaled(640, 480, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     
-if __name__=="__main__":
+if __name__=='__main__':
     app = QApplication(sys.argv)
     a = App()
     a.show()
