@@ -33,10 +33,12 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QInputDialog,
     QMessageBox,
-    QDesktopWidget
+    QDesktopWidget,
+    QStyle,
+
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
 
 import os
 import sys
@@ -819,17 +821,17 @@ class App(QMainWindow):
         screen = QDesktopWidget().availableGeometry()
         app_screen = self.frameGeometry()
 
-        app_screen.moveCenter(screen.center())
-        self.move(app_screen.topLeft())
-
-        print('W:', screen.width(),' H:', screen.height())
-        
         if screen.width() >= 800 and screen.width() < 900:
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
-            self.resize( 700, 500 )
-        else: self.resize( 800, 600 )
-        
+            self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(750,550),screen))
+        else: self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(800,600),screen))
+        app_screen.moveCenter(screen.center())
+        self.move(app_screen.topLeft())
+        print('Screen - W:', screen.width(),' H:', screen.height())
+        print('App - W:', app_screen.width(), ' H:', app_screen.height())
+
+
         self.setStyleSheet(
             '\
             QPushButton {\
