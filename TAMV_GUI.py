@@ -824,6 +824,7 @@ class App(QMainWindow):
 
         print('W:', screen.width(),' H:', screen.height())
         if screen.width() >= 800 and screen.width() < 900:
+            self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
         self.setStyleSheet(
             '\
