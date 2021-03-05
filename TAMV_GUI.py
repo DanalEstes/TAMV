@@ -118,8 +118,8 @@ class VideoThread(QThread):
             #self.saturation = self.saturation_default
             #self.hue = self.hue_default
             while self._run_flag:
-                ret, cv_frame = self.cap.read()
-                cv_img = cv2.resize(cv_frame,(640,480),interpolation = cv2.INTER_AREA)
+                ret, cv_img = self.cap.read()
+                #cv_img = cv2.resize(cv_frame,(640,480),interpolation = cv2.INTER_AREA)
                 if ret:
                     self.change_pixmap_signal.emit(cv_img)
         except Exception as v1:
@@ -394,8 +394,8 @@ class CalibrateNozzles(QThread):
         self.message_update.emit('Detector created, waiting for tool..')
         # Start Video feed
         self.cap = cv2.VideoCapture(video_src)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, display_width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, display_height)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
         self.cap.set(cv2.CAP_PROP_FPS,25)
         self.ret, self.cv_img = self.cap.read()
@@ -712,7 +712,7 @@ class CalibrateNozzles(QThread):
 
 
     def normalize_coords(self,coords):
-        xdim, ydim = display_width, display_height
+        xdim, ydim = camera_width, camera_height
         return (coords[0] / xdim - 0.5, coords[1] / ydim - 0.5)
 
     def least_square_mapping(self,calibration_points):
@@ -817,12 +817,14 @@ class App(QMainWindow):
         super().__init__()
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
-        
+        global display_width, display_height
         screen = QDesktopWidget().availableGeometry()
         
         # 800x600 display - fullscreen app
-        if int(screen.width()) >= 800 and int(screen.height()) >= 550:
+        if int(screen.width()) >= 800 and int(screen.height()) >= 550 and int(screen.height() < 600):
             print('800x600 desktop detected')
+            display_width = 560
+            display_height = 420
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(0,0,700,500)
@@ -830,12 +832,16 @@ class App(QMainWindow):
         # 848x480 display - fullscreen app
         elif int(screen.width()) >= 800 and int(screen.height()) < 550:
             print('848x480 desktop detected')
+            display_width = 560
+            display_height = 420
             self.setWindowFlag(Qt.FramelessWindowHint)
             self.showFullScreen()
             self.setGeometry(0,0,700,400)
             app_screen = self.frameGeometry()
         # larger displays - normal window
-        else: 
+        else:
+            display_width = 640
+            display_height = 480
             self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,Qt.AlignHCenter,QSize(800,600),screen))
             app_screen = self.frameGeometry()
             app_screen.moveCenter(screen.center())
@@ -844,6 +850,7 @@ class App(QMainWindow):
         
         print('Screen - W:', screen.width(),' H:', screen.height())
         print('App - W:', app_screen.width(), ' H:', app_screen.height())
+        print('Image - W:', display_width, ' H:',display_height)
 
 
         self.setStyleSheet(
@@ -1027,13 +1034,13 @@ class App(QMainWindow):
         self.calibration_results = []
 
     def loadUserParameters(self):
-        global display_width, display_height, video_src
+        global camera_width, camera_height, video_src
         try:
             with open('settings.json','r') as inputfile:
                 options = json.load(inputfile)
             camera_settings = options['camera'][0]
-            display_height = int( camera_settings['display_height'] )
-            display_width = int( camera_settings['display_width'] )
+            camera_height = int( camera_settings['display_height'] )
+            camera_width = int( camera_settings['display_width'] )
             video_src = camera_settings['video_src']
             if len(str(video_src)) == 1: video_src = int(video_src)
             printer_settings = options['printer'][0]
@@ -1053,8 +1060,8 @@ class App(QMainWindow):
                 'name': 'Hermoine'
             } )
             try:
-                display_width = 640
-                display_height = 480
+                camera_width = 640
+                camera_height = 480
                 video_src = 1
                 with open('settings.json','w') as outputfile:
                     json.dump(options, outputfile)
@@ -1105,8 +1112,7 @@ class App(QMainWindow):
 
     def startVideo(self):
         # create the video capture thread
-        #print('Src:', video_src,' Width: ', display_width, 'Height: ', display_height)
-        self.video_thread = VideoThread(src=video_src, width=display_width, height=display_height)
+        self.video_thread = VideoThread(src=video_src, width=camera_width, height=camera_height)
         # connect its signal to the update_image slot
         self.video_thread.change_pixmap_signal.connect(self.update_image)
         # start the thread
@@ -1303,14 +1309,14 @@ class App(QMainWindow):
             # Draw alignment circle on image
             cv_img = cv2.circle( 
                 cv_img, 
-                ( int(display_width/2), int(display_height/2) ), 
-                int( display_width/6 ), 
+                ( int(camera_width/2), int(camera_height/2) ), 
+                int( camera_width/6 ), 
                 (0,255,0), 
                 2
             )
             cv_img = cv2.circle( 
                 cv_img, 
-                ( int(display_width/2), int(display_height/2) ), 
+                ( int(camera_width/2), int(camera_height/2) ), 
                 5, 
                 (0,0,255), 
                 2
@@ -1324,11 +1330,22 @@ class App(QMainWindow):
     def update_image(self, cv_img):
         self.mutex.lock()
         self.current_frame = cv_img
-        self.crosshair = True
         if self.crosshair:
             # Draw alignment circle on image
-            cv_img = cv2.circle( cv_img, ( 320, 240 ), 80, (0,255,0), 2 )
-            cv_img = cv2.circle( cv_img, ( 320,240 ), 5, (0,0,255), 2 )
+            cv_img = cv2.circle( 
+                cv_img, 
+                ( int(camera_width/2), int(camera_height/2) ), 
+                int( camera_width/6 ), 
+                (0,255,0), 
+                2
+            )
+            cv_img = cv2.circle( 
+                cv_img, 
+                ( int(camera_width/2), int(camera_height/2) ), 
+                5, 
+                (0,0,255), 
+                2
+            )
         # Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
@@ -1340,7 +1357,7 @@ class App(QMainWindow):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(640, 480, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(display_width, display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     
 if __name__=='__main__':
