@@ -39,7 +39,8 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QGroupBox,
-    QVBoxLayout
+    QVBoxLayout,
+    QCheckBox
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
@@ -385,9 +386,12 @@ class CalibrateNozzles(QThread):
     display_crosshair = pyqtSignal(str)
     resume_video = pyqtSignal()
     calibration_complete = pyqtSignal()
+    xray_flag = pyqtSignal()
     
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=250, minCircularity=0.8,numTools=0,cycles=1):
         super(QThread,self).__init__(parent=parent)
+        self.xray = False
+        self.xray_flag.connect(self.toggleXray)
         self.detect_th1 = th1
         self.detect_th2 = th2
         self.detect_thstep = thstep
@@ -406,6 +410,9 @@ class CalibrateNozzles(QThread):
         if self.ret:
             self.change_pixmap_signal.emit(self.cv_img)
     
+    def toggleXray(self):
+        self.xray = not self.xray
+
     def run(self):
         self.createDetector()
         self._running = True
@@ -482,6 +489,8 @@ class CalibrateNozzles(QThread):
             # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
             # place the cleanFrame capture into display to avoid showing edge detection and other confusing images
             #self.frame = self.putText(cleanFrame,'timestamp',offsety=99)
+            if self.xray:
+                cleanFrame = self.frame
             self.frame = cv2.line(cleanFrame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1)
             self.frame = cv2.line(self.frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1)
             self.change_pixmap_signal.emit(self.frame)
@@ -822,6 +831,9 @@ class App(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__()
+
+        self.xray_flag = pyqtSignal()
+
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
         self.setWindowIcon(QIcon('jubilee.png'))
@@ -1026,6 +1038,11 @@ class App(QMainWindow):
         self.offsets_box.setLayout(vbox)
         vbox.addWidget(self.offsets_table)
         self.offsets_box.setVisible(False)
+        # Xray checkbox
+        self.xray_box = QCheckBox('X-ray')
+        self.xray_box.setChecked(False)
+        self.xray_box.stateChanged.connect(self.toggle_xray)
+        self.xray_box.setDisabled(True)
 
         # create a grid box layout
         grid = QGridLayout()
@@ -1034,6 +1051,7 @@ class App(QMainWindow):
         # add elements to grid
         # FIRST ROW
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
+        grid.addWidget(self.xray_box,1,2)
         grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
@@ -1301,11 +1319,11 @@ class App(QMainWindow):
     def runCalibration(self):
         # stop video thread
         self.stopVideo()
-        
         # update GUI
         self.cp_button.setDisabled(True)
         self.jogpanel_button.setDisabled(False)
         self.calibration_button.setDisabled(True)
+        self.xray_box.setDisabled(False)
         
         # get number of repeat cycles
         self.cycles = self.repeatSpinBox.value()
@@ -1322,8 +1340,17 @@ class App(QMainWindow):
         self.detect_thread.resume_video.connect(self.startVideo)
         self.detect_thread.calibration_complete.connect(self.applyCalibration)
         
+        
+        
         # start the thread
         self.detect_thread.start()
+
+    def toggle_xray(self):
+        try:
+            if self.detect_thread.isRunning():
+                self.xray_flag.emit()
+        except Exception:
+            self.updateStatusbar('Detection thread not running.')
 
     @pyqtSlot(str)
     def updateStatusbar(self, statusCode ):
