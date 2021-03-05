@@ -35,7 +35,11 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QDesktopWidget,
     QStyle,
-
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QGroupBox,
+    QVBoxLayout
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
@@ -925,12 +929,16 @@ class App(QMainWindow):
             }\
             '
         )
+
+        # LOAD USER SAVED PARAMETERS OR CREATE DEFAULTS
         self.loadUserParameters()
         
+        # GUI ELEMENTS DEFINITION
         # Menubar
-        #self._createActions()
-        #self._createMenuBar()
-        #self._connectActions()
+        if not self.small_display:
+            self._createActions()
+            self._createMenuBar()
+            self._connectActions()
         
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
@@ -1002,11 +1010,23 @@ class App(QMainWindow):
         self.repeatSpinBox.setMinimum(1)
         self.repeatSpinBox.setSingleStep(1)
         self.repeatSpinBox.setDisabled(True)
-        # END BUTTONS
-
         # Info panel
         self.info_panel = QLabel('<i>Not connected to a printer.</i>')
         self.info_panel.setObjectName('info_panel')
+        # Offsets table
+        self.offsets_box = QGroupBox("Tool Offsets")
+        self.offsets_table = QTableWidget()
+        self.offsets_table.setColumnCount(2)
+        self.offsets_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.offsets_table.setColumnWidth(0,50)
+        self.offsets_table.setColumnWidth(1,50)
+        self.offsets_table.setHorizontalHeaderItem(0, QTableWidgetItem("X"))
+        self.offsets_table.setHorizontalHeaderItem(1, QTableWidgetItem("Y"))
+        self.offsets_table.resizeRowsToContents()
+        vbox = QVBoxLayout()
+        self.offsets_box.setLayout(vbox)
+        vbox.addWidget(self.offsets_table)
+        self.offsets_box.setVisible(False)
 
         # create a grid box layout
         grid = QGridLayout()
@@ -1022,7 +1042,7 @@ class App(QMainWindow):
         # main image viewer
         grid.addWidget(self.image_label,3,1,4,4)
         grid.addWidget(self.jogpanel_button,3,5,1,1)
-        grid.addWidget(self.info_panel,4,5,1,-1)
+        grid.addWidget(self.offsets_box,4,5,1,1)
         if self.small_display:
             grid.addWidget(self.exit_button,5,5,1,1)
         grid.addWidget(self.debug_button,6,5,1,1)
@@ -1160,16 +1180,19 @@ class App(QMainWindow):
         self.printer = DWA.DuetWebAPI(self.printerURL)
         if not self.printer.printerType():
             self.updateStatusbar('Device at '+self.printerURL+' either did not respond or is not a Duet V2 or V3 printer.')
+            return
         else:
             self._connected_flag = True
             self.num_tools = self.printer.getNumTools()
-            offset_text = '<b>Original tool offsets:</b>'
-            offset_text += '<br>'
+            # UPDATE OFFSET INFORMATION
+            self.offsets_box.setVisible(True)
+            self.offsets_table.setRowCount(self.num_tools)
             for i in range(self.num_tools):
                 current_tool = self.printer.getG10ToolOffset(i)
-                offset_text += ' -- T' + str(i) + ' (' + str(current_tool['X']) + ', ' + str(current_tool['Y']) + ')<br>'
-                if (i+1)%3 == 0: offset_text+='<br>'
-            self.info_panel.setText(offset_text)
+                self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
+                self.offsets_table.setItem(i,0,QTableWidgetItem(str(current_tool['X'])))
+                self.offsets_table.setItem(i,1,QTableWidgetItem(str(current_tool['Y'])))
+
             self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
 
         # Connection succeeded, update GUI first
@@ -1257,6 +1280,7 @@ class App(QMainWindow):
         self.cp_button.setDisabled(True)
         self.cp_button.setText('Set Controlled Point..')
         self.jogpanel_button.setDisabled(True)
+        self.offsets_table.setVisible(False)
         
         self.connection_status.setText('Disconnected.')
         self.connection_status.setStyleSheet(style_red)
