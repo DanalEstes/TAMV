@@ -1280,7 +1280,7 @@ class App(QMainWindow):
         self.cp_button.setDisabled(True)
         self.cp_button.setText('Set Controlled Point..')
         self.jogpanel_button.setDisabled(True)
-        self.offsets_table.setVisible(False)
+        self.offsets_box.setVisible(False)
         
         self.connection_status.setText('Disconnected.')
         self.connection_status.setStyleSheet(style_red)
