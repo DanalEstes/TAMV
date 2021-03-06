@@ -1437,10 +1437,12 @@ class App(QMainWindow):
         
         self.repeatSpinBox.setDisabled(True)
         try:
-            self.detect_thread.terminate()
+            if self.detect_thread.isRunning():
+                self.detect_thread.exit()
         except Exception: None
         try:
-            self.video_thread.exit()
+            if self.video_thread.isRunning():
+                self.video_thread.exit()
         except Exception: None
         self.startVideo()
 
