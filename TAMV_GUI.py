@@ -40,7 +40,9 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QGroupBox,
     QVBoxLayout,
-    QCheckBox
+    QHBoxLayout,
+    QCheckBox,
+    QSlider
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
@@ -104,6 +106,10 @@ class VideoThread(QThread):
         self.contrast_default = 0
         self.saturation_default = 0
         self.hue_default = 0
+        self.brightness = -1
+        self.contrast = -1
+        self.saturation = -1
+        self.hue = -1
 
     def run(self):
         try:
@@ -118,13 +124,9 @@ class VideoThread(QThread):
             self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
             self.saturation_default = self.cap.get(cv2.CAP_PROP_SATURATION)
             self.hue_default = self.cap.get(cv2.CAP_PROP_HUE)
-            #self.brightness = self.brightness_default
-            #self.contrast = self.contrast_default
-            #self.saturation = self.saturation_default
-            #self.hue = self.hue_default
+            
             while self._run_flag:
                 ret, cv_img = self.cap.read()
-                #cv_img = cv2.resize(cv_frame,(640,480),interpolation = cv2.INTER_AREA)
                 if ret:
                     self.change_pixmap_signal.emit(cv_img)
         except Exception as v1:
@@ -138,18 +140,37 @@ class VideoThread(QThread):
         self._run_flag = False
         self.wait()
     
-    def setProperty(self,brightness, contrast, saturation, hue):
-        self.brightness = brightness
-        self.contrast = contrast
-        self.saturation = saturation
-        self.hue = hue
-        self.cap.set(cv2.CAP_PROP_BRIGHTNESS,self.brightness)
-        self.cap.set(cv2.CAP_PROP_CONTRAST,self.contrast)
-        self.cap.set(cv2.CAP_PROP_SATURATION,self.saturation)
-        self.cap.set(cv2.CAP_PROP_HUE,self.hue)
+    def setProperty(self,brightness=-1, contrast=-1, saturation=-1, hue=-1):
+        try:
+            if int(brightness) >= 0:
+                self.brightness = brightness
+                self.cap.set(cv2.CAP_PROP_BRIGHTNESS,self.brightness)
+        except Exception as b1: 
+            print('Brightness exception: ', b1 )
+        try:
+            if int(contrast) >= 0:
+                self.contrast = contrast
+                self.cap.set(cv2.CAP_PROP_CONTRAST,self.contrast)
+        except Exception as c1:
+            print('Contrast exception: ', c1 )
+        try:
+            if int(saturation) >= 0:
+                self.saturation = saturation
+                self.cap.set(cv2.CAP_PROP_SATURATION,self.saturation)
+        except Exception as s1:
+            print('Saturation exception: ', s1 )
+        try:
+            if int(hue) >= 0:
+                self.hue = hue
+                self.cap.set(cv2.CAP_PROP_HUE,self.hue)
+        except Exception as h1:
+            print('Hue exception: ', h1 )
 
     def getProperties(self):
         return (self.brightness_default, self.contrast_default, self.saturation_default,self.hue_default)
+
+    def resetProperties(self):
+        self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
 
 class CPDialog(QDialog):
     def __init__(self,
@@ -318,47 +339,143 @@ class CameraSettingsDialog(QDialog):
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('Camera Settings')
         
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.Close
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         
-        # Set layout details
-        self.layout = QGridLayout()
-        self.layout.setSpacing(3)
-
+        # Get camera settings from video thread
         (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
-            
-
-
-        self.brightnessBox = QSpinBox()
-        self.brightnessBox.setValue(brightness_input)
-        self.contrastBox = QSpinBox()
-        self.contrastBox.setValue(contrast_input)
-        self.saturationBox = QSpinBox()
-        self.saturationBox.setValue(saturation_input)
-        self.hueBox = QSpinBox()
-        self.hueBox.setValue(hue_input)
         
-        self.brightnessLabel = QLabel('Brightness: ')
-        self.contrastLabel = QLabel('Contrast: ')
-        self.saturationLabel = QLabel('Saturation: ')
-        self.hueLabel = QLabel('Hue: ')
-        
-        # Items
-        self.layout.addWidget(self.buttonBox,5,0)
-        self.layout.addWidget(self.brightnessLabel,1,0)
-        self.layout.addWidget(self.brightnessBox,1,1)
-        self.layout.addWidget(self.contrastLabel,2,0)
-        self.layout.addWidget(self.contrastBox,2,1)
-        self.layout.addWidget(self.saturationLabel,3,0)
-        self.layout.addWidget(self.saturationBox,3,1)
-        self.layout.addWidget(self.hueLabel,4,0)
-        self.layout.addWidget(self.hueBox,4,1)
+        # Set layout details
+        self.layout = QVBoxLayout()
+        self.layout.setSpacing(3)
         # apply layout
         self.setLayout(self.layout)
-        print( self.parent().video_thread.getProperties())
 
+        # Brightness slider
+        self.brightness_slider = QSlider(Qt.Horizontal)
+        self.brightness_slider.setMinimum(0)
+        self.brightness_slider.setMaximum(32)
+        self.brightness_slider.setValue(int(brightness_input))
+        self.brightness_slider.valueChanged.connect(self.changeBrightness)
+        self.brightness_slider.setTickPosition(QSlider.TicksBelow)
+        self.brightness_slider.setTickInterval(1)
+        self.brightness_label = QLabel(str(int(brightness_input)))
+        # Contrast slider
+        self.contrast_slider = QSlider(Qt.Horizontal)
+        self.contrast_slider.setMinimum(0)
+        self.contrast_slider.setMaximum(32)
+        self.contrast_slider.setValue(int(contrast_input))
+        self.contrast_slider.valueChanged.connect(self.changeContrast)
+        self.contrast_slider.setTickPosition(QSlider.TicksBelow)
+        self.contrast_slider.setTickInterval(1)
+        self.contrast_label = QLabel(str(int(contrast_input)))
+        # Saturation slider
+        self.saturation_slider = QSlider(Qt.Horizontal)
+        self.saturation_slider.setMinimum(0)
+        self.saturation_slider.setMaximum(32)
+        self.saturation_slider.setValue(int(saturation_input))
+        self.saturation_slider.valueChanged.connect(self.changeSaturation)
+        self.saturation_slider.setTickPosition(QSlider.TicksBelow)
+        self.saturation_slider.setTickInterval(1)
+        self.saturation_label = QLabel(str(int(saturation_input)))
+        # Hue slider
+        self.hue_slider = QSlider(Qt.Horizontal)
+        self.hue_slider.setMinimum(0)
+        self.hue_slider.setMaximum(16)
+        self.hue_slider.setValue(int(hue_input))
+        self.hue_slider.valueChanged.connect(self.changeHue)
+        self.hue_slider.setTickPosition(QSlider.TicksBelow)
+        self.hue_slider.setTickInterval(1)
+        self.hue_label = QLabel(str(int(hue_input)))
+        # Reset button
+        self.reset_button = QPushButton("Reset to defaults")
+        self.reset_button.clicked.connect(self.resetDefaults)
+        
+        # Layout objects
+        # Brightness
+        self.brightness_box =QGroupBox('Brightness')
+        self.layout.addWidget(self.brightness_box)
+        bvbox = QHBoxLayout()
+        self.brightness_box.setLayout(bvbox)
+        bvbox.addWidget(self.brightness_slider)
+        bvbox.addWidget(self.brightness_label)
+        # Contrast
+        self.contrast_box =QGroupBox('Contrast')
+        self.layout.addWidget(self.contrast_box)
+        cvbox = QHBoxLayout()
+        self.contrast_box.setLayout(cvbox)
+        cvbox.addWidget(self.contrast_slider)
+        cvbox.addWidget(self.contrast_label)
+        # Saturation
+        self.saturation_box =QGroupBox('Saturation')
+        self.layout.addWidget(self.saturation_box)
+        svbox = QHBoxLayout()
+        self.saturation_box.setLayout(svbox)
+        svbox.addWidget(self.saturation_slider)
+        svbox.addWidget(self.saturation_label)
+        # Hue
+        self.hue_box =QGroupBox('Hue')
+        self.layout.addWidget(self.hue_box)
+        hvbox = QHBoxLayout()
+        self.hue_box.setLayout(hvbox)
+        hvbox.addWidget(self.hue_slider)
+        hvbox.addWidget(self.hue_label)
+        # Reset button
+        self.layout.addWidget(self.reset_button)
+        # OK Cancel buttons
+        self.layout.addWidget(self.buttonBox)
+    
+    def resetDefaults(self):
+        self.parent().video_thread.resetProperties()
+        (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
+        brightness_input = int(brightness_input)
+        contrast_input = int(contrast_input)
+        saturation_input = int(saturation_input)
+        hue_input = int(hue_input)
+        self.brightness_slider.setValue(brightness_input)
+        self.brightness_label.setText(str(brightness_input))
+        self.contrast_slider.setValue(contrast_input)
+        self.contrast_label.setText(str(contrast_input))
+        self.saturation_slider.setValue(saturation_input)
+        self.saturation_label.setText(str(saturation_input))
+        self.hue_slider.setValue(hue_input)
+        self.hue_label.setText(str(hue_input))
+
+    def changeBrightness(self):
+        try:
+            if self.parent().video_thread.isRunning():
+                parameter = int(self.brightness_slider.value())
+                self.parent().video_thread.setProperty(brightness=parameter)
+                self.brightness_label.setText(str(parameter))
+        except:
+            None
+    def changeContrast(self):
+        try:
+            if self.parent().video_thread.isRunning():
+                parameter = int(self.contrast_slider.value())
+                self.parent().video_thread.setProperty(contrast=parameter)
+                self.contrast_label.setText(str(parameter))
+        except:
+            None
+    def changeSaturation(self):
+        try:
+            if self.parent().video_thread.isRunning():
+                parameter = int(self.saturation_slider.value())
+                self.parent().video_thread.setProperty(saturation=parameter)
+                self.saturation_label.setText(str(parameter))
+        except:
+            None
+    def changeHue(self):
+        try:
+            if self.parent().video_thread.isRunning():
+                parameter = int(self.hue_slider.value())
+                self.parent().video_thread.setProperty(hue=parameter)
+                self.hue_label.setText(str(parameter))
+        except:
+            None
+    
 class OverlayLabel(QLabel):
     def __init__(self):
         super(OverlayLabel, self).__init__()
@@ -384,7 +501,6 @@ class CalibrateNozzles(QThread):
     message_update = pyqtSignal(str)
     change_pixmap_signal = pyqtSignal(np.ndarray)
     display_crosshair = pyqtSignal(str)
-    resume_video = pyqtSignal()
     calibration_complete = pyqtSignal()
     #xray_flag = pyqtSignal()
     
@@ -764,7 +880,6 @@ class CalibrateNozzles(QThread):
         while self.parent().printer.getStatus() not in 'idle':
             sleep(1)
         self.cap.release()
-        self.resume_video.emit()
         self.exit()
 
     def createDetector(self):
@@ -1274,6 +1389,18 @@ class App(QMainWindow):
             self.statusBar.showMessage('New offsets applied to machine.')
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
+        # Clean up threads
+        try:
+            if self.detect_thread.isRunning():
+                self.detect_thread.stop()
+                self.startVideo()
+        except Exception:
+            try:
+                if self.video_thread.isRunning():
+                    None
+                else:
+                    self.startVideo()
+            except: self.startVideo()
     
     def disconnectFromPrinter(self):
         _ret = 'Unloading tools and disconnecting from printer.'
@@ -1340,12 +1467,7 @@ class App(QMainWindow):
         self.detect_thread.status_update.connect(self.updateStatusbar)
         self.detect_thread.message_update.connect(self.updateMessagebar)
         self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-        self.detect_thread.resume_video.connect(self.startVideo)
         self.detect_thread.calibration_complete.connect(self.applyCalibration)
-        #self.xray_flag.connect(self.detect_thread.toggleXray)
-        
-        
-        
         # start the thread
         self.detect_thread.start()
 
