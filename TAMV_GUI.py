@@ -666,8 +666,10 @@ class CalibrateNozzles(QThread):
 
         while True:
             self.ret, self.frame = self.cap.read()
-            # capture tool location in machine space before processing
-            toolCoordinates = self.parent().printer.getCoords()
+            try:
+                # capture tool location in machine space before processing
+                toolCoordinates = self.parent().printer.getCoords()
+            except: continue
             # capture first clean frame for display
             cleanFrame = self.frame
             # apply nozzle detection algorithm
@@ -684,8 +686,6 @@ class CalibrateNozzles(QThread):
             # run nozzle detection for keypoints
             keypoints = self.detector.detect(self.frame)
             # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
-            # place the cleanFrame capture into display to avoid showing edge detection and other confusing images
-            #self.frame = self.putText(cleanFrame,'timestamp',offsety=99)
             if self.xray:
                 cleanFrame = self.frame
             self.frame = cv2.line(cleanFrame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1)
@@ -698,17 +698,9 @@ class CalibrateNozzles(QThread):
             num_keypoints=len(keypoints)
             if (num_keypoints == 0):
                 if (25 < (int(round(time() * 1000)) - rd)):
-                    #print('No circles found')
-                    # HBHBHB: TODO: Add nozzle jog!!!!
                     nocircle += 1
                     self.frame = self.putText(self.frame,'No circles found',offsety=3)
                     self.message_update.emit( 'No circles found.' )
-                    # HBHBHB TODO: enable Xray
-                    ''' if( xray ):
-                        #xray mode enabled, stack output
-                        xrayFrame = np.hstack((frame, edgeDetectedFrame))
-                        show.frame = xrayFrame
-                    else :'''
                     self.change_pixmap_signal.emit(self.frame)
                 continue
             if (num_keypoints > 1):
@@ -716,12 +708,6 @@ class CalibrateNozzles(QThread):
                     self.message_update.emit( 'Too many circles found. Please stop and clean the nozzle.' )
                     self.frame = self.putText(self.frame,'Too many circles found '+str(num_keypoints),offsety=3, color=(255,255,255))                
                     self.frame = cv2.drawKeypoints(self.frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-                    # HBHBHB TODO: enable Xray
-                    '''if( xray ):
-                        #xray mode enabled, stack output
-                        xrayFrame = np.hstack((frame, edgeDetectedFrame))
-                        show.frame = xrayFrame
-                    else :'''
                     self.change_pixmap_signal.emit(self.frame)
                 continue
             # Found one and only one circle.  Put it on the frame.
@@ -735,13 +721,6 @@ class CalibrateNozzles(QThread):
             xy = np.uint16(xy)
             self.frame = self.putText(self.frame, ts, offsety=2, color=(0, 255, 0), stroke=2)
             # show the frame
-            # HBHBHB TODO: enable Xray
-            '''if( xray ):
-                #xray mode enabled, stack output
-                xrayFrame = np.hstack((frame, edgeDetectedFrame))
-                show.frame = xrayFrame
-            else :'''
-            #self.message_update.emit('Circle at: ' + ts )
             self.change_pixmap_signal.emit(self.frame)
             rd = int(round(time() * 1000))
             #end the loop
