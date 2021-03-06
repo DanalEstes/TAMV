@@ -611,16 +611,16 @@ class CalibrateNozzles(QThread):
         # transformation matrix
         self.transform_matrix = []
         while self._running:
-            for rep in range(self.cycles):
-                for tool in range(self.parent().num_tools):
-                    # Update status bar
-                    self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
-                    # Load next tool for calibration
-                    self.parent().printer.gCode('T'+str(tool))
-                    # Move tool to CP coordinates
-                    self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
-                    self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
-                    try:
+            try:
+                for rep in range(self.cycles):
+                    for tool in range(self.parent().num_tools):
+                        # Update status bar
+                        self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
+                        # Load next tool for calibration
+                        self.parent().printer.gCode('T'+str(tool))
+                        # Move tool to CP coordinates
+                        self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+                        self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                         # Wait for moves to complete
                         while self.parent().printer.getStatus() not in 'idle':
                             self.ret, self.cv_img = self.cap.read()
@@ -637,10 +637,11 @@ class CalibrateNozzles(QThread):
                         # Analyze frame for blobs
                         (c, transform, mpp) = self.calibrateTool(tool, rep)
                         #(xy, target, rotation, radius) = self.analyzeFrame()
-                    except Exception as mn1:
-                        print('Detection thread error: ', mn1)
-                        self.stop()
-                    
+            except Exception as mn1:
+                print('Detection thread error: ', mn1)
+                self._running = False
+                self.stop()
+            # signal end of execution
             self._running = False
         # Update status bar
         self.status_update.emit('Calibration complete: Resetting machine.')
