@@ -1334,8 +1334,8 @@ class App(QMainWindow):
         self.cameraAction.triggered.connect(self.displayCameraSettings)
     
     def displayCameraSettings(self):
-        camera_dialog = CameraSettingsDialog(parent=self)
-        if camera_dialog.exec_():
+        self.camera_dialog = CameraSettingsDialog(parent=self)
+        if self.camera_dialog.exec_():
             self.updateStatusbar('Camera settings saved.')
             # HBHBHB: call save settings
         else: self.updateStatusbar('Camera settings discarded.')
@@ -1480,6 +1480,11 @@ class App(QMainWindow):
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
         # Clean up threads
+        # close camera settings dialog so it doesn't crash
+        try:
+            if self.camera_dialog.isVisible():
+                self.camera_dialog.reject()
+        except: None
         try:
             if self.detect_thread.isRunning():
                 self.detect_thread.stop()
