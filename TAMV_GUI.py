@@ -1476,6 +1476,22 @@ class App(QMainWindow):
             except: self.startVideo()
     
     def disconnectFromPrinter(self):
+        # temporarily suspend GUI and display status message
+        self.image_label.setText('Restoring machine to initial state..')
+        self.connection_button.setText('Pending..')
+        self.connection_button.setDisabled(True)
+        self.disconnection_button.setDisabled(True)
+        self.calibration_button.setDisabled(True)
+        self.cp_button.setDisabled(True)
+        self.cp_button.setText('Pending..')
+        self.jogpanel_button.setDisabled(True)
+        self.offsets_box.setVisible(False)
+        self.connection_status.setText('Disconnecting..')
+        self.connection_status.setStyleSheet(style_orange)
+        self.cp_label.setText('<b>CP:</b> <i>undef</i>')
+        self.cp_label.setStyleSheet(style_orange)
+        self.repeatSpinBox.setDisabled(True)
+        self.xray_box.setDisabled(True)
         # End video threads and restart default thread
         try:
             if self.detect_thread.isRunning():
@@ -1486,7 +1502,7 @@ class App(QMainWindow):
                 self.video_thread.stop()
         except Exception: None
         self.startVideo()
-        
+
         # update status 
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
         # Wait for printer to stop moving and unload tools
