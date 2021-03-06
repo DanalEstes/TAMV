@@ -535,6 +535,7 @@ class CalibrateNozzles(QThread):
         super(QThread,self).__init__(parent=parent)
         self.xray = False
         self.loose = False
+        self.detector_changed = False
         #self.xray_flag.connect(self.toggleXray)
         self.detect_th1 = th1
         self.detect_th2 = th2
@@ -575,6 +576,7 @@ class CalibrateNozzles(QThread):
         else: self.xray = True
     
     def toggleLoose(self):
+        self.detector_changed = True
         if self.loose:
             self.loose = False
         else: self.loose = True
@@ -622,9 +624,6 @@ class CalibrateNozzles(QThread):
             while self._running:
                 for rep in range(self.cycles):
                     for tool in range(self.parent().num_tools):
-                        if self.loose:
-                            self.detect_minCircularity = 0.3
-                        self.createDetector()
                         # process GUI events
                         app.processEvents()
                         # Update status bar
@@ -649,6 +648,12 @@ class CalibrateNozzles(QThread):
                             self.change_pixmap_signal.emit(self.cv_img)
                         self.frame = self.cv_img
                         
+                        # Process runtime algorithm changes
+                        if self.loose:
+                            self.detect_minCircularity = 0.3
+                        if self.detector_changed:
+                            self.createDetector()
+                            self.detector_changed = False
                         # Analyze frame for blobs
                         (c, transform, mpp) = self.calibrateTool(tool, rep)
                         
