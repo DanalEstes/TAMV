@@ -614,6 +614,8 @@ class CalibrateNozzles(QThread):
             while self._running:
                 for rep in range(self.cycles):
                     for tool in range(self.parent().num_tools):
+                        # process GUI events
+                        app.processEvents()
                         # Update status bar
                         self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
                         # Load next tool for calibration
