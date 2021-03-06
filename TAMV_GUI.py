@@ -617,6 +617,7 @@ class CalibrateNozzles(QThread):
         try:
             if self.loose:
                 self.detect_minCircularity = 0.3
+            else: self.detect_minCircularity = 0.8
             self.createDetector()
             self._running = True
             # transformation matrix
@@ -651,6 +652,7 @@ class CalibrateNozzles(QThread):
                         # Process runtime algorithm changes
                         if self.loose:
                             self.detect_minCircularity = 0.3
+                        else: self.detect_minCircularity = 0.8
                         if self.detector_changed:
                             self.createDetector()
                             self.detector_changed = False
@@ -711,7 +713,9 @@ class CalibrateNozzles(QThread):
             # Process runtime algorithm changes
             if self.loose:
                 self.detect_minCircularity = 0.3
+            else: self.detect_minCircularity = 0.8
             if self.detector_changed:
+                print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
