@@ -606,12 +606,12 @@ class CalibrateNozzles(QThread):
         self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
 
     def run(self):
-        self.createDetector()
-        self._running = True
-        # transformation matrix
-        self.transform_matrix = []
-        while self._running:
-            try:
+        try:
+            self.createDetector()
+            self._running = True
+            # transformation matrix
+            self.transform_matrix = []
+            while self._running:
                 for rep in range(self.cycles):
                     for tool in range(self.parent().num_tools):
                         # Update status bar
@@ -637,23 +637,23 @@ class CalibrateNozzles(QThread):
                         # Analyze frame for blobs
                         (c, transform, mpp) = self.calibrateTool(tool, rep)
                         #(xy, target, rotation, radius) = self.analyzeFrame()
-            except Exception as mn1:
-                print('Detection thread error: ', mn1)
+                # signal end of execution
                 self._running = False
-                self.stop()
-            # signal end of execution
+            # Update status bar
+            self.status_update.emit('Calibration complete: Resetting machine.')
+            # Update debug window with results
+            self.parent().debugString += '\n\nCalibration output:\n'
+            for tool_result in self.parent().calibration_results:
+                self.parent().debugString += tool_result + '\n'
+            self.parent().printer.gCode('T-1')
+            self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+            self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
+            self.status_update.emit('Calibration complete: Done.')
+            self.calibration_complete.emit()
+        except Exception as mn1:
+            print('Detection thread error: ', mn1)
             self._running = False
-        # Update status bar
-        self.status_update.emit('Calibration complete: Resetting machine.')
-        # Update debug window with results
-        self.parent().debugString += '\n\nCalibration output:\n'
-        for tool_result in self.parent().calibration_results:
-            self.parent().debugString += tool_result + '\n'
-        self.parent().printer.gCode('T-1')
-        self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
-        self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
-        self.status_update.emit('Calibration complete: Done.')
-        self.calibration_complete.emit()
+            self.stop()
         self.stop()
     
     def analyzeFrame(self):
