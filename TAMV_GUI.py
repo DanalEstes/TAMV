@@ -625,6 +625,8 @@ class CalibrateNozzles(QThread):
                         self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                         # Wait for moves to complete
                         while self.parent().printer.getStatus() not in 'idle':
+                            # process GUI events
+                            app.processEvents()
                             self.ret, self.cv_img = self.cap.read()
                             if self.ret:
                                 self.change_pixmap_signal.emit(self.cv_img)
@@ -643,7 +645,7 @@ class CalibrateNozzles(QThread):
                         app.processEvents()                        
                         
                         #(xy, target, rotation, radius) = self.analyzeFrame()
-                        
+
                 # signal end of execution
                 self._running = False
             # Update status bar
