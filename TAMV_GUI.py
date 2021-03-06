@@ -1455,11 +1455,10 @@ class App(QMainWindow):
     def readyToCalibrate(self):
         self.statusBar.showMessage('Controlled Point coordinates saved.',3000)
         self.image_label.setText('Controlled Point set. Click \"Start Tool Alignment\" to calibrate..')
-
         self.cp_button.setText('Reset CP ')
         self.cp_label.setText('<b>CP:</b> ' + self.cp_string)
         self.cp_label.setStyleSheet(style_green)
-
+        self.xray_box.setDisabled(True)
         self.calibration_button.setDisabled(False)
         #self.repeatSpinBox.setDisabled(False)
     
@@ -1529,6 +1528,7 @@ class App(QMainWindow):
         self.cp_label.setText('<b>CP:</b> <i>undef</i>')
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
+        self.xray_box.setDisabled(True)
 
         # End video threads and restart default thread
         try:
