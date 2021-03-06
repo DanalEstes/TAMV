@@ -1527,11 +1527,11 @@ class App(QMainWindow):
         # End video threads and restart default thread
         try:
             if self.detect_thread.isRunning():
-                self.detect_thread.terminate()
+                self.detect_thread.stop()
         except Exception: None
         try:
             if self.video_thread.isRunning():
-                self.video_thread.terminate()
+                self.video_thread.stop()
         except Exception: None
         self.startVideo()
 
