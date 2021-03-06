@@ -620,22 +620,26 @@ class CalibrateNozzles(QThread):
                     # Move tool to CP coordinates
                     self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                     self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
-                    # Wait for moves to complete
-                    while self.parent().printer.getStatus() not in 'idle':
+                    try:
+                        # Wait for moves to complete
+                        while self.parent().printer.getStatus() not in 'idle':
+                            self.ret, self.cv_img = self.cap.read()
+                            if self.ret:
+                                self.change_pixmap_signal.emit(self.cv_img)
+                        # Update message bar
+                        self.message_update.emit('Searching for nozzle..')
+                        # Fetch a new frame from the inspection camera
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
                             self.change_pixmap_signal.emit(self.cv_img)
-                    # Update message bar
-                    self.message_update.emit('Searching for nozzle..')
-                    # Fetch a new frame from the inspection camera
-                    self.ret, self.cv_img = self.cap.read()
-                    if self.ret:
-                        self.change_pixmap_signal.emit(self.cv_img)
-                    self.frame = self.cv_img
-                    
-                    # Analyze frame for blobs
-                    (c, transform, mpp) = self.calibrateTool(tool, rep)
-                    #(xy, target, rotation, radius) = self.analyzeFrame()
+                        self.frame = self.cv_img
+                        
+                        # Analyze frame for blobs
+                        (c, transform, mpp) = self.calibrateTool(tool, rep)
+                        #(xy, target, rotation, radius) = self.analyzeFrame()
+                    except Exception as mn1:
+                        print('Detection thread error: ', mn1)
+                        self.stop()
                     
             self._running = False
         # Update status bar
