@@ -1547,6 +1547,11 @@ class App(QMainWindow):
         self.startVideo()
 
     def runCalibration(self):
+        # close camera settings dialog so it doesn't crash
+        try:
+            if self.camera_dialog.isVisible():
+                self.camera_dialog.reject()
+        except: None
         # stop video thread
         self.stopVideo()
         # update GUI
