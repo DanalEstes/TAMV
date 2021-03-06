@@ -949,13 +949,14 @@ class CalibrateNozzles(QThread):
         retVal = np.sqrt((x_dist + y_dist))
         return np.around(retVal,3)
 
-
     def stop(self):
         self._running = False
-        self.parent().printer.gCode('T-1')
-        self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']) + ' Y' + str(self.parent().cp_coords['Y']))
-        while self.parent().printer.getStatus() not in 'idle':
-            sleep(1)
+        try:
+            self.parent().printer.gCode('T-1')
+            self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']) + ' Y' + str(self.parent().cp_coords['Y']))
+            while self.parent().printer.getStatus() not in 'idle':
+                sleep(1)
+        except: None
         self.cap.release()
         self.exit()
 
