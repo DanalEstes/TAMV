@@ -1444,6 +1444,11 @@ class App(QMainWindow):
     def applyCalibration(self):
         # update GUI
         self.readyToCalibrate()
+        # close camera settings dialog so it doesn't crash
+        try:
+            if self.camera_dialog.isVisible():
+                self.camera_dialog.reject()
+        except: None
         # prompt for user to apply results
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
@@ -1459,11 +1464,6 @@ class App(QMainWindow):
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
         # Clean up threads
-        # close camera settings dialog so it doesn't crash
-        try:
-            if self.camera_dialog.isVisible():
-                self.camera_dialog.reject()
-        except: None
         try:
             if self.detect_thread.isRunning():
                 self.detect_thread.stop()
@@ -1633,6 +1633,7 @@ class App(QMainWindow):
         return QPixmap.fromImage(p)
     
 if __name__=='__main__':
+    os.putenv("QT_LOGGING_RULES","qt5ct.debug=false")
     app = QApplication(sys.argv)
     a = App()
     a.show()
