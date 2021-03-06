@@ -129,6 +129,7 @@ class VideoThread(QThread):
                 ret, cv_img = self.cap.read()
                 if ret:
                     self.change_pixmap_signal.emit(cv_img)
+                app.processEvents()
         except Exception as v1:
             print('Exception in video thread: ')
             print(v1)
@@ -1369,51 +1370,63 @@ class App(QMainWindow):
 
     def connectToPrinter(self):
         try:
+            # check if printerURL has already been defined (user reconnecting)
             if len(self.printerURL) > 0:
                 None
         except Exception:
+            # printerURL initalization to defaults
             self.printerURL = 'http://localhost'
-
+        # Prompt user for machine connection address
         text, ok = QInputDialog.getText(self, 'Machine URL','Machine IP address or hostname: ', QLineEdit.Normal, self.printerURL)
-
-        if ok and text != '':
+        # Handle clicking OK/Connect
+        if ok and text != '' and len(text) > 5:
             self.printerURL = text
+        # Handle clicking cancel
         elif not ok:
+            self.updateStatusbar('Connection request cancelled.')
             return
-        else:
-            self.updateStatusbar('Invalid IP address or hostname: \"' + text +'\"')
+        # Handle invalid input
+        elif len(text) < 6 or text[:4] not in ['http']:
+            self.updateStatusbar('Invalid IP address or hostname: \"' + text +'\". Add http(s):// to try again.')
             return
+        # Update user with new state
         self.statusBar.showMessage('Attempting to connect to: ' + self.printerURL )
-        self.printer = DWA.DuetWebAPI(self.printerURL)
-        if not self.printer.printerType():
-            self.updateStatusbar('Device at '+self.printerURL+' either did not respond or is not a Duet V2 or V3 printer.')
+        # Attempt connecting to the Duet controller
+        try:
+            self.printer = DWA.DuetWebAPI(self.printerURL)
+            if not self.printer.printerType():
+                # connection failed for some reason
+                self.updateStatusbar('Device at '+self.printerURL+' either did not respond or is not a Duet V2 or V3 printer.')
+                return
+            else:
+                # connection succeeded, update objects accordingly
+                self._connected_flag = True
+                self.num_tools = self.printer.getNumTools()
+                # UPDATE OFFSET INFORMATION
+                self.offsets_box.setVisible(True)
+                self.offsets_table.setRowCount(self.num_tools)
+                for i in range(self.num_tools):
+                    current_tool = self.printer.getG10ToolOffset(i)
+                    self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
+                    self.offsets_table.setItem(i,0,QTableWidgetItem(str(current_tool['X'])))
+                    self.offsets_table.setItem(i,1,QTableWidgetItem(str(current_tool['Y'])))
+        except Exception as conn1:
+            self.updateStatusbar('Cannot connect to: ' + self.printerURL )
+            print('Duet Connection exception: ', conn1)
             return
-        else:
-            self._connected_flag = True
-            self.num_tools = self.printer.getNumTools()
-            # UPDATE OFFSET INFORMATION
-            self.offsets_box.setVisible(True)
-            self.offsets_table.setRowCount(self.num_tools)
-            for i in range(self.num_tools):
-                current_tool = self.printer.getG10ToolOffset(i)
-                self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
-                self.offsets_table.setItem(i,0,QTableWidgetItem(str(current_tool['X'])))
-                self.offsets_table.setItem(i,1,QTableWidgetItem(str(current_tool['Y'])))
-
-            self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
-
         # Connection succeeded, update GUI first
+        self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
         self.connection_button.setText('Online: ' + self.printerURL[self.printerURL.rfind('/')+1:])
         self.statusBar.showMessage('Connected to printer at ' + self.printerURL, 5000)
         self.connection_status.setText('Connected.')
         self.image_label.setText('Set your Controlled Point to continue.')
-
+        # enable/disable buttons
         self.connection_button.setDisabled(True)
         self.calibration_button.setDisabled(True)
         self.disconnection_button.setDisabled(False)
         self.cp_button.setDisabled(False)
         self.jogpanel_button.setDisabled(False)
-        
+        # update connection status indicator to green
         self.connection_status.setStyleSheet(style_green)
 
     def controlledPoint(self):
@@ -1475,23 +1488,28 @@ class App(QMainWindow):
             except: self.startVideo()
     
     def disconnectFromPrinter(self):
-        _ret = 'Unloading tools and disconnecting from printer.'
-        self.statusBar.showMessage(_ret,5000)
+        # update status 
+        self.updateStatusbar('Unloading tools and disconnecting from machine..')
+        # Wait for printer to stop moving and unload tools
         _ret_error = self.printer.gCode('M400')
         _ret_error += self.printer.gCode('T-1')
+        # return carriage to controlled point position
         if len(self.cp_coords) > 0:
             _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+        # update status with disconnection state
         if _ret_error == 0:
-            self.statusBar.showMessage('Disconnect: OK',3000)
+            self.updateStatusbar('Disconnected.')
             self.image_label.setText('Disconnected.')
         else: 
-            self.statusBar.showMessage('ERROR occurred while disconnecting.')
+            # handle unforeseen disconnection error (power loss?)
+            self.statusBar.showMessage('Disconnect: error communicating with machine.')
             self.statusBar.setStyleSheet(style_red)
+        # Reinitialize printer object
         self.printer = None
-        #self.printer.resetAdvancedMovement()
         
         # Tools unloaded, reset GUI
+        self.image_label.setText('Welcome to TAMV. Enter your printer address and click \"Connect..\" to start.')
         self.connection_button.setText('Connect..')
         self.connection_button.setDisabled(False)
         self.disconnection_button.setDisabled(True)
@@ -1500,25 +1518,22 @@ class App(QMainWindow):
         self.cp_button.setText('Set Controlled Point..')
         self.jogpanel_button.setDisabled(True)
         self.offsets_box.setVisible(False)
-        
         self.connection_status.setText('Disconnected.')
         self.connection_status.setStyleSheet(style_red)
-        
         self.cp_label.setText('<b>CP:</b> <i>undef</i>')
         self.cp_label.setStyleSheet(style_red)
-        
         self.repeatSpinBox.setDisabled(True)
+
+        # End video threads and restart default thread
         try:
             if self.detect_thread.isRunning():
-                self.detect_thread.exit()
+                self.detect_thread.terminate()
         except Exception: None
         try:
             if self.video_thread.isRunning():
-                self.video_thread.exit()
+                self.video_thread.terminate()
         except Exception: None
         self.startVideo()
-
-        self.image_label.setText('Welcome to TAMV. Enter your printer address and click \"Connect..\" to start.')
 
     def runCalibration(self):
         # stop video thread
