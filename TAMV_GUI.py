@@ -638,7 +638,12 @@ class CalibrateNozzles(QThread):
                         
                         # Analyze frame for blobs
                         (c, transform, mpp) = self.calibrateTool(tool, rep)
+                        
+                        # process GUI events
+                        app.processEvents()                        
+                        
                         #(xy, target, rotation, radius) = self.analyzeFrame()
+                        
                 # signal end of execution
                 self._running = False
             # Update status bar
