@@ -534,6 +534,7 @@ class CalibrateNozzles(QThread):
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=250, minCircularity=0.8,numTools=0,cycles=1):
         super(QThread,self).__init__(parent=parent)
         self.xray = False
+        self.loose = False
         #self.xray_flag.connect(self.toggleXray)
         self.detect_th1 = th1
         self.detect_th2 = th2
@@ -572,6 +573,11 @@ class CalibrateNozzles(QThread):
         if self.xray:
             self.xray = False
         else: self.xray = True
+    
+    def toggleLoose(self):
+        if self.loose:
+            self.loose = False
+        else: self.loose = True
 
     def setProperty(self,brightness=-1, contrast=-1, saturation=-1, hue=-1):
         try:
@@ -607,6 +613,8 @@ class CalibrateNozzles(QThread):
 
     def run(self):
         try:
+            if self.loose:
+                self.detect_minCircularity = 0.3
             self.createDetector()
             self._running = True
             # transformation matrix
@@ -1227,6 +1235,11 @@ class App(QMainWindow):
         self.xray_box.setChecked(False)
         self.xray_box.stateChanged.connect(self.toggle_xray)
         self.xray_box.setDisabled(True)
+        # Loose checkbox
+        self.loose_box = QCheckBox('Loose detection')
+        self.loose_box.setChecked(False)
+        self.loose_box.stateChanged.connect(self.toggle_loose)
+        self.loose_box.setDisabled(True)
 
         # create a grid box layout
         grid = QGridLayout()
@@ -1236,6 +1249,7 @@ class App(QMainWindow):
         # FIRST ROW
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
         grid.addWidget(self.xray_box,1,2)
+        grid.addWidget(self.loose_box,1,3)
         grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
@@ -1377,6 +1391,8 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_orange)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
+        self.xray_box.setChecked(False)
+        self.loose_box.setDisabled(True)
         self.repaint()
         try:
             # check if printerURL has already been defined (user reconnecting)
@@ -1456,6 +1472,8 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
+        self.xray_box.setChecked(False)
+        self.loose_box.setDisabled(True)
         self.repaint()
 
     def controlledPoint(self):
@@ -1482,6 +1500,8 @@ class App(QMainWindow):
         self.cp_label.setText('<b>CP:</b> ' + self.cp_string)
         self.cp_label.setStyleSheet(style_green)
         self.xray_box.setDisabled(True)
+        self.xray_box.setChecked(False)
+        self.loose_box.setDisabled(True)
         self.calibration_button.setDisabled(False)
         #self.repeatSpinBox.setDisabled(False)
     
@@ -1538,6 +1558,8 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_orange)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
+        self.xray_box.setChecked(False)
+        self.loose_box.setDisabled(True)
         self.repaint()
         # End video threads and restart default thread
         try:
@@ -1586,6 +1608,7 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
+        self.loose_box.setDisabled(True)
 
     def runCalibration(self):
         # close camera settings dialog so it doesn't crash
@@ -1600,7 +1623,8 @@ class App(QMainWindow):
         self.jogpanel_button.setDisabled(False)
         self.calibration_button.setDisabled(True)
         self.xray_box.setDisabled(False)
-        
+        self.xray_box.setChecked(False)
+        self.loose_box.setDisabled(False)
         # get number of repeat cycles
         self.cycles = self.repeatSpinBox.value()
         self.repeatSpinBox.setDisabled(True)
@@ -1625,6 +1649,15 @@ class App(QMainWindow):
         except Exception as e1:
             self.updateStatusbar('Detection thread not running.')
             print( 'Detection thread error in XRAY: ')
+            print(e1)
+    
+    def toggle_loose(self):
+        try:
+            if self.detect_thread:
+                self.detect_thread.toggleLoose()
+        except Exception as e1:
+            self.updateStatusbar('Detection thread not running.')
+            print( 'Detection thread error in LOOSE: ')
             print(e1)
 
     @pyqtSlot(str)
