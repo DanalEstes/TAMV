@@ -651,7 +651,7 @@ class CalibrateNozzles(QThread):
             self.status_update.emit('Calibration complete: Done.')
             self.calibration_complete.emit()
         except Exception as mn1:
-            print('Detection thread error: ', mn1)
+            #print('Detection thread error: ', mn1)
             self._running = False
             self.stop()
         self.stop()
@@ -901,7 +901,6 @@ class CalibrateNozzles(QThread):
                 self.avg = [0,0]
                 self.location = {'X':0,'Y':0}
                 self.count = 0
-
 
     def normalize_coords(self,coords):
         xdim, ydim = camera_width, camera_height
