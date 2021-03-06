@@ -1362,6 +1362,22 @@ class App(QMainWindow):
         event.accept()
 
     def connectToPrinter(self):
+        # temporarily suspend GUI and display status message
+        self.image_label.setText('Waiting to connect..')
+        self.updateStatusbar('Please enter machine IP address or name prefixed with http(s)://')
+        self.connection_button.setDisabled(True)
+        self.disconnection_button.setDisabled(True)
+        self.calibration_button.setDisabled(True)
+        self.cp_button.setDisabled(True)
+        self.jogpanel_button.setDisabled(True)
+        self.offsets_box.setVisible(False)
+        self.connection_status.setText('Connecting..')
+        self.connection_status.setStyleSheet(style_orange)
+        self.cp_label.setText('<b>CP:</b> <i>undef</i>')
+        self.cp_label.setStyleSheet(style_orange)
+        self.repeatSpinBox.setDisabled(True)
+        self.xray_box.setDisabled(True)
+        self.repaint()
         try:
             # check if printerURL has already been defined (user reconnecting)
             if len(self.printerURL) > 0:
@@ -1377,10 +1393,12 @@ class App(QMainWindow):
         # Handle clicking cancel
         elif not ok:
             self.updateStatusbar('Connection request cancelled.')
+            self.resetConnectInterface()
             return
         # Handle invalid input
         elif len(text) < 6 or text[:4] not in ['http']:
             self.updateStatusbar('Invalid IP address or hostname: \"' + text +'\". Add http(s):// to try again.')
+            self.resetConnectInterface()
             return
         # Update user with new state
         self.statusBar.showMessage('Attempting to connect to: ' + self.printerURL )
@@ -1390,6 +1408,7 @@ class App(QMainWindow):
             if not self.printer.printerType():
                 # connection failed for some reason
                 self.updateStatusbar('Device at '+self.printerURL+' either did not respond or is not a Duet V2 or V3 printer.')
+                self.resetConnectInterface()
                 return
             else:
                 # connection succeeded, update objects accordingly
@@ -1406,6 +1425,7 @@ class App(QMainWindow):
         except Exception as conn1:
             self.updateStatusbar('Cannot connect to: ' + self.printerURL )
             print('Duet Connection exception: ', conn1)
+            self.resetConnectInterface()
             return
         # Connection succeeded, update GUI first
         self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
@@ -1421,6 +1441,22 @@ class App(QMainWindow):
         self.jogpanel_button.setDisabled(False)
         # update connection status indicator to green
         self.connection_status.setStyleSheet(style_green)
+        self.cp_label.setStyleSheet(style_red)
+
+    def resetConnectInterface(self):
+        self.connection_button.setDisabled(False)
+        self.disconnection_button.setDisabled(True)
+        self.calibration_button.setDisabled(True)
+        self.cp_button.setDisabled(True)
+        self.jogpanel_button.setDisabled(True)
+        self.offsets_box.setVisible(False)
+        self.connection_status.setText('Disconnected')
+        self.connection_status.setStyleSheet(style_red)
+        self.cp_label.setText('<b>CP:</b> <i>undef</i>')
+        self.cp_label.setStyleSheet(style_red)
+        self.repeatSpinBox.setDisabled(True)
+        self.xray_box.setDisabled(True)
+        self.repaint()
 
     def controlledPoint(self):
         # display crosshair on video feed at center of image
