@@ -1478,6 +1478,7 @@ class App(QMainWindow):
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
         self.image_label.setText('Restoring machine to initial state..')
+        self.updateStatusbar('Restoring machine and disconnecting...')
         self.connection_button.setText('Pending..')
         self.connection_button.setDisabled(True)
         self.disconnection_button.setDisabled(True)
