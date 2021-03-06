@@ -1502,7 +1502,7 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_orange)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
-        sleep(1)
+        self.repaint()
         # End video threads and restart default thread
         try:
             if self.detect_thread.isRunning():
