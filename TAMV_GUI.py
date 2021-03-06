@@ -1476,6 +1476,17 @@ class App(QMainWindow):
             except: self.startVideo()
     
     def disconnectFromPrinter(self):
+        # End video threads and restart default thread
+        try:
+            if self.detect_thread.isRunning():
+                self.detect_thread.stop()
+        except Exception: None
+        try:
+            if self.video_thread.isRunning():
+                self.video_thread.stop()
+        except Exception: None
+        self.startVideo()
+        
         # update status 
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
         # Wait for printer to stop moving and unload tools
@@ -1512,17 +1523,6 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
-
-        # End video threads and restart default thread
-        try:
-            if self.detect_thread.isRunning():
-                self.detect_thread.stop()
-        except Exception: None
-        try:
-            if self.video_thread.isRunning():
-                self.video_thread.stop()
-        except Exception: None
-        self.startVideo()
 
     def runCalibration(self):
         # close camera settings dialog so it doesn't crash
