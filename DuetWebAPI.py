@@ -75,7 +75,7 @@ class DuetWebAPI:
                     replyURL = (f'{self._base_url}'+'/rr_reply')
                     reply = self.requests.get(replyURL,timeout=8)
                     if buffer_size < 150:
-                        print(buffer_size)
+                        print('Buffer low: ', buffer_size)
                         time.sleep(0.6)
                 while self.getStatus() not in "idle":
                     time.sleep(0.5)
@@ -216,7 +216,7 @@ class DuetWebAPI:
                     replyURL = (f'{self._base_url}'+'/rr_reply')
                     reply = self.requests.get(replyURL,timeout=8)
                     if buffer_size < 150:
-                        print(buffer_size)
+                        print('Buffer low: ', buffer_size)
                         time.sleep(0.6)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
                 r = self.requests.get(URL,timeout=8)
@@ -258,7 +258,7 @@ class DuetWebAPI:
                 except:
                     buffer_size = 149
                 if buffer_size < 150:
-                    print(buffer_size)
+                    print('Buffer low: ', buffer_size)
                     time.sleep(0.6)
             URL=(f'{self._base_url}'+'/rr_gcode?gcode='+command)
             r = self.requests.get(URL,timeout=8)
