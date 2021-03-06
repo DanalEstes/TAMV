@@ -343,9 +343,19 @@ class CameraSettingsDialog(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        
-        # Get camera settings from video thread
-        (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
+        # Find out which feed is running
+        try:
+            if self.parent().video_thread.isRunning():
+                self.active_thread = 'video'
+            else: self.active_thread = 'detect'
+        except Exception: self.active_thread = 'detect'
+
+        if self.active_thread == 'video':
+            # Get camera settings from video thread
+            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
+        else:
+            # Get camera settings from detect thread
+            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().detect_thread.getProperties()
         
         # Set layout details
         self.layout = QVBoxLayout()
@@ -428,8 +438,13 @@ class CameraSettingsDialog(QDialog):
         self.layout.addWidget(self.buttonBox)
     
     def resetDefaults(self):
-        self.parent().video_thread.resetProperties()
-        (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
+        if self.active_thread == 'video':
+            self.parent().video_thread.resetProperties()
+            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
+        else:
+            self.parent().detect_thread.resetProperties()
+            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().detect_thread.getProperties()
+        
         brightness_input = int(brightness_input)
         contrast_input = int(contrast_input)
         saturation_input = int(saturation_input)
@@ -444,37 +459,48 @@ class CameraSettingsDialog(QDialog):
         self.hue_label.setText(str(hue_input))
 
     def changeBrightness(self):
+        parameter = int(self.brightness_slider.value())
         try:
-            if self.parent().video_thread.isRunning():
-                parameter = int(self.brightness_slider.value())
+            if self.active_thread == 'video':
                 self.parent().video_thread.setProperty(brightness=parameter)
-                self.brightness_label.setText(str(parameter))
+            else:
+                self.parent().detect_thread.setProperty(brightness=parameter)
         except:
             None
+        self.brightness_label.setText(str(parameter))
+
     def changeContrast(self):
+        parameter = int(self.contrast_slider.value())
         try:
-            if self.parent().video_thread.isRunning():
-                parameter = int(self.contrast_slider.value())
+            if self.active_thread == 'video':
                 self.parent().video_thread.setProperty(contrast=parameter)
-                self.contrast_label.setText(str(parameter))
+            else:
+                self.parent().detect_thread.setProperty(contrast=parameter)
         except:
             None
+        self.contrast_label.setText(str(parameter))
+
     def changeSaturation(self):
+        parameter = int(self.saturation_slider.value())
         try:
-            if self.parent().video_thread.isRunning():
-                parameter = int(self.saturation_slider.value())
+            if self.active_thread == 'video':
                 self.parent().video_thread.setProperty(saturation=parameter)
-                self.saturation_label.setText(str(parameter))
+            else:
+                self.parent().detect_thread.setProperty(saturation=parameter)
         except:
             None
+        self.saturation_label.setText(str(parameter))
+
     def changeHue(self):
+        parameter = int(self.hue_slider.value())
         try:
-            if self.parent().video_thread.isRunning():
-                parameter = int(self.hue_slider.value())
+            if self.active_thread == 'video':
                 self.parent().video_thread.setProperty(hue=parameter)
-                self.hue_label.setText(str(parameter))
+            else:
+                self.parent().detect_thread.setProperty(hue=parameter)
         except:
             None
+        self.hue_label.setText(str(parameter))
     
 class OverlayLabel(QLabel):
     def __init__(self):
@@ -516,12 +542,27 @@ class CalibrateNozzles(QThread):
         self.numTools = numTools
         self.cycles = cycles
         self.message_update.emit('Detector created, waiting for tool..')
+        # Video Parameters
+        self.brightness_default = 0
+        self.contrast_default = 0
+        self.saturation_default = 0
+        self.hue_default = 0
+        self.brightness = -1
+        self.contrast = -1
+        self.saturation = -1
+        self.hue = -1
+
         # Start Video feed
         self.cap = cv2.VideoCapture(video_src)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
         self.cap.set(cv2.CAP_PROP_FPS,25)
+        self.brightness_default = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
+        self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
+        self.saturation_default = self.cap.get(cv2.CAP_PROP_SATURATION)
+        self.hue_default = self.cap.get(cv2.CAP_PROP_HUE)
+
         self.ret, self.cv_img = self.cap.read()
         if self.ret:
             self.change_pixmap_signal.emit(self.cv_img)
@@ -531,6 +572,37 @@ class CalibrateNozzles(QThread):
             self.xray = False
         else: self.xray = True
 
+    def setProperty(self,brightness=-1, contrast=-1, saturation=-1, hue=-1):
+        try:
+            if int(brightness) >= 0:
+                self.brightness = brightness
+                self.cap.set(cv2.CAP_PROP_BRIGHTNESS,self.brightness)
+        except Exception as b1: 
+            print('Brightness exception: ', b1 )
+        try:
+            if int(contrast) >= 0:
+                self.contrast = contrast
+                self.cap.set(cv2.CAP_PROP_CONTRAST,self.contrast)
+        except Exception as c1:
+            print('Contrast exception: ', c1 )
+        try:
+            if int(saturation) >= 0:
+                self.saturation = saturation
+                self.cap.set(cv2.CAP_PROP_SATURATION,self.saturation)
+        except Exception as s1:
+            print('Saturation exception: ', s1 )
+        try:
+            if int(hue) >= 0:
+                self.hue = hue
+                self.cap.set(cv2.CAP_PROP_HUE,self.hue)
+        except Exception as h1:
+            print('Hue exception: ', h1 )
+
+    def getProperties(self):
+        return (self.brightness_default, self.contrast_default, self.saturation_default,self.hue_default)
+
+    def resetProperties(self):
+        self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
 
     def run(self):
         self.createDetector()
