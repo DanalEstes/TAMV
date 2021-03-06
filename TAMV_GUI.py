@@ -622,6 +622,9 @@ class CalibrateNozzles(QThread):
             while self._running:
                 for rep in range(self.cycles):
                     for tool in range(self.parent().num_tools):
+                        if self.loose:
+                            self.detect_minCircularity = 0.3
+                        self.createDetector()
                         # process GUI events
                         app.processEvents()
                         # Update status bar
@@ -984,7 +987,7 @@ class CalibrateNozzles(QThread):
 
         # create detector
         self.detector = cv2.SimpleBlobDetector_create(params)
-        self.detector_created.emit('Detector: OK')
+        #self.detector_created.emit('Detector: OK')
 
     def adjust_gamma(self, image, gamma=1.2):
         # build a lookup table mapping the pixel values [0, 255] to
