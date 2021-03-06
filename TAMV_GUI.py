@@ -708,6 +708,12 @@ class CalibrateNozzles(QThread):
             yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35,1)
             self.frame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
             target = [int(np.around(self.frame.shape[1]/2)),int(np.around(self.frame.shape[0]/2))]
+            # Process runtime algorithm changes
+            if self.loose:
+                self.detect_minCircularity = 0.3
+            if self.detector_changed:
+                self.createDetector()
+                self.detector_changed = False
             # run nozzle detection for keypoints
             keypoints = self.detector.detect(self.frame)
             # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
