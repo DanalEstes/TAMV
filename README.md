@@ -1,17 +1,66 @@
-# ©2020 Danal Estes, all rights reserved.
-This fork is a modification for Jubilee printers running RRF2 and RRF3 and serves to extend the wonderful work Danal Estes created for the community. 
+# This is a branch under active development, so please don't rely on these instructions as final. 
 
-# DISCLAIMER: this will work on Duet 2 boards running RRF2, or Duet 3 boards running RRF 3+. Duet 2 with RRF 3 is still not fully functional.
+**You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
-# Major changes to this fork (Why should I use this version of TAMV?)
-1. blob detection parameters tweaked to better detect rounder blobs of a certain size (helps reduce false positives)
-2. image filter used for blob detection is now based on a threshold image that produces proper edges for shapes (or at least more consistent ones), and doesn't use color information for filtering (improves detection)
-3. nozzle alignment uses a rotation matrix via a least-squares approximation of the mapping between camera space and machine space
-4. camera feed defaults to 640x480 resolution to speed up processing times and provide consistent accuracy
-5. video frame capture and frame display are offloaded to their own threads to speed up processing (not thread-safe, but works well and doesn't cause memory leaks)
-6. added new TAMV flags: '-xray' (shows the edge detection frame to help troubleshoot); '-loose': uses a less restrictive roundness in blob detection that aids in nozzle detection sometimes; '-export': exports JSON of repeat alignment runs to allow us to plot data and store it somewhere; '-alternate': a community-developed alternative for nozzle detection that seems to work better when using a webcam for nozzle detection
-7. added "plot.py" which makes those nice graphs that help us visualize what's happening on the machine during TAMV runs
+# TAMV = Tool Alignment (using) Machine Vision
+Ever needed to simplify nozzle and tool alignment on a toolchanging 3D printer/machine? 
 
+Well, welcome to the wonderful experience of **automated nozzle alignment** and Z offset setting using machine vision (for X&Y offset alignment) and electrical touch plates (for Z offset alignment).
+
+This program significantly improves how tool-changing machines using Duet RRF v2/3 on Duet2 / Duet3 controlers by leveraging open-source computer vision algorithms from the OpenCV project to eliminate the guesswork from tool alignment and (nearly) completely automate the process. Let the machines do the work!
+
+TAMV in its current release is a graphical program that allows you to connect to your printer and automatically calculate tool offsets in XY space using a generic [USB microscope](https://www.amazon.co.uk/gp/product/B07KQDQ4VR/) and a Raspberry Pi (preferably a Pi4 or better).
+
+You may opt to use a webcam for tool alignment, but this approach (while reliable) will need significantly more work to overcome issues related to insufficient/inappropriate lighting and limited depth-of-field of webcam optics (not to mention more sensor noise artifacts), all of which can throw off the computer vision algorithms and cause headaches.
+
+# Why should I use this version/fork of TAMV?
+1. Its now a graphical interface with ZERO command line steps at run-time.
+2. Its got a bundled installation script for getting OpenCV 4.5.1 running on a Raspberry Pi (it will take 1.5 hours to install the first time)
+3. The program guides you through the alignment process by only enabling the right procedures at the right times.
+4. The computer vision functions automatically calibrate your camera output to your machine's movement so there's no need to worry about lens distortion or slightly off-plane images.
+5. You may use any USB webcam (no picam yet!) that is compatible with Raspbian (when running TAMV on a Raspberry Pi)
+6. You can also use RTSP/network cameras and run the main program on a desktop/laptop if you so prefer (just need Python -- not much benefit over a Raspberry Pi 4 since the computer vision is running some basic blob detection.)
+7. (still pending RC2 release) - TAMV can run repeatability tests for your machine (based on the number of cycles you define) and export/display useful visualizations of how your machine behaves over time to aid in identifying tool drift.
+8. (still pending RC2 release) - TAMV allows you to save your machine address and some advanced parameters to save you some time when running it multiple times
+9. Its completely open-source and community driven.
+10. *Did we mention its a graphical interface now?*
+
+# What's included in this package?
+1. **TAMV**: the main interface for automated X/Y offset tool alignment using computer vision
+2. **ZTATP**: a second program that uses electrical touch plates to physically measure tool Z offsets using your Duet controller's endstop inputs
+
+# What do I need to run TAMV?
+1. A fully functional tool changer platform running RepRapFirmware 2.0.5 or 3.2+
+   It has only been tested on machines using either Duet2 (+Duex2 or Duex5) or Duet 3 boards.
+   All your toolchanging macros (*tpre, tpost, tfree*) have to be up and running - you can run tool changes cleanly.
+   All of your tools are assumed to have reached a **"safe working area"** once the tool is active (after tpost has completed), and your selected "Controlled Point" (the XY position where your microscope is located) can be reached using a large Y move followed by a large X move (be mindful of collisions here!)
+   You will need to modify your tool change macros to exclude any extrusion moves temporarily to make sure the nozzles are clear of any filament and can be detected reliably. This is still a manual modification and we're working on automating this in the near future.
+   All of your tools must have clean nozzles with no excessive filament deposits surrounding the nozzle.
+2. A Raspberry Pi (3 or better with at least 2GB of RAM)
+   We prefer a **Raspberry Pi 4 with 4GB of RAM** for a smoother experience, but it will also work on a Model 3 Raspberry Pi.
+   OpenCV requires at least 2GB of RAM to be installed, keep this in mind before jumping into installing openCV. It also takes over an hour to compile OpenCV on a Raspberry Pi 4.
+3. [A generic USB microscope](https://www.amazon.co.uk/gp/product/B07KQDQ4VR/) with the light controls built-in to the USB cable
+   This is a generic mass-manufactured part commonly found at your favorite ecommerce outlet of choice. **Make sure you are using the variant that has a lighting control wheel built-in to the USB cable**, as there are alternative versions that look very similar which lack lighting control and have been found to be incompatible with Raspbian and will not work.
+   You may choose to use a webcam you already have at home, but be mindful that computer vision requires a specific type of lighting (mainly soft diffuse light directed perpendicular from the camera to the object/nozzle) to work consistently. Webcams also tend to have wide-angle lens optics and offer a very limited field of view, further complicating things when you need to focus on a 0.4mm nozzle from a 25mm focal distance. Add to that webcam sensors typically exhibit a lot of noise artifacts when forced to zoom in so closely to the nozzles. Overall, it will work, but you'll need to fiddle with it until its just right. We all started using TAMV with Logitech C270 webcams, and then moved to microscopes for the vastly superior experience.
+4. A little dose of patience (since you're reading this and already own a toolchanger, then we're sure you've got this bit covered..)
+   You'll find a great community and ton of help and answers to your questions on the [Jubilee Discord Server](https://discord.gg/XkphRqb)
+
+# What do I need to run ZTATP?
+1. A toolchanger, just like #1 above for TAMV
+2. A Raspberry Pi, just like #2 above for TAMV, but you can also choose to use any computer that can run a Python3 script and communicate with your Duet over the local network.
+3. Some sort of electrically conductive touch plate which you're going to connect to an endstop input (ground) on your Duet board.
+   This can be as simple as a block of aluminum with an electrical wire screwed into it. As long as its electrically conductive and relatively small (under 3 inches on its longest side), you should be OK (size plays a large part in signal noise, so avoid using your printer's build plate..)
+4. A second electrical wire that you can hook up to your tools (one at a time, ZTATP pauses and prompts you to connect/disconnect everything for each tool).
+   We can recommend some electrical wire and an alligator clip that you can connect to your nozzle for each alignment sequence.
+5. A multimeter (REQUIRED!) to test for electrical continuity between your tool nozzle and touch plate before each alignement sequence.
+   We are talking about moving your tool down into a block of metal on your printer bed with ZTATP, so any collisions will definitely lead to machine/tool damage that will cause frustration and expensive repair.
+6. Patience, more so than TAMV, since you want to make sure each tool is ready to be slowly lowered into a block of solid metal, and you definitely don't want to mess this up.
+   Don't worry. If you do your checks before each probe move, you won't have any crashes (hopefully). 
+   **But you are taking full responsibilty and accountability for using ZTATP and we will not be liable for any damages that you may incur.**
+
+
+*Instructions below are now deprecated*
+---
 # TAMV
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
