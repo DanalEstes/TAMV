@@ -31,31 +31,52 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 
 # What do I need to run TAMV?
 1. A fully functional tool changer platform running RepRapFirmware 2.0.5 or 3.2+
+
    It has only been tested on machines using either Duet2 (+Duex2 or Duex5) or Duet 3 boards.
+
    All your toolchanging macros (*tpre, tpost, tfree*) have to be up and running - you can run tool changes cleanly.
+
    All of your tools are assumed to have reached a **"safe working area"** once the tool is active (after tpost has completed), and your selected "Controlled Point" (the XY position where your microscope is located) can be reached using a large Y move followed by a large X move (be mindful of collisions here!)
+
    You will need to modify your tool change macros to exclude any extrusion moves temporarily to make sure the nozzles are clear of any filament and can be detected reliably. This is still a manual modification and we're working on automating this in the near future.
+
    All of your tools must have clean nozzles with no excessive filament deposits surrounding the nozzle.
+
 2. A Raspberry Pi (3 or better with at least 2GB of RAM)
+
    We prefer a **Raspberry Pi 4 with 4GB of RAM** for a smoother experience, but it will also work on a Model 3 Raspberry Pi.
+
    OpenCV requires at least 2GB of RAM to be installed, keep this in mind before jumping into installing openCV. It also takes over an hour to compile OpenCV on a Raspberry Pi 4.
+
 3. [A generic USB microscope](https://www.amazon.co.uk/gp/product/B07KQDQ4VR/) with the light controls built-in to the USB cable
+
    This is a generic mass-manufactured part commonly found at your favorite ecommerce outlet of choice. **Make sure you are using the variant that has a lighting control wheel built-in to the USB cable**, as there are alternative versions that look very similar which lack lighting control and have been found to be incompatible with Raspbian and will not work.
+
    You may choose to use a webcam you already have at home, but be mindful that computer vision requires a specific type of lighting (mainly soft diffuse light directed perpendicular from the camera to the object/nozzle) to work consistently. Webcams also tend to have wide-angle lens optics and offer a very limited field of view, further complicating things when you need to focus on a 0.4mm nozzle from a 25mm focal distance. Add to that webcam sensors typically exhibit a lot of noise artifacts when forced to zoom in so closely to the nozzles. Overall, it will work, but you'll need to fiddle with it until its just right. We all started using TAMV with Logitech C270 webcams, and then moved to microscopes for the vastly superior experience.
+
 4. A little dose of patience (since you're reading this and already own a toolchanger, then we're sure you've got this bit covered..)
+
    You'll find a great community and ton of help and answers to your questions on the [Jubilee Discord Server](https://discord.gg/XkphRqb)
 
 # What do I need to run ZTATP?
 1. A toolchanger, just like #1 above for TAMV
 2. A Raspberry Pi, just like #2 above for TAMV, but you can also choose to use any computer that can run a Python3 script and communicate with your Duet over the local network.
 3. Some sort of electrically conductive touch plate which you're going to connect to an endstop input (ground) on your Duet board.
+
    This can be as simple as a block of aluminum with an electrical wire screwed into it. As long as its electrically conductive and relatively small (under 3 inches on its longest side), you should be OK (size plays a large part in signal noise, so avoid using your printer's build plate..)
+
 4. A second electrical wire that you can hook up to your tools (one at a time, ZTATP pauses and prompts you to connect/disconnect everything for each tool).
+
    We can recommend some electrical wire and an alligator clip that you can connect to your nozzle for each alignment sequence.
+
 5. A multimeter (REQUIRED!) to test for electrical continuity between your tool nozzle and touch plate before each alignement sequence.
+
    We are talking about moving your tool down into a block of metal on your printer bed with ZTATP, so any collisions will definitely lead to machine/tool damage that will cause frustration and expensive repair.
+
 6. Patience, more so than TAMV, since you want to make sure each tool is ready to be slowly lowered into a block of solid metal, and you definitely don't want to mess this up.
+
    Don't worry. If you do your checks before each probe move, you won't have any crashes (hopefully). 
+
    **But you are taking full responsibilty and accountability for using ZTATP and we will not be liable for any damages that you may incur.**
 
 
