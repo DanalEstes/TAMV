@@ -67,6 +67,12 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 
    **But you are taking full responsibilty and accountability for using ZTATP and we will not be liable for any damages that you may incur.**
 
+# How do I install OpenCV on my Raspberry Pi?
+1. Clone this repository into your home folder
+2. Run `~/TAMV/install_opencv.sh`
+3. Wait an hour or two for everything to be installed
+4. Celebrate.
+
 
 *Instructions below are now deprecated*
 ---
