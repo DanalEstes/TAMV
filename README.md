@@ -32,14 +32,10 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 # What do I need to run TAMV?
 1. A fully functional tool changer platform running RepRapFirmware 2.0.5 or 3.2+
 
-   It has only been tested on machines using either Duet2 (+Duex2 or Duex5) or Duet 3 boards.
-
-   All your toolchanging macros (*tpre, tpost, tfree*) have to be up and running - you can run tool changes cleanly.
-
-   All of your tools are assumed to have reached a **"safe working area"** once the tool is active (after tpost has completed), and your selected "Controlled Point" (the XY position where your microscope is located) can be reached using a large Y move followed by a large X move (be mindful of collisions here!)
-
-   You will need to modify your tool change macros to exclude any extrusion moves temporarily to make sure the nozzles are clear of any filament and can be detected reliably. This is still a manual modification and we're working on automating this in the near future.
-
+   It has only been tested on machines using either Duet2 (+Duex2 or Duex5) or Duet 3 boards.  
+   All your toolchanging macros (*tpre, tpost, tfree*) have to be up and running - you can run tool changes cleanly.  
+   All of your tools are assumed to have reached a **"safe working area"** once the tool is active (after tpost has completed), and your selected "Controlled Point" (the XY position where your microscope is located) can be reached using a large Y move followed by a large X move (be mindful of collisions here!)  
+   You will need to modify your tool change macros to exclude any extrusion moves temporarily to make sure the nozzles are clear of any filament and can be detected reliably. This is still a manual modification and we're working on automating this in the near future.  
    All of your tools must have clean nozzles with no excessive filament deposits surrounding the nozzle.
 
 2. A Raspberry Pi (3 or better with at least 2GB of RAM)
