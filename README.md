@@ -72,6 +72,7 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 2. Run `~/TAMV/install_opencv.sh`
 3. Wait an hour or two for everything to be installed
 4. Celebrate.
+5. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
 
 
 *Instructions below are now deprecated*
