@@ -9,6 +9,7 @@
 # methods for other information; please keep the abstraction for V2 V3 
 #
 # Copyright (C) 2020 Danal Estes all rights reserved.
+# Copyright (C) 2021 Haytham Bennani
 # Released under The MIT License. Full text available via https://opensource.org/licenses/MIT
 #
 # Requires Python3
