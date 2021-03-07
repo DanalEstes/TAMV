@@ -20,9 +20,9 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 4. The computer vision functions automatically calibrate your camera output to your machine's movement so there's no need to worry about lens distortion or slightly off-plane images.
 5. You may use any USB webcam (no picam yet!) that is compatible with Raspbian (when running TAMV on a Raspberry Pi)
 6. You can also use RTSP/network cameras and run the main program on a desktop/laptop if you so prefer (just need Python -- not much benefit over a Raspberry Pi 4 since the computer vision is running some basic blob detection.)
-7. (still pending RC2 release) - TAMV can run repeatability tests for your machine (based on the number of cycles you define) and export/display useful visualizations of how your machine behaves over time to aid in identifying tool drift.
-8. (still pending RC2 release) - TAMV allows you to save your machine address and some advanced parameters to save you some time when running it multiple times
-9. Its completely open-source and community driven.
+7. *(still pending RC2 release) - TAMV can run repeatability tests for your machine (based on the number of cycles you define) and export/display useful visualizations of how your machine behaves over time to aid in identifying tool drift.*
+8. *(still pending RC2 release) - TAMV allows you to save your machine address and some advanced parameters to save you some time when running it multiple times*
+9. **Its completely open-source and community driven.**
 10. *Did we mention its a graphical interface now?*
 
 # What's included in this package?
@@ -60,7 +60,10 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 
 # What do I need to run ZTATP?
 1. A toolchanger, just like #1 above for TAMV
-2. A Raspberry Pi, just like #2 above for TAMV, but you can also choose to use any computer that can run a Python3 script and communicate with your Duet over the local network.
+2. A Raspberry Pi, just like #2 above for TAMV
+
+   You may also choose to use any computer that can run a Python3 script and communicate with your Duet over the local network.
+
 3. Some sort of electrically conductive touch plate which you're going to connect to an endstop input (ground) on your Duet board.
 
    This can be as simple as a block of aluminum with an electrical wire screwed into it. As long as its electrically conductive and relatively small (under 3 inches on its longest side), you should be OK (size plays a large part in signal noise, so avoid using your printer's build plate..)
