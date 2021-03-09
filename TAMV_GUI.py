@@ -1515,8 +1515,8 @@ class App(QMainWindow):
             tempCoords = self.printer.getCoords()
             self.printer.gCode('T-1')
             self.printer.gCode(self.sender().text())
-            self.printer.gCode('G1 Y' + str(self.tempCoords['Y']))
-            self.printer.gCode('G1 X' + str(self.tempCoords['X']))
+            self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+            self.printer.gCode('G1 X' + str(tempCoords['X']))
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
