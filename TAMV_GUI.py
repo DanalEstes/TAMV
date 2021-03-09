@@ -1505,10 +1505,12 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
 
     def callTool(self):
+        sender = self.sender()
+        sender.setChecked(True)
         # return carriage to controlled point position
         if len(self.cp_coords) > 0:
             self.printer.gCode('T-1')
-            self.printer.gCode(self.sender().text())
+            self.printer.gCode(sender.text())
             self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             self.printer.gCode('G1 X' + str(self.cp_coords['X']))
         else:
@@ -1643,11 +1645,16 @@ class App(QMainWindow):
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
         # Wait for printer to stop moving and unload tools
         _ret_error = self.printer.gCode('M400')
+        tempCoords = self.printer.getCoords()
         _ret_error += self.printer.gCode('T-1')
         # return carriage to controlled point position
         if len(self.cp_coords) > 0:
             _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+        else:
+            print('Returning.')
+            _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+            _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
         # update status with disconnection state
         if _ret_error == 0:
             self.updateStatusbar('Disconnected.')
