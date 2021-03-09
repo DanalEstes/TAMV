@@ -1087,7 +1087,7 @@ class App(QMainWindow):
         # SET UP STYLESHEETS FOR GUI ELEMENTS
         self.setStyleSheet(
             '\
-            QPushButton {\
+            QPushButton, QPushButton:!checked {\
                 border: 1px solid #adadad;\
                 border-style: outset;\
                 border-radius: 4px;\
@@ -1119,7 +1119,7 @@ class App(QMainWindow):
                 border-style: inset;\
                 color: white;\
             }\
-            QPushButton#active {\
+            QPushButton#active, QPushButton:checked {\
                 background-color: green;\
                 color: white;\
             }\
@@ -1133,7 +1133,7 @@ class App(QMainWindow):
             QPushButton#terminate:pressed {\
                 background-color: #c0392b;\
             }\
-            QPushButton:disabled,QPushButton#terminate:disabled {\
+            QPushButton:disabled, QPushButton#terminate:disabled {\
                 background-color: #cccccc;\
                 color: #999999;\
             }\
@@ -1251,6 +1251,15 @@ class App(QMainWindow):
         self.offsets_box.setLayout(vbox)
         vbox.addWidget(self.offsets_table)
         self.offsets_box.setVisible(False)
+        # Tool buttons table
+        self.toolBoxLayout = QHBoxLayout()
+        self.toolBoxLayout.setSpacing(1)
+        self.toolBox = QGroupBox()
+        self.toolBoxLayout.setContentsMargins(0,0,0,0)
+        self.toolBox.setLayout(self.toolBoxLayout)
+        self.toolBox.setVisible(False)
+        self.toolButtons = []
+
         # Xray checkbox
         self.xray_box = QCheckBox('X-ray')
         self.xray_box.setChecked(False)
@@ -1271,6 +1280,7 @@ class App(QMainWindow):
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
         grid.addWidget(self.xray_box,1,2)
         grid.addWidget(self.loose_box,1,3)
+        grid.addWidget(self.toolBox,1,4)
         grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
@@ -1461,11 +1471,23 @@ class App(QMainWindow):
                     self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
                     self.offsets_table.setItem(i,0,x_tableitem)
                     self.offsets_table.setItem(i,1,y_tableitem)
+                    # add tool buttons
+                    toolButton = QPushButton('T'+str(i))
+                    self.toolButtons.append(toolButton)
         except Exception as conn1:
             self.updateStatusbar('Cannot connect to: ' + self.printerURL )
             print('Duet Connection exception: ', conn1)
             self.resetConnectInterface()
             return
+
+        # Display toolbox
+        for i,button in enumerate(self.toolButtons):
+            button.setCheckable(True)
+            button.setChecked(False)
+            button.clicked.connect(self.callTool)
+            self.toolBoxLayout.addWidget(button)
+
+        self.toolBox.setVisible(True)
         # Connection succeeded, update GUI first
         self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
         self.connection_button.setText('Online: ' + self.printerURL[self.printerURL.rfind('/')+1:])
@@ -1482,6 +1504,14 @@ class App(QMainWindow):
         self.connection_status.setStyleSheet(style_green)
         self.cp_label.setStyleSheet(style_red)
 
+    def callTool(self):
+        self.printer.gCode('T-1')
+        self.printer.gCode(self.sender().text())
+        # return carriage to controlled point position
+        if len(self.cp_coords) > 0:
+            self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+            self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
         self.disconnection_button.setDisabled(True)
@@ -1497,6 +1527,13 @@ class App(QMainWindow):
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(True)
+        index = self.toolBoxLayout.count()-1
+        while index >= 0:
+            curWidget = self.toolBoxLayout.itemAt(index).widget()
+            curWidget.setParent(None)
+            index -= 1
+        self.toolBox.setVisible(False)
+        self.toolButtons = []
         self.repaint()
 
     def controlledPoint(self):
@@ -1583,6 +1620,7 @@ class App(QMainWindow):
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(True)
+        self.toolBox.setVisible(False)
         self.repaint()
         # End video threads and restart default thread
         try:
@@ -1632,6 +1670,7 @@ class App(QMainWindow):
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
         self.loose_box.setDisabled(True)
+        self.resetConnectInterface()
 
     def runCalibration(self):
         # close camera settings dialog so it doesn't crash
