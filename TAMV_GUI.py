@@ -1505,12 +1505,18 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
 
     def callTool(self):
-        self.printer.gCode('T-1')
-        self.printer.gCode(self.sender().text())
         # return carriage to controlled point position
         if len(self.cp_coords) > 0:
+            self.printer.gCode('T-1')
+            self.printer.gCode(self.sender().text())
             self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+        else:
+            tempCoords = self.printer.getCoords()
+            self.printer.gCode('T-1')
+            self.printer.gCode(self.sender().text())
+            self.printer.gCode('G1 Y' + str(self.tempCoords['Y']))
+            self.printer.gCode('G1 X' + str(self.tempCoords['X']))
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
