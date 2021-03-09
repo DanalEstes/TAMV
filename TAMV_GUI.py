@@ -924,9 +924,14 @@ class CalibrateNozzles(QThread):
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
                         self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
-                        
-                        self.parent().offsets_table.setItem(tool,0,QTableWidgetItem(str(np.around(final_x, 2))))
-                        self.parent().offsets_table.setItem(tool,1,QTableWidgetItem(str(np.around(final_y, 2))))
+                        x_tableitem = QTableWidgetItem(str(np.around(final_x, 2)))
+                        x_tableitem.setForeground(QColor(255,255,255,255))
+                        x_tableitem.setBackground(QColor(0,255,0,255))
+                        y_tableitem = QTableWidgetItem(str(np.around(final_y, 2)))
+                        y_tableitem.setForeground(QColor(255,255,255,255))
+                        y_tableitem.setBackground(QColor(0,255,0,255))
+                        self.parent().offsets_table.setItem(tool,0,x_tableitem)
+                        self.parent().offsets_table.setItem(tool,1,y_tableitem)
                         
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
                         return(_return, self.transform_matrix, self.mpp)
@@ -1453,9 +1458,11 @@ class App(QMainWindow):
                 self.offsets_table.setRowCount(self.num_tools)
                 for i in range(self.num_tools):
                     current_tool = self.printer.getG10ToolOffset(i)
+                    x_tableitem = QTableWidgetItem(str(current_tool['X']))
+                    y_tableitem = QTableWidgetItem(str(current_tool['Y']))
                     self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
-                    self.offsets_table.setItem(i,0,QTableWidgetItem(str(current_tool['X'])))
-                    self.offsets_table.setItem(i,1,QTableWidgetItem(str(current_tool['Y'])))
+                    self.offsets_table.setItem(i,0,x_tableitem)
+                    self.offsets_table.setItem(i,1,y_tableitem)
         except Exception as conn1:
             self.updateStatusbar('Cannot connect to: ' + self.printerURL )
             print('Duet Connection exception: ', conn1)
