@@ -1087,7 +1087,7 @@ class App(QMainWindow):
         # SET UP STYLESHEETS FOR GUI ELEMENTS
         self.setStyleSheet(
             '\
-            QPushButton, QPushButton:!checked {\
+            QPushButton {\
                 border: 1px solid #adadad;\
                 border-style: outset;\
                 border-radius: 4px;\
@@ -1098,7 +1098,7 @@ class App(QMainWindow):
                 background-color: #27ae60;\
                 border: 1px solid #aaaaaa;\
             }\
-            QPushButton:pressed,QPushButton:enabled:pressed {\
+            QPushButton:pressed,QPushButton:enabled:pressed,QPushButton:enabled:checked {\
                 background-color: #ae2776;\
                 border: 1px solid #aaaaaa;\
             }\
@@ -1119,7 +1119,7 @@ class App(QMainWindow):
                 border-style: inset;\
                 color: white;\
             }\
-            QPushButton#active, QPushButton:checked {\
+            QPushButton#active {\
                 background-color: green;\
                 color: white;\
             }\
@@ -1137,7 +1137,7 @@ class App(QMainWindow):
                 background-color: #cccccc;\
                 color: #999999;\
             }\
-            QInputDialog QDialogButtonBox > QPushButton:enabled, QDialog QPushButton:enabled {\
+            QInputDialog QDialogButtonBox > QPushButton:enabled, QDialog QPushButton:enabled,QPushButton[checkable="true"]:enabled {\
                 background-color: none;\
                 color: black;\
                 border: 1px solid #adadad;\
@@ -1145,6 +1145,10 @@ class App(QMainWindow):
                 border-radius: 4px;\
                 font: 14px;\
                 padding: 6px;\
+            }\
+            QPushButton:enabled:checked {\
+                background-color: #ae2776;\
+                border: 1px solid #aaaaaa;\
             }\
             QInputDialog QDialogButtonBox > QPushButton:pressed, QDialog QPushButton:pressed {\
                 background-color: #ae2776;\
@@ -1257,6 +1261,8 @@ class App(QMainWindow):
         self.toolBox = QGroupBox()
         self.toolBoxLayout.setContentsMargins(0,0,0,0)
         self.toolBox.setLayout(self.toolBoxLayout)
+        toolbox_label = QLabel("Load: ")
+        self.toolBoxLayout.addWidget(toolbox_label)
         self.toolBox.setVisible(False)
         self.toolButtons = []
 
@@ -1506,7 +1512,9 @@ class App(QMainWindow):
 
     def callTool(self):
         sender = self.sender()
-        sender.setChecked(True)
+        for button in self.toolButtons:
+            button.setChecked(False)
+        self.toolButtons[int(self.sender().text()[1:])].setChecked(True)
         # return carriage to controlled point position
         if len(self.cp_coords) > 0:
             self.printer.gCode('T-1')
@@ -1652,7 +1660,6 @@ class App(QMainWindow):
             _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
         else:
-            print('Returning.')
             _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
         # update status with disconnection state
@@ -1700,6 +1707,7 @@ class App(QMainWindow):
         self.xray_box.setDisabled(False)
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(False)
+        self.toolBox.setVisible(False)
         # get number of repeat cycles
         self.cycles = self.repeatSpinBox.value()
         self.repeatSpinBox.setDisabled(True)
