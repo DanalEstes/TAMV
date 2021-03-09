@@ -926,10 +926,10 @@ class CalibrateNozzles(QThread):
                         self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
                         x_tableitem = QTableWidgetItem(str(np.around(final_x, 2)))
                         x_tableitem.setForeground(QColor(255,255,255,255))
-                        x_tableitem.setBackground(QColor(0,255,0,255))
+                        x_tableitem.setBackground(QColor(100,255,100,255))
                         y_tableitem = QTableWidgetItem(str(np.around(final_y, 2)))
                         y_tableitem.setForeground(QColor(255,255,255,255))
-                        y_tableitem.setBackground(QColor(0,255,0,255))
+                        y_tableitem.setBackground(QColor(100,255,100,255))
                         self.parent().offsets_table.setItem(tool,0,x_tableitem)
                         self.parent().offsets_table.setItem(tool,1,y_tableitem)
                         
