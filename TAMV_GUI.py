@@ -531,7 +531,7 @@ class CalibrateNozzles(QThread):
     calibration_complete = pyqtSignal()
     #xray_flag = pyqtSignal()
     
-    def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=250, minCircularity=0.8,numTools=0,cycles=1):
+    def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=600, minCircularity=0.8,numTools=0,cycles=1):
         super(QThread,self).__init__(parent=parent)
         self.xray = False
         self.loose = False
@@ -1655,7 +1655,7 @@ class App(QMainWindow):
         self.repeatSpinBox.setDisabled(True)
 
         # create the Nozzle detection capture thread
-        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, cycles=self.cycles,minArea=310)
+        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, cycles=self.cycles,minArea=600)
         
         # connect its signal to the update_image slot
         self.detect_thread.detector_created.connect(self.updateStatusbar)
