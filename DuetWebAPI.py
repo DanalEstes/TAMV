@@ -380,7 +380,7 @@ class DuetWebAPI:
                 r = self.requests.get(URL,timeout=8)
                 j = self.json.loads(r.text)
                 if 'result' in j: j = j['result']
-                ret=j['currentTool']
+                ret=j['state']['currentTool']
                 return(ret)
         except Exception as e1:
             print('Error in getStatus: ',e1 )
