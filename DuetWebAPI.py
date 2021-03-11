@@ -310,7 +310,6 @@ class DuetWebAPI:
                 return(r.status_code)
         endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
         r2 = self.requests.get(endsessionURL,timeout=8)
-        
 
     def getFilenamed(self,filename):
         if (self.pt == 2):
@@ -345,6 +344,46 @@ class DuetWebAPI:
             else:
                 return False
 
+    def getCurrentTool(self):
+        import time
+        try:
+            if (self.pt == 2):
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                if not r.ok:
+                    print('Error in getStatus session: ', r)
+                buffer_size = 0
+                while buffer_size < 150:
+                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                    buffer_request = self.requests.get(bufferURL,timeout=8)
+                    try:
+                        buffer_response = buffer_request.json()
+                        buffer_size = int(buffer_response['buff'])
+                    except:
+                        buffer_size = 149
+                    replyURL = (f'{self._base_url}'+'/rr_reply')
+                    reply = self.requests.get(replyURL,timeout=8)
+                    if buffer_size < 150:
+                        print('Buffer low: ', buffer_size)
+                        time.sleep(0.6)
+                while self.getStatus() not in "idle":
+                    time.sleep(0.5)
+                URL=(f'{self._base_url}'+'/rr_status?type=2')
+                r = self.requests.get(URL,timeout=8)
+                j = self.json.loads(r.text)
+                replyURL = (f'{self._base_url}'+'/rr_reply')
+                reply = self.requests.get(replyURL,timeout=8)
+                ret=j['currentTool']
+                return(ret)
+            if (self.pt == 3):
+                URL=(f'{self._base_url}'+'/machine/status')
+                r = self.requests.get(URL,timeout=8)
+                j = self.json.loads(r.text)
+                if 'result' in j: j = j['result']
+                ret=j['currentTool']
+                return(ret)
+        except Exception as e1:
+            print('Error in getStatus: ',e1 )
 
 
 ####

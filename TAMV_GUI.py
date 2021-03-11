@@ -402,6 +402,7 @@ class CameraSettingsDialog(QDialog):
         self.hue_label = QLabel(str(int(hue_input)))
         # Reset button
         self.reset_button = QPushButton("Reset to defaults")
+        self.reset_button.setToolTip('Reset camera settings to defaults.')
         self.reset_button.clicked.connect(self.resetDefaults)
         
         # Layout objects
@@ -1094,7 +1095,7 @@ class App(QMainWindow):
                 font: 14px;\
                 padding: 6px;\
             }\
-            QPushButton:hover,QPushButton:enabled:hover {\
+            QPushButton:hover,QPushButton:enabled:hover,QPushButton:enabled:!checked:hover {\
                 background-color: #27ae60;\
                 border: 1px solid #aaaaaa;\
             }\
@@ -1196,38 +1197,45 @@ class App(QMainWindow):
         # BUTTONS
         # Connect
         self.connection_button = QPushButton('Connect..')
+        self.connection_button.setToolTip('Connect to a Duet machine..')
         self.connection_button.clicked.connect(self.connectToPrinter)
         self.connection_button.setFixedWidth(170)
         # Disconnect
         self.disconnection_button = QPushButton('STOP / DISCONNECT')
+        self.disconnection_button.setToolTip('End current operation,\nunload tools, and return carriage to CP\nthen disconnect.')
         self.disconnection_button.clicked.connect(self.disconnectFromPrinter)
         self.disconnection_button.setFixedWidth(170)
         self.disconnection_button.setObjectName('terminate')
         self.disconnection_button.setDisabled(True)
         # Controlled point
         self.cp_button = QPushButton('Set Controlled Point..')
+        self.cp_button.setToolTip('Define your origin point\nto calculate all tool offsets from.')
         self.cp_button.clicked.connect(self.controlledPoint)
         self.cp_button.setFixedWidth(170)
         #self.cp_button.setStyleSheet(style_disabled)
         self.cp_button.setDisabled(True)
         # Calibration
         self.calibration_button = QPushButton('Start Tool Alignment')
+        self.calibration_button.setToolTip('Start alignment process.\nMAKE SURE YOUR CARRIAGE IS CLEAR TO MOVE ABOUT WITHOUT COLLISIONS!')
         self.calibration_button.clicked.connect(self.runCalibration)
         #self.calibration_button.setStyleSheet(style_disabled)
         self.calibration_button.setDisabled(True)
         self.calibration_button.setFixedWidth(170)
         # Jog Panel
         self.jogpanel_button = QPushButton('Jog Panel')
+        self.jogpanel_button.setToolTip('Open a control panel to move carriage.')
         self.jogpanel_button.clicked.connect(self.displayJogPanel)
         self.jogpanel_button.setDisabled(True)
         self.jogpanel_button.setFixedWidth(170)
         # Debug Info
         self.debug_button = QPushButton('Debug Information')
+        self.debug_button.setToolTip('Display current debug info for troubleshooting\nand to display final G10 commands')
         self.debug_button.clicked.connect(self.displayDebug)
         self.debug_button.setFixedWidth(170)
         self.debug_button.setObjectName('debug')
         # Exit
         self.exit_button = QPushButton('Quit')
+        self.exit_button.setToolTip('Unload tools, disconnect, and quit TAMV.')
         self.exit_button.clicked.connect(lambda: quit())
         self.exit_button.setFixedWidth(170)
         
@@ -1261,8 +1269,6 @@ class App(QMainWindow):
         self.toolBox = QGroupBox()
         self.toolBoxLayout.setContentsMargins(0,0,0,0)
         self.toolBox.setLayout(self.toolBoxLayout)
-        toolbox_label = QLabel("Load: ")
-        self.toolBoxLayout.addWidget(toolbox_label)
         self.toolBox.setVisible(False)
         self.toolButtons = []
 
@@ -1479,6 +1485,7 @@ class App(QMainWindow):
                     self.offsets_table.setItem(i,1,y_tableitem)
                     # add tool buttons
                     toolButton = QPushButton('T'+str(i))
+                    toolButton.setToolTip('Fetch T' + str(i) + ' to current machine position.')
                     self.toolButtons.append(toolButton)
         except Exception as conn1:
             self.updateStatusbar('Cannot connect to: ' + self.printerURL )
@@ -1486,13 +1493,17 @@ class App(QMainWindow):
             self.resetConnectInterface()
             return
 
+        # Get active tool
+        _active = self.printer.getCurrentTool()
         # Display toolbox
         for i,button in enumerate(self.toolButtons):
             button.setCheckable(True)
-            button.setChecked(False)
+            if int(_active) == i:
+                button.setChecked(True)
+            else: 
+                button.setChecked(False)
             button.clicked.connect(self.callTool)
             self.toolBoxLayout.addWidget(button)
-
         self.toolBox.setVisible(True)
         # Connection succeeded, update GUI first
         self.updateStatusbar('Connected to a Duet V'+str(self.printer.printerType()))
@@ -1511,22 +1522,56 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
 
     def callTool(self):
+        # get current active tool
+        _active = self.printer.getCurrentTool()
+        
+        # get requested tool number
         sender = self.sender()
+
+        # update buttons to new status
         for button in self.toolButtons:
             button.setChecked(False)
         self.toolButtons[int(self.sender().text()[1:])].setChecked(True)
-        # return carriage to controlled point position
-        if len(self.cp_coords) > 0:
-            self.printer.gCode('T-1')
-            self.printer.gCode(sender.text())
-            self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
-            self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+
+        # handle tool already active on printer
+        if int(_active) == int(sender.text()[1:]):
+            msg = QMessageBox()
+            status = msg.question( self, 'Unload ' + sender.text(), 'Unload ' + sender.text() + ' and return carriage to the current position?',QMessageBox.Yes | QMessageBox.No  )
+            if status == QMessageBox.Yes:
+                self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
+                if len(self.cp_coords) > 0:
+                    self.printer.gCode('T-1')
+                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+                    self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+                else:
+                    tempCoords = self.printer.getCoords()
+                    self.printer.gCode('T-1')
+                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+                    self.printer.gCode('G1 X' + str(tempCoords['X']))
+            else:
+                # User cancelled, do nothing
+                return
         else:
-            tempCoords = self.printer.getCoords()
-            self.printer.gCode('T-1')
-            self.printer.gCode(self.sender().text())
-            self.printer.gCode('G1 Y' + str(tempCoords['Y']))
-            self.printer.gCode('G1 X' + str(tempCoords['X']))
+            # Requested tool is different from active tool
+            msg = QMessageBox()
+            status = msg.question( self, 'Confirm loading ' + sender.text(), 'Load ' + sender.text() + ' and move to current position?',QMessageBox.Yes | QMessageBox.No  )
+            
+            if status == QMessageBox.Yes:
+                # return carriage to controlled point position
+                if len(self.cp_coords) > 0:
+                    self.printer.gCode('T-1')
+                    self.printer.gCode(sender.text())
+                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+                    self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+                else:
+                    tempCoords = self.printer.getCoords()
+                    self.printer.gCode('T-1')
+                    self.printer.gCode(self.sender().text())
+                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+                    self.printer.gCode('G1 X' + str(tempCoords['X']))
+            else:
+                self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
+        
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
