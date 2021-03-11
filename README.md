@@ -2,6 +2,8 @@
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
+[![Alt text](https://img.youtube.com/vi/1nGc_hFzK0s/0.jpg)](https://youtu.be/1nGc_hFzK0s)
+
 # TAMV = Tool Alignment (using) Machine Vision
 Ever needed to simplify nozzle and tool alignment on a toolchanging 3D printer/machine? 
 
