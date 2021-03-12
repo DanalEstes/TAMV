@@ -186,3 +186,11 @@ TAMV, ZTATP, and their associated plot functions utilize Python3+, and some addi
 
 
 _[back to top](#table-of-contents)_
+
+# TAMV Community Videos
+## Danal's Original TAMV Release
+(http://img.youtube.com/vi/e_d_XHwGfRM/0.jpg)[https://www.youtube.com/watch?v=e_d_XHwGfRM]
+## Luke's Laboratory Walkthrough
+(http://img.youtube.com/vi/ZjgjIAw_s7E/0.jpg)[https://www.youtube.com/watch?v=ZjgjIAw_s7E]
+## Reefing Ninja's Walkthrough
+(http://img.youtube.com/vi/uPa1ecRxpr4/0.jpg)[https://www.youtube.com/watch?v=uPa1ecRxpr4]
