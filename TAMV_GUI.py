@@ -716,9 +716,9 @@ class CalibrateNozzles(QThread):
                     # process GUI events
                     app.processEvents()
             except Exception as mn1:
-                print('Frame detection thread error: ', mn1)
+                #print('Frame detection thread error: ', mn1)
                 self._running = False
-                self.detection_error.emit(str(mn1))
+                #self.detection_error.emit(str(mn1))
                 self.cap.release()
             self.stop()
     
@@ -1600,6 +1600,13 @@ class App(QMainWindow):
                         self.video_thread.stop()
                 except Exception: None
                 self.startVideo()
+                # Update GUI
+                self.xray_box.setDisabled(True)
+                self.xray_box.setChecked(False)
+                self.loose_box.setDisabled(True)
+                self.loose_box.setChecked(False)
+                self.calibration_button.setDisabled(False)
+                self.cp_button.setDisabled(False)
             else:
                 # User cancelled, do nothing
                 return
