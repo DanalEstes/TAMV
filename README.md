@@ -31,6 +31,7 @@ This program significantly improves how tool-changing machines using Duet RRF v2
 TAMV in its current release is a graphical program that allows you to connect to your printer and automatically calculate tool offsets in XY space using a generic [USB microscope](https://www.amazon.co.uk/gp/product/B07KQDQ4VR/) and a Raspberry Pi (preferably a Pi4 or better).
 
 You may opt to use a webcam for tool alignment, but this approach (while reliable) will need significantly more work to overcome issues related to insufficient/inappropriate lighting and limited depth-of-field of webcam optics (not to mention more sensor noise artifacts), all of which can throw off the computer vision algorithms and cause headaches.
+
 _[back to top](#table-of-contents)_
 # Why should I use this version/fork of TAMV?
 1. Its now a graphical interface with ZERO command line steps at run-time.
@@ -43,11 +44,13 @@ _[back to top](#table-of-contents)_
 8. *(still pending RC2 release) - TAMV allows you to save your machine address and some advanced parameters to save you some time when running it multiple times*
 9. **Its completely open-source and community driven.**
 10. *Did we mention its a graphical interface now?*
+
 _[back to top](#table-of-contents)_
 # What's included in this package?
 1. **TAMV_GUI.py**: the main interface for automated X/Y offset tool alignment using computer vision
 2. **ZTATP.py**: a second program that uses electrical touch plates to physically measure tool Z offsets using your Duet controller's endstop inputs
 3. **TAMV.py**: the "original" command line version of TAMV, which also includes data export and repeatability testing
+
 _[back to top](#table-of-contents)_
 # What do I need to run TAMV?
 1. **A fully functional tool changer platform running RepRapFirmware 2.0.5 or 3.2+**  
@@ -67,6 +70,7 @@ _[back to top](#table-of-contents)_
 
 4. **A little dose of patience (since you're reading this and already own a toolchanger, then we're sure you've got this bit covered..)**  
    You'll find a great community and ton of help and answers to your questions on the [Jubilee Discord Server](https://discord.gg/XkphRqb)
+
 _[back to top](#table-of-contents)_
 # What do I need to run ZTATP?
 1. Any **tool changer machine**, just like #1 above for TAMV, running RRF
@@ -86,11 +90,13 @@ _[back to top](#table-of-contents)_
    Don't worry. If you do your checks before each probe move, you won't have any crashes (hopefully). 
 
    **But you are taking full responsibilty and accountability for using ZTATP and we will not be liable for any damages that you may incur.**
+
 _[back to top](#table-of-contents)_
 # How do I install OpenCV on my Raspberry Pi?
 1. Clone this repository into your home folder
 2. Run `~/TAMV/install_opencv.sh`
 3. Wait an hour or two for everything to be installed
+
 _[back to top](#table-of-contents)_
 How do I run these packages?
 ---
@@ -108,6 +114,7 @@ TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 * Always use soft diffused lighting when running TAMV (a diffused LED ring works great). This is the most important factor to get it to detect nozzles consistently and reliably without any fuss.
 
 P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWindows (graphic) setup. Badly. 
+
 _[back to top](#table-of-contents)_
 ## ZTATP
 ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
@@ -141,6 +148,7 @@ set a run for an individual tool number
     ./ZTATP.py -touchplate X Y
 
 NOTE: Requires Wiring! Each nozzle must be wired to the GPIO specified (default is io5.in, can be overriden on command line).  The touchplate must be grounded. Recommend about running with finger on power switch, in case a given touch does not stop. 
+
 _[back to top](#table-of-contents)_
 ## TAMV (legacy command-line interface)
 ### Preparation steps
@@ -176,4 +184,6 @@ TAMV, ZTATP, and their associated plot functions utilize Python3+, and some addi
                       parameters to help detect worn nozzles.
       -export         Export repeat raw data to output.csv when done.
       -alternate      Try alternative nozzle detection method
+
+
 _[back to top](#table-of-contents)_
