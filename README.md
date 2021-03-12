@@ -98,7 +98,8 @@ _[back to top](#table-of-contents)_
 3. Wait an hour or two for everything to be installed
 
 _[back to top](#table-of-contents)_
-How do I run these packages?
+
+#How do I run these packages?
 ---
 ## TAMV_GUI
 1. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
