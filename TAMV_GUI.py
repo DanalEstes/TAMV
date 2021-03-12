@@ -1445,7 +1445,11 @@ class App(QMainWindow):
         self.video_thread.start()
     
     def stopVideo(self):
-        self.video_thread.stop()
+        try:
+            if self.video_thread.isRunning():
+                self.video_thread.stop()
+        except:
+            None
 
     def closeEvent(self, event):
         try:
@@ -1623,8 +1627,6 @@ class App(QMainWindow):
                     if self.camera_dialog.isVisible():
                         self.camera_dialog.reject()
                 except: None
-                # stop video thread
-                self.stopVideo()
                 # update GUI
                 self.cp_button.setDisabled(True)
                 self.jogpanel_button.setDisabled(False)
@@ -1634,18 +1636,24 @@ class App(QMainWindow):
                 self.loose_box.setDisabled(False)
                 self.repeatSpinBox.setDisabled(True)
 
-                # create the Nozzle detection capture thread
-                self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
-                
-                # connect its signal to the update_image slot
-                self.detect_thread.detector_created.connect(self.updateStatusbar)
-                self.detect_thread.status_update.connect(self.updateStatusbar)
-                self.detect_thread.message_update.connect(self.updateMessagebar)
-                self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-                #self.detect_thread.calibration_complete.connect(self.applyCalibration)
-                self.detect_thread.detection_error.connect(self.updateStatusbar)
-                # start the thread
-                self.detect_thread.start()
+                try:
+                    if self.detect_thread.isRunning():
+                        None
+                except:
+                    # stop video thread
+                    self.stopVideo()
+                    # create the Nozzle detection capture thread
+                    self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
+                    
+                    # connect its signal to the update_image slot
+                    self.detect_thread.detector_created.connect(self.updateStatusbar)
+                    self.detect_thread.status_update.connect(self.updateStatusbar)
+                    self.detect_thread.message_update.connect(self.updateMessagebar)
+                    self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
+                    #self.detect_thread.calibration_complete.connect(self.applyCalibration)
+                    self.detect_thread.detection_error.connect(self.updateStatusbar)
+                    # start the thread
+                    self.detect_thread.start()
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
