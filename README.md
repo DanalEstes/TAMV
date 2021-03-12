@@ -8,7 +8,7 @@
 - [What do I need to run ZTATP?](#what-do-i-need-to-run-ztatp)
 - [How do I install OpenCV on my Raspberry Pi?](#how-do-i-install-opencv-on-my-raspberry-pi)
 - [How do I run these packages?](#how-do-i-run-these-packages)
-  * [TAMV_GUI](#tamv-gui)
+  * [TAMV_GUI](#tamv_gui)
   * [ZTATP](#ztatp)
   * [TAMV (legacy command-line interface)](#tamv-legacy-command-line-interface)
 
