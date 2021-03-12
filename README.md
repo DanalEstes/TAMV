@@ -190,10 +190,12 @@ _[back to top](#table-of-contents)_
 
 # TAMV Community Videos
 ## Danal's Original TAMV Release
-You can find the original release of [TAMV in Danal Estes' repository](https://github.com/DanalEstes/TAMV)
+You can find the original release of [TAMV in Danal Estes' repository](https://github.com/DanalEstes/TAMV).
 
 [![Danal's Original TAMV Release](http://img.youtube.com/vi/e_d_XHwGfRM/0.jpg)](https://www.youtube.com/watch?v=e_d_XHwGfRM)
 ## Walkthrough: Luke's Laboratory
+Be sure to check out [Luke's latest releases on his website](https://www.lukeslab.online/).
+
 [![Luke's Laboratory Walkthrough](http://img.youtube.com/vi/ZjgjIAw_s7E/0.jpg)](https://www.youtube.com/watch?v=ZjgjIAw_s7E)
 ## Walkthrough: Reefing Ninja
 [![Reefing Ninja's Walkthrough](http://img.youtube.com/vi/uPa1ecRxpr4/0.jpg)](https://www.youtube.com/watch?v=uPa1ecRxpr4)
