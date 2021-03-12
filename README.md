@@ -2,15 +2,15 @@
 # Table of Contents
 - [TAMV Walkthrough Video](#tamv-beta-in-action)
 - [TAMV = Tool Alignment (using) Machine Vision](#tamv--tool-alignment-using-machine-vision)
-- [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv)
-- [What's included in this package?](#what-s-included-in-this-package)
+- [Why should I use this version/fork of TAMV?](#why-should-i-use-this-versionfork-of-tamv)
+- [What's included in this package?](#whats-included-in-this-package)
 - [What do I need to run TAMV?](#what-do-i-need-to-run-tamv)
 - [What do I need to run ZTATP?](#what-do-i-need-to-run-ztatp)
 - [How do I install OpenCV on my Raspberry Pi?](#how-do-i-install-opencv-on-my-raspberry-pi)
 - [How do I run these packages?](#how-do-i-run-these-packages)
   * [TAMV_GUI](#tamv-gui)
   * [ZTATP](#ztatp)
-  * [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface)
+  * [TAMV (legacy command-line interface)](#tamv-legacy-command-line-interface)
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
