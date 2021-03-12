@@ -530,6 +530,7 @@ class CalibrateNozzles(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
     display_crosshair = pyqtSignal(str)
     calibration_complete = pyqtSignal()
+    detection_error = pyqtSignal(str)
     
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=600, minCircularity=0.8,numTools=0,cycles=1, align=False):
         super(QThread,self).__init__(parent=parent)
@@ -681,6 +682,7 @@ class CalibrateNozzles(QThread):
             except Exception as mn1:
                 #print('Detection thread error: ', mn1)
                 self._running = False
+                self.detection_error.emit(mn1)
                 self.stop()
             self.stop()
         else:
@@ -716,7 +718,7 @@ class CalibrateNozzles(QThread):
             except Exception as mn1:
                 print('Frame detection thread error: ', mn1)
                 self._running = False
-                self.stop()
+                self.detection_error.emit(mn1)
             self.stop()
     
     def analyzeFrame(self):
@@ -1639,11 +1641,14 @@ class App(QMainWindow):
                 self.detect_thread.status_update.connect(self.updateStatusbar)
                 self.detect_thread.message_update.connect(self.updateMessagebar)
                 self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-                self.detect_thread.calibration_complete.connect(self.applyCalibration)
+                #self.detect_thread.calibration_complete.connect(self.applyCalibration)
+                self.detect_thread.detection_error.connect(self.updateStatusbar)
                 # start the thread
                 self.detect_thread.start()
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
+
+    def detectionError(self):
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
