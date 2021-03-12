@@ -1614,8 +1614,6 @@ class App(QMainWindow):
                     self.printer.gCode(self.sender().text())
                     self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
-            else:
-                self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
                 # START DETECTION THREAD HANDLING
                 # close camera settings dialog so it doesn't crash
                 try:
@@ -1644,6 +1642,8 @@ class App(QMainWindow):
                 self.detect_thread.calibration_complete.connect(self.applyCalibration)
                 # start the thread
                 self.detect_thread.start()
+            else:
+                self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
