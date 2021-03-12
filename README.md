@@ -191,6 +191,7 @@ _[back to top](#table-of-contents)_
 # TAMV Community Videos
 ## Danal's Original TAMV Release
 You can find the original release of [TAMV in Danal Estes' repository](https://github.com/DanalEstes/TAMV)
+
 [![Danal's Original TAMV Release](http://img.youtube.com/vi/e_d_XHwGfRM/0.jpg)](https://www.youtube.com/watch?v=e_d_XHwGfRM)
 ## Walkthrough: Luke's Laboratory
 [![Luke's Laboratory Walkthrough](http://img.youtube.com/vi/ZjgjIAw_s7E/0.jpg)](https://www.youtube.com/watch?v=ZjgjIAw_s7E)
