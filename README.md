@@ -1,4 +1,7 @@
-# TAMV is under active development!
+# TOC 
+- [Video walkthrough](#tamv-beta-in-action-click-on-image-to-head-to-youtube-video)
+- 
+## TAMV is under active development!
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
