@@ -1634,7 +1634,7 @@ class App(QMainWindow):
         self.repeatSpinBox.setDisabled(True)
 
         # create the Nozzle detection capture thread
-        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, cycles=self.cycles,minArea=600, align=False)
+        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
         
         # connect its signal to the update_image slot
         self.detect_thread.detector_created.connect(self.updateStatusbar)
