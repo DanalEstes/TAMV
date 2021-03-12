@@ -1631,9 +1631,6 @@ class App(QMainWindow):
         self.xray_box.setDisabled(False)
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(False)
-        self.toolBox.setVisible(False)
-        # get number of repeat cycles
-        self.cycles = self.repeatSpinBox.value()
         self.repeatSpinBox.setDisabled(True)
 
         # create the Nozzle detection capture thread
