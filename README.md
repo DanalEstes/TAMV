@@ -1,4 +1,24 @@
-# TAMV is under active development!
+** TAMV _is under active development!_**
+
+- [TAMV Walkthrough Video](#tamv-beta-in-action--click-on-image-to-head-to-youtube-video-)
+- [TAMV = Tool Alignment (using) Machine Vision](#tamv---tool-alignment--using--machine-vision)
+- [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv-)
+- [What's included in this package?](#what-s-included-in-this-package-)
+- [What do I need to run TAMV?](#what-do-i-need-to-run-tamv-)
+- [What do I need to run ZTATP?](#what-do-i-need-to-run-ztatp-)
+- [How do I install OpenCV on my Raspberry Pi?](#how-do-i-install-opencv-on-my-raspberry-pi-)
+- [How do I run these packages?](#how-do-i-run-these-packages-)
+  * [TAMV_GUI](#tamv-gui)
+  * [ZTATP](#ztatp)
+    - [Installation](#installation)
+    - [Parameters](#parameters)
+  * [Run](#run)
+- [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface-)
+  * [Preparation steps](#preparation-steps)
+  * [Installation](#installation-1)
+  * [Run](#run-1)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
@@ -78,7 +98,7 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 
 How do I run these packages?
 ---
-# TAMV_GUI
+## TAMV_GUI
 1. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
 2. Follow the buttons and prompts on-screen. There are tooltips everywhere to guide you!
 
@@ -93,41 +113,41 @@ TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
 P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWindows (graphic) setup. Badly. 
 
-# ZTATP
+## ZTATP
 ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
 
 * Requires network connection to DUET RepRap V2 or V3 based printer.
 * This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
 * Warning: RRF 2&3 have a **hardcoded offset of 0.7mm applied to Z-probes** which you must over-ride in your config.g file. If you don't fix this issue, your offsets will be calculated 0.7mm too close to your print surface **and this will result in damage to your printer!** A simple G31 Z0 at the end of your config.g file (or whatever Z offset applies to your probe) is sufficient to fix this issue. A later release of ZTATP will automatically handle this issue, but for now, it is a manual fix.
-## Installation
+### Installation
 
     See instructions above for TAMV.  It will be in the same directory. 
 
-## Parameters
-### -h, --help            
+### Parameters
+#### -h, --help            
 show help message and exit
   
-### -duet DUET
+#### -duet DUET
 Name or IP address of Duet printer. You can use -duet=localhost if you are on the embedded Pi on a Duet3.
   
-### -touchplate TOUCHPLATE TOUCHPLATE
+#### -touchplate TOUCHPLATE TOUCHPLATE
 x y of center of a 15x15mm touch plate (these can be decimal values)
                         
-### -pin PIN PIN
+#### -pin PIN PIN
 input pin to which wires from nozzles are attached (only in RRF3)
   
-### -tool TOOL
+#### -tool TOOL
 set a run for an individual tool number
 
-## Run
+### Run
 
     cd TAMV
     ./ZTATP.py -touchplate X Y
 
 NOTE: Requires Wiring! Each nozzle must be wired to the GPIO specified (default is io5.in, can be overriden on command line).  The touchplate must be grounded. Recommend about running with finger on power switch, in case a given touch does not stop. 
 
-# TAMV (legacy command-line interface)
-## Preparation steps
+## TAMV (legacy command-line interface)
+### Preparation steps
 TAMV, ZTATP, and their associated plot functions utilize Python3+, and some additional libraries for GUI elements and processing. If you have some errors while running the code, consider running the following commands to install missing modules.
 
     sudo apt-get update
@@ -135,12 +155,12 @@ TAMV, ZTATP, and their associated plot functions utilize Python3+, and some addi
     sudo apt-get install python3-matplotlib
     sudo apt-get install python3-pyqt5
 
-## Installation
+### Installation
 
     cd
     git clone https://github.com/HaythamB/TAMV/
 
-## Run
+### Run
     usage: TAMV.py [-h] [-duet DUET] [-vidonly] [-camera CAMERA] [-cp CP CP]
                    [-repeat REPEAT] [-xray] [-loose] [-export] [-alternate]
     
