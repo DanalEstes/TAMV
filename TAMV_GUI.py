@@ -68,23 +68,23 @@ class printerDriver:
     # Constructor used to connect to printerURL
     def __init__(self, printerURL):
         None
-    
+
     # Generic gcode command, returns 0 if success, error_code otherwise
     def gCode(self, command):
         None
-    
+
     # get user coordinates (not absolute machine coordinates) and return as tuple array (axis_name: position)
     def getCoords(self):
         None
-    
+
     # get firmware version and board type
     def printerType(self):
         None
-    
+
     # get number of tools defined on the machine
     def getNumTools(self):
         None
-    
+
     # get tool offset definitions
     def getToolOffsets(self,tool):
         None
@@ -140,7 +140,7 @@ class VideoThread(QThread):
         # Sets run flag to False and waits for thread to finish
         self._run_flag = False
         self.wait()
-    
+
     def setProperty(self,brightness=-1, contrast=-1, saturation=-1, hue=-1):
         try:
             if int(brightness) >= 0:
@@ -438,7 +438,7 @@ class CameraSettingsDialog(QDialog):
         self.layout.addWidget(self.reset_button)
         # OK Cancel buttons
         self.layout.addWidget(self.buttonBox)
-    
+
     def resetDefaults(self):
         if self.active_thread == 'video':
             self.parent().video_thread.resetProperties()
@@ -503,7 +503,7 @@ class CameraSettingsDialog(QDialog):
         except:
             None
         self.hue_label.setText(str(parameter))
-    
+
 class OverlayLabel(QLabel):
     def __init__(self):
         super(OverlayLabel, self).__init__()
@@ -531,7 +531,7 @@ class CalibrateNozzles(QThread):
     display_crosshair = pyqtSignal(str)
     calibration_complete = pyqtSignal()
     detection_error = pyqtSignal(str)
-    
+
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=600, minCircularity=0.8,numTools=0,cycles=1, align=False):
         super(QThread,self).__init__(parent=parent)
         self.xray = False
@@ -570,12 +570,12 @@ class CalibrateNozzles(QThread):
         self.ret, self.cv_img = self.cap.read()
         if self.ret:
             self.change_pixmap_signal.emit(self.cv_img)
-    
+
     def toggleXray(self):
         if self.xray:
             self.xray = False
         else: self.xray = True
-    
+
     def toggleLoose(self):
         self.detector_changed = True
         if self.loose:
@@ -721,7 +721,7 @@ class CalibrateNozzles(QThread):
                 #self.detection_error.emit(str(mn1))
                 self.cap.release()
             self.stop()
-    
+
     def analyzeFrame(self):
         # Placeholder coordinates
         xy = [0,0]
@@ -1409,12 +1409,12 @@ class App(QMainWindow):
         self.debugAction.setText('&Debug info')
         self.cameraAction = QAction(self)
         self.cameraAction.setText('&Camera settings')
-    
+
     def _connectActions(self):
         # Connect File actions
         self.debugAction.triggered.connect(self.displayDebug)
         self.cameraAction.triggered.connect(self.displayCameraSettings)
-    
+
     def displayCameraSettings(self):
         self.camera_dialog = CameraSettingsDialog(parent=self)
         if self.camera_dialog.exec_():
@@ -1443,7 +1443,7 @@ class App(QMainWindow):
         self.video_thread.change_pixmap_signal.connect(self.update_image)
         # start the thread
         self.video_thread.start()
-    
+
     def stopVideo(self):
         try:
             if self.video_thread.isRunning():
@@ -1718,7 +1718,7 @@ class App(QMainWindow):
         self.loose_box.setDisabled(True)
         self.calibration_button.setDisabled(False)
         #self.repeatSpinBox.setDisabled(False)
-    
+
     def applyCalibration(self):
         # update GUI
         self.readyToCalibrate()
@@ -1753,7 +1753,7 @@ class App(QMainWindow):
                 else:
                     self.startVideo()
             except: self.startVideo()
-    
+
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
         self.image_label.setText('Restoring machine to initial state..')
@@ -1871,7 +1871,7 @@ class App(QMainWindow):
             self.updateStatusbar('Detection thread not running.')
             print( 'Detection thread error in XRAY: ')
             print(e1)
-    
+
     def toggle_loose(self):
         try:
             if self.detect_thread:
@@ -1938,7 +1938,7 @@ class App(QMainWindow):
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
         self.mutex.unlock()
-    
+
     def convert_cv_qt(self, cv_img):
         # Convert from an opencv image to QPixmap
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -1947,7 +1947,7 @@ class App(QMainWindow):
         convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(display_width, display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
-    
+
 if __name__=='__main__':
     os.putenv("QT_LOGGING_RULES","qt5ct.debug=false")
     app = QApplication(sys.argv)
