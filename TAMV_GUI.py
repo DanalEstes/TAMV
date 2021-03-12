@@ -683,7 +683,7 @@ class CalibrateNozzles(QThread):
                 #print('Detection thread error: ', mn1)
                 self._running = False
                 self.detection_error.emit(str(mn1))
-                self.stop()
+                self.cap.release()
             self.stop()
         else:
             # don't run alignment - fetch frames and detect only
@@ -719,6 +719,7 @@ class CalibrateNozzles(QThread):
                 print('Frame detection thread error: ', mn1)
                 self._running = False
                 self.detection_error.emit(str(mn1))
+                self.cap.release()
             self.stop()
     
     def analyzeFrame(self):
