@@ -20,7 +20,7 @@ We've got a short walkthrough of TAMV in operation up on YouTube, and there you 
 <a href="https://youtu.be/1nGc_hFzK0s?t=5"><img src="video_cap.png">
 </p>
 
-_[back to top]#table-of-contents)_
+_[back to top](#table-of-contents)_
 # TAMV = Tool Alignment (using) Machine Vision
 Ever needed to simplify nozzle and tool alignment on a toolchanging 3D printer/machine? 
 
