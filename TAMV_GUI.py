@@ -714,7 +714,7 @@ class CalibrateNozzles(QThread):
                     # process GUI events
                     app.processEvents()
             except Exception as mn1:
-                #print('Detection thread error: ', mn1)
+                print('Frame detection thread error: ', mn1)
                 self._running = False
                 self.stop()
             self.stop()
