@@ -1,7 +1,7 @@
 **TAMV _is under active development!_**
 # Table of Contents
 - [TAMV Walkthrough Video](#tamv-beta-in-action)
-- [TAMV = Tool Alignment (using) Machine Vision](#tamv---tool-alignment--using--machine-vision)
+- [TAMV = Tool Alignment (using) Machine Vision](#tamv--tool-alignment-using-machine-vision)
 - [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv-)
 - [What's included in this package?](#what-s-included-in-this-package-)
 - [What do I need to run TAMV?](#what-do-i-need-to-run-tamv-)
