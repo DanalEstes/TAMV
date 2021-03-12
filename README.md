@@ -75,59 +75,23 @@ You may opt to use a webcam for tool alignment, but this approach (while reliabl
 1. Clone this repository into your home folder
 2. Run `~/TAMV/install_opencv.sh`
 3. Wait an hour or two for everything to be installed
-4. Celebrate.
-5. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
 
-
-*Instructions below are now deprecated*
+How do I run these packages?
 ---
-# TAMV
+# TAMV_GUI
+1. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
+2. Follow the buttons and prompts on-screen. There are tooltips everywhere to guide you!
+
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
 * Runs on the Pi that has the USB or Pi camera 
 * Requires network connection to DUET RepRap V2 or V3 based printer.
 * This MAY be, but is not required to be, the Pi in a Duet3+Pi configuration
 * Requires OpenCV installed on the Pi.  
-  * See https://github.com/DanalEstes/installOpenCV for one way to install OpenCV
 * MUST run on the graphic console, not SSH.  This can be physical, VNC, or any combination of the two.
 * Always use soft diffused lighting when running TAMV (a diffused LED ring works great). This is the most important factor to get it to detect nozzles consistently and reliably without any fuss.
 
 P.S. Reminder: Never NEVER run a graphic app with 'sudo'.  It can break your XWindows (graphic) setup. Badly. 
-
-## Preparation steps
-TAMV, ZTATP, and their associated plot functions utilize Python3+, and some additional libraries for GUI elements and processing. If you have some errors while running the code, consider running the following commands to install missing modules.
-
-    sudo apt-get update
-    sudo apt-get upgrade
-    sudo apt-get install python3-matplotlib
-    sudo apt-get install python3-pyqt5
-
-## Installation
-
-    cd
-    git clone https://github.com/HaythamB/TAMV/
-
-## Run
-    usage: TAMV.py [-h] [-duet DUET] [-vidonly] [-camera CAMERA] [-cp CP CP]
-                   [-repeat REPEAT] [-xray] [-loose] [-export] [-alternate]
-    
-    Program to allign multiple tools on Duet based printers, using machine vision.
-    
-    optional arguments:
-      -h, --help      show this help message and exit
-      -duet DUET      Name or IP address of Duet printer. You can use
-                      -duet=localhost if you are on the embedded Pi on a Duet3.
-      -vidonly        Open video window and do nothing else.
-      -camera CAMERA  Index of /dev/videoN device to be used. Default 0.
-      -cp CP CP       x y that will put 'controlled point' on carriage over
-                      camera.
-      -repeat REPEAT  Repeat entire alignment N times and report statistics
-      -xray           Display edge detection output for troubleshooting.
-      -loose          Run circle detection algorithm with less stringent
-                      parameters to help detect worn nozzles.
-      -export         Export repeat raw data to output.csv when done.
-      -alternate      Try alternative nozzle detection method
- 
 
 # ZTATP
 ZTATP.py = Z Tool Align Touch Plate - for Duet based tool changing 3D printers.
@@ -162,3 +126,37 @@ set a run for an individual tool number
 
 NOTE: Requires Wiring! Each nozzle must be wired to the GPIO specified (default is io5.in, can be overriden on command line).  The touchplate must be grounded. Recommend about running with finger on power switch, in case a given touch does not stop. 
 
+# TAMV (legacy command-line interface)
+## Preparation steps
+TAMV, ZTATP, and their associated plot functions utilize Python3+, and some additional libraries for GUI elements and processing. If you have some errors while running the code, consider running the following commands to install missing modules.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+    sudo apt-get install python3-matplotlib
+    sudo apt-get install python3-pyqt5
+
+## Installation
+
+    cd
+    git clone https://github.com/HaythamB/TAMV/
+
+## Run
+    usage: TAMV.py [-h] [-duet DUET] [-vidonly] [-camera CAMERA] [-cp CP CP]
+                   [-repeat REPEAT] [-xray] [-loose] [-export] [-alternate]
+    
+    Program to allign multiple tools on Duet based printers, using machine vision.
+    
+    optional arguments:
+      -h, --help      show this help message and exit
+      -duet DUET      Name or IP address of Duet printer. You can use
+                      -duet=localhost if you are on the embedded Pi on a Duet3.
+      -vidonly        Open video window and do nothing else.
+      -camera CAMERA  Index of /dev/videoN device to be used. Default 0.
+      -cp CP CP       x y that will put 'controlled point' on carriage over
+                      camera.
+      -repeat REPEAT  Repeat entire alignment N times and report statistics
+      -xray           Display edge detection output for troubleshooting.
+      -loose          Run circle detection algorithm with less stringent
+                      parameters to help detect worn nozzles.
+      -export         Export repeat raw data to output.csv when done.
+      -alternate      Try alternative nozzle detection method
