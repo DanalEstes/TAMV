@@ -1,5 +1,5 @@
 ** TAMV _is under active development!_**
-
+# Table of Contents
 - [TAMV Walkthrough Video](#tamv-beta-in-action--click-on-image-to-head-to-youtube-video-)
 - [TAMV = Tool Alignment (using) Machine Vision](#tamv---tool-alignment--using--machine-vision)
 - [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv-)
@@ -10,13 +10,7 @@
 - [How do I run these packages?](#how-do-i-run-these-packages-)
   * [TAMV_GUI](#tamv-gui)
   * [ZTATP](#ztatp)
-    - [Installation](#installation)
-    - [Parameters](#parameters)
-  * [Run](#run)
-- [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface-)
-  * [Preparation steps](#preparation-steps)
-  * [Installation](#installation-1)
-  * [Run](#run-1)
+  * [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface-)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
