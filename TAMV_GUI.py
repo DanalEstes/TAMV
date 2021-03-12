@@ -1648,8 +1648,6 @@ class App(QMainWindow):
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
-    def detectionError(self):
-
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
         self.disconnection_button.setDisabled(True)
