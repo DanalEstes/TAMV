@@ -1,6 +1,6 @@
 **TAMV _is under active development!_**
 # Table of Contents
-- [TAMV Walkthrough Video](#tamv-beta-in-action--click-on-image-to-head-to-youtube-video-)
+- [TAMV Walkthrough Video](#tamv-beta-in-action)
 - [TAMV = Tool Alignment (using) Machine Vision](#tamv---tool-alignment--using--machine-vision)
 - [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv-)
 - [What's included in this package?](#what-s-included-in-this-package-)
@@ -14,7 +14,8 @@
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
-# TAMV Beta in Action (click on image to head to YouTube video)
+# TAMV Beta in Action
+We've got a short walkthrough of TAMV in operation up on YouTube, and there you can see a real-time setup and alignment for a 3 tool printer. Click on the image to head over there!
 <p align="center">
 <a href="https://youtu.be/1nGc_hFzK0s?t=5"><img src="video_cap.png">
 </p>
