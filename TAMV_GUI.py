@@ -682,7 +682,7 @@ class CalibrateNozzles(QThread):
             except Exception as mn1:
                 #print('Detection thread error: ', mn1)
                 self._running = False
-                self.detection_error.emit(mn1)
+                self.detection_error.emit(str(mn1))
                 self.stop()
             self.stop()
         else:
@@ -718,7 +718,7 @@ class CalibrateNozzles(QThread):
             except Exception as mn1:
                 print('Frame detection thread error: ', mn1)
                 self._running = False
-                self.detection_error.emit(mn1)
+                self.detection_error.emit(str(mn1))
             self.stop()
     
     def analyzeFrame(self):
