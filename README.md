@@ -2,15 +2,15 @@
 # Table of Contents
 - [TAMV Walkthrough Video](#tamv-beta-in-action)
 - [TAMV = Tool Alignment (using) Machine Vision](#tamv--tool-alignment-using-machine-vision)
-- [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv-)
-- [What's included in this package?](#what-s-included-in-this-package-)
-- [What do I need to run TAMV?](#what-do-i-need-to-run-tamv-)
-- [What do I need to run ZTATP?](#what-do-i-need-to-run-ztatp-)
-- [How do I install OpenCV on my Raspberry Pi?](#how-do-i-install-opencv-on-my-raspberry-pi-)
-- [How do I run these packages?](#how-do-i-run-these-packages-)
+- [Why should I use this version/fork of TAMV?](#why-should-i-use-this-version-fork-of-tamv)
+- [What's included in this package?](#what-s-included-in-this-package)
+- [What do I need to run TAMV?](#what-do-i-need-to-run-tamv)
+- [What do I need to run ZTATP?](#what-do-i-need-to-run-ztatp)
+- [How do I install OpenCV on my Raspberry Pi?](#how-do-i-install-opencv-on-my-raspberry-pi)
+- [How do I run these packages?](#how-do-i-run-these-packages)
   * [TAMV_GUI](#tamv-gui)
   * [ZTATP](#ztatp)
-  * [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface-)
+  * [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface)
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
@@ -98,9 +98,7 @@ _[back to top](#table-of-contents)_
 3. Wait an hour or two for everything to be installed
 
 _[back to top](#table-of-contents)_
-
-#How do I run these packages?
----
+# How do I run these packages?
 ## TAMV_GUI
 1. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
 2. Follow the buttons and prompts on-screen. There are tooltips everywhere to guide you!
