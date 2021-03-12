@@ -1,4 +1,4 @@
-** TAMV _is under active development!_**
+**TAMV _is under active development!_**
 # Table of Contents
 - [TAMV Walkthrough Video](#tamv-beta-in-action--click-on-image-to-head-to-youtube-video-)
 - [TAMV = Tool Alignment (using) Machine Vision](#tamv---tool-alignment--using--machine-vision)
