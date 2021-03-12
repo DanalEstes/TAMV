@@ -1607,6 +1607,8 @@ class App(QMainWindow):
                 self.loose_box.setChecked(False)
                 self.calibration_button.setDisabled(False)
                 self.cp_button.setDisabled(False)
+                self.updateMessagebar('Ready.')
+                self.updateStatusbar('Ready.')
             else:
                 # User cancelled, do nothing
                 return
