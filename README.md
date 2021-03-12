@@ -16,7 +16,7 @@
 
 # TAMV Beta in Action (click on image to head to YouTube video)
 <p align="center">
-<a href="https://youtu.be/1nGc_hFzK0s?t=5" target="new"><img src="https://img.youtube.com/vi/1nGc_hFzK0s/0.jpg">
+<a href="https://youtu.be/1nGc_hFzK0s?t=5" target="_blank"><img src="https://img.youtube.com/vi/1nGc_hFzK0s/0.jpg">
 </p>
 
 # TAMV = Tool Alignment (using) Machine Vision
