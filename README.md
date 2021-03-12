@@ -12,14 +12,12 @@
   * [ZTATP](#ztatp)
   * [TAMV (legacy command-line interface)](#tamv--legacy-command-line-interface-)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
 # TAMV Beta in Action (click on image to head to YouTube video)
 <p align="center">
 Check it out.
-[![TAMV Beta in Action](https://img.youtube.com/vi/1nGc_hFzK0s/0.jpg)](https://youtu.be/1nGc_hFzK0s?t=5)</p>
+<a href="https://youtu.be/1nGc_hFzK0s?t=5"><img src="https://img.youtube.com/vi/1nGc_hFzK0s/0.jpg"></p>
 
 # TAMV = Tool Alignment (using) Machine Vision
 Ever needed to simplify nozzle and tool alignment on a toolchanging 3D printer/machine? 
