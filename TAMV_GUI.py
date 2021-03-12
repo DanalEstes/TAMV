@@ -1616,34 +1616,34 @@ class App(QMainWindow):
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
-        # START DETECTION THREAD HANDLING
-        # close camera settings dialog so it doesn't crash
-        try:
-            if self.camera_dialog.isVisible():
-                self.camera_dialog.reject()
-        except: None
-        # stop video thread
-        self.stopVideo()
-        # update GUI
-        self.cp_button.setDisabled(True)
-        self.jogpanel_button.setDisabled(False)
-        self.calibration_button.setDisabled(True)
-        self.xray_box.setDisabled(False)
-        self.xray_box.setChecked(False)
-        self.loose_box.setDisabled(False)
-        self.repeatSpinBox.setDisabled(True)
+                # START DETECTION THREAD HANDLING
+                # close camera settings dialog so it doesn't crash
+                try:
+                    if self.camera_dialog.isVisible():
+                        self.camera_dialog.reject()
+                except: None
+                # stop video thread
+                self.stopVideo()
+                # update GUI
+                self.cp_button.setDisabled(True)
+                self.jogpanel_button.setDisabled(False)
+                self.calibration_button.setDisabled(True)
+                self.xray_box.setDisabled(False)
+                self.xray_box.setChecked(False)
+                self.loose_box.setDisabled(False)
+                self.repeatSpinBox.setDisabled(True)
 
-        # create the Nozzle detection capture thread
-        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
-        
-        # connect its signal to the update_image slot
-        self.detect_thread.detector_created.connect(self.updateStatusbar)
-        self.detect_thread.status_update.connect(self.updateStatusbar)
-        self.detect_thread.message_update.connect(self.updateMessagebar)
-        self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-        self.detect_thread.calibration_complete.connect(self.applyCalibration)
-        # start the thread
-        self.detect_thread.start()
+                # create the Nozzle detection capture thread
+                self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
+                
+                # connect its signal to the update_image slot
+                self.detect_thread.detector_created.connect(self.updateStatusbar)
+                self.detect_thread.status_update.connect(self.updateStatusbar)
+                self.detect_thread.message_update.connect(self.updateMessagebar)
+                self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
+                self.detect_thread.calibration_complete.connect(self.applyCalibration)
+                # start the thread
+                self.detect_thread.start()
 
     def resetConnectInterface(self):
         self.connection_button.setDisabled(False)
