@@ -11,6 +11,7 @@
   * [TAMV_GUI](#tamv_gui)
   * [ZTATP](#ztatp)
   * [TAMV (legacy command-line interface)](#tamv-legacy-command-line-interface)
+- [TAMV Community Videos](#tamv-community-videos)
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
@@ -194,3 +195,5 @@ _[back to top](#table-of-contents)_
 [![Luke's Laboratory Walkthrough](http://img.youtube.com/vi/ZjgjIAw_s7E/0.jpg)](https://www.youtube.com/watch?v=ZjgjIAw_s7E)
 ## Reefing Ninja's Walkthrough
 [![Reefing Ninja's Walkthrough](http://img.youtube.com/vi/uPa1ecRxpr4/0.jpg)](https://www.youtube.com/watch?v=uPa1ecRxpr4)
+
+_[back to top](#table-of-contents)_
