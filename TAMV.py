@@ -258,7 +258,7 @@ def createDetector(t1=1,t2=50, all=0.5, area=250):
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = t1          # Change thresholds
     params.maxThreshold = t2
-    params.thresholdStep = 1
+    params.thresholdStep = 2
     params.filterByArea = True         # Filter by Area.
     params.minArea = area
     params.filterByCircularity = True  # Filter by Circularity
@@ -269,10 +269,10 @@ def createDetector(t1=1,t2=50, all=0.5, area=250):
         params.minCircularity = 0.8
     params.maxCircularity= 1
     params.filterByConvexity = True    # Filter by Convexity
-    params.minConvexity = 0.8
+    params.minConvexity = 0.5
     params.maxConvexity = 1
     params.filterByInertia = True      # Filter by Inertia
-    params.minInertiaRatio = 0.8
+    params.minInertiaRatio = 0.75
     detector = cv2.SimpleBlobDetector_create(params)
     return(detector)
 
@@ -612,8 +612,14 @@ def runVideoStream(get, show, rotationInput):
             frame = adjust_gamma(cleanFrame, gammaInput)
             yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
             yuvPlanes = cv2.split(yuv)
-            yuvPlanes[0] = cv2.GaussianBlur(yuvPlanes[0],(7,7),6)
-            yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35,1)
+            yuvPlanes[0] = cv2.GaussianBlur(yuvPlanes[0],(3,3), 251)
+            yuvPlanes[0] = cv2.adaptiveThreshold(yuvPlanes[0],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,35, -0.5)
+            
+            # manipulation kernel
+            dilateKernel = np.ones((5,5), np.uint8) 
+            yuvPlanes[0] = cv2.dilate(yuvPlanes[0],dilateKernel, iterations=1)
+            yuvPlanes[0] = cv2.erode(yuvPlanes[0],dilateKernel, iterations=1)
+            
             edgeDetectedFrame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
             frame = cv2.cvtColor(yuvPlanes[0],cv2.COLOR_GRAY2BGR)
             target = [int(np.around(frame.shape[1]/2)),int(np.around(frame.shape[0]/2))]

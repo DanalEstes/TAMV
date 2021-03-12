@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# Copyright (C) 2021 Haytham Bennani all rights reserved.
 import os
 import json
 import argparse
