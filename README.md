@@ -1,4 +1,4 @@
-# This is a branch under active development, so please don't rely on these instructions as final. 
+# TAMV is under active development!
 
 **You can find me (H2B) on the [Jubilee Discord Server](https://discord.gg/XkphRqb) and I'll be more than glad to help you get things up and running.**
 
