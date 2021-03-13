@@ -634,8 +634,8 @@ class CalibrateNozzles(QThread):
                             # Load next tool for calibration
                             self.parent().printer.gCode('T'+str(tool))
                             # Move tool to CP coordinates
-                            self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                             self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
+                            self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                             # Wait for moves to complete
                             while self.parent().printer.getStatus() not in 'idle':
                                 # process GUI events
@@ -675,8 +675,8 @@ class CalibrateNozzles(QThread):
                 for tool_result in self.parent().calibration_results:
                     self.parent().debugString += tool_result + '\n'
                 self.parent().printer.gCode('T-1')
-                self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                 self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
+                self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
                 self.status_update.emit('Calibration complete: Done.')
                 self.calibration_complete.emit()
             except Exception as mn1:
@@ -1583,13 +1583,13 @@ class App(QMainWindow):
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
                 if len(self.cp_coords) > 0:
                     self.printer.gCode('T-1')
-                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
                     self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
                 else:
                     tempCoords = self.printer.getCoords()
                     self.printer.gCode('T-1')
-                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
+                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                 # End video threads and restart default thread
                 try:
                     if self.detect_thread.isRunning():
@@ -1622,14 +1622,14 @@ class App(QMainWindow):
                 if len(self.cp_coords) > 0:
                     self.printer.gCode('T-1')
                     self.printer.gCode(sender.text())
-                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
                     self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+                    self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
                 else:
                     tempCoords = self.printer.getCoords()
                     self.printer.gCode('T-1')
                     self.printer.gCode(self.sender().text())
-                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
+                    self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                 # START DETECTION THREAD HANDLING
                 # close camera settings dialog so it doesn't crash
                 try:
@@ -1795,11 +1795,11 @@ class App(QMainWindow):
         _ret_error += self.printer.gCode('T-1')
         # return carriage to controlled point position
         if len(self.cp_coords) > 0:
-            _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+            _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
         else:
-            _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
             _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
+            _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
         # update status with disconnection state
         if _ret_error == 0:
             self.updateStatusbar('Disconnected.')
