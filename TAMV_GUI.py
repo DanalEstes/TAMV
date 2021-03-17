@@ -1738,6 +1738,7 @@ class App(QMainWindow):
         if returnValue == QMessageBox.Ok:
             for tool_result in self.calibration_results:
                 self.printer.gCode(tool_result)
+                self.printer.gCode('M500') # because of Rene.
             self.statusBar.showMessage('New offsets applied to machine.')
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
