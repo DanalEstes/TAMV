@@ -751,8 +751,11 @@ class CalibrateNozzles(QThread):
         # Random time offset
         rd = int(round(time()*1000))
         print('Analysis loop start.')
-        while True and self.detection_on:
+        while True:
             app.processEvents()
+            if not self.detection_on:
+                (xy, target, toolCoordinates, r) = (None, None, None, None)
+                break
             self.ret, self.frame = self.cap.read()
             try:
                 # capture tool location in machine space before processing
