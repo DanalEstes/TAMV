@@ -1202,7 +1202,6 @@ class App(QMainWindow):
             app_screen = self.frameGeometry()
             app_screen.moveCenter(screen.center())
             self.move(app_screen.topLeft())
-
         # SET UP STYLESHEETS FOR GUI ELEMENTS
         self.setStyleSheet(
             '\
@@ -1277,41 +1276,33 @@ class App(QMainWindow):
             }\
             '
         )
-
         # LOAD USER SAVED PARAMETERS OR CREATE DEFAULTS
         self.loadUserParameters()
-        
         # GUI ELEMENTS DEFINITION
         # Menubar
         if not self.small_display:
             self._createActions()
             self._createMenuBar()
             self._connectActions()
-        
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
-        
         # create the label that holds the image
         self.image_label = OverlayLabel()
         self.image_label.setFixedSize( display_width, display_height )
         pixmap = QPixmap( display_width, display_height )
         self.image_label.setPixmap(pixmap)
-        
         # create a status bar
         self.statusBar = QStatusBar()
         self.statusBar.showMessage('Loading up video feed and libraries..',5000)
         self.setStatusBar( self.statusBar )
-
         # CP location on statusbar
         self.cp_label = QLabel('<b>CP:</b> <i>undef</i>')
         self.statusBar.addPermanentWidget(self.cp_label)
         self.cp_label.setStyleSheet(style_red)
-
         # Connection status on statusbar
         self.connection_status = QLabel('Disconnected')
         self.connection_status.setStyleSheet(style_red)
         self.statusBar.addPermanentWidget(self.connection_status)
-
         # BUTTONS
         # Connect
         self.connection_button = QPushButton('Connect..')
@@ -1389,7 +1380,6 @@ class App(QMainWindow):
         self.toolBox.setLayout(self.toolBoxLayout)
         self.toolBox.setVisible(False)
         self.toolButtons = []
-
         # Xray checkbox
         self.xray_box = QCheckBox('X-ray')
         self.xray_box.setChecked(False)
@@ -1402,16 +1392,13 @@ class App(QMainWindow):
         self.loose_box.stateChanged.connect(self.toggle_loose)
         self.loose_box.setDisabled(True)
         self.loose_box.setVisible(False)
-
         # Detection checkbox
         self.detect_box = QCheckBox('Detect ON')
         self.detect_box.setChecked(False)
         self.detect_box.stateChanged.connect(self.toggle_detect)
-
         # create a grid box layout
         grid = QGridLayout()
         grid.setSpacing(3)
-
         # add elements to grid
         # FIRST ROW
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
@@ -1435,11 +1422,8 @@ class App(QMainWindow):
         grid.addWidget(self.calibration_button,7,2,1,1)
         grid.addWidget(self.repeat_label,7,3,1,1)
         grid.addWidget(self.repeatSpinBox,7,4,1,1)
-
-        
         # set the grid layout as the widgets layout
         self.centralWidget.setLayout(grid)
-
         # start video feed
         self.startVideo()
         # flag to draw circle
@@ -1564,10 +1548,9 @@ class App(QMainWindow):
 
     def closeEvent(self, event):
         try:
-            self.video_thread.stop()
-        except Exception as close1:
-            print('ERROR ending video thread: ')
-            print(close1)
+            tempCoords = self.printer.getCoords()
+            self.printer.gCode('T-1')
+            self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
         event.accept()
 
     def connectToPrinter(self):
@@ -1648,7 +1631,6 @@ class App(QMainWindow):
             print('Duet Connection exception: ', conn1)
             self.resetConnectInterface()
             return
-
         # Get active tool
         _active = self.printer.getCurrentTool()
         # Display toolbox
