@@ -748,7 +748,7 @@ class CalibrateNozzles(QThread):
         # Counter of frames with no circle.
         nocircle = 0
         # Random time offset
-        rd = int(round(datetime.time()*1000))
+        rd = int(round(time.time()*1000))
         while True and self.detection_on:
             app.processEvents()
             #if not self.detection_on:
