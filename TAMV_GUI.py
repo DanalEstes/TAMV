@@ -756,7 +756,7 @@ class CalibrateNozzles(QThread):
             try:
                 # capture tool location in machine space before processing
                 toolCoordinates = self.parent().printer.getCoords()
-            except: continue
+            except: toolCoordinates = None
             # capture first clean frame for display
             cleanFrame = self.frame
             # apply nozzle detection algorithm
