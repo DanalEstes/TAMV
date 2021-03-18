@@ -1356,22 +1356,20 @@ class App(QMainWindow):
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
         grid.addWidget(self.xray_box,1,2)
         grid.addWidget(self.loose_box,1,3)
-        
-        #HBHBHB
         grid.addWidget(self.detect_box,1,4)
-        #grid.addWidget(self.toolBox,1,4)
+        grid.addWidget(self.toolBox,1,5)
 
-        grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
+        grid.addWidget(self.disconnection_button,1,6,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
         # THIRD ROW
         # main image viewer
-        grid.addWidget(self.image_label,3,1,4,4)
-        grid.addWidget(self.jogpanel_button,3,5,1,1)
-        grid.addWidget(self.offsets_box,4,5,1,1)
+        grid.addWidget(self.image_label,3,1,4,5)
+        grid.addWidget(self.jogpanel_button,3,6,1,1)
+        grid.addWidget(self.offsets_box,4,6,1,1)
         if self.small_display:
-            grid.addWidget(self.exit_button,5,5,1,1)
-        grid.addWidget(self.debug_button,6,5,1,1)
+            grid.addWidget(self.exit_button,5,6,1,1)
+        grid.addWidget(self.debug_button,6,6,1,1)
         # FOURTH ROW
         grid.addWidget(self.cp_button,7,1,1,1)
         grid.addWidget(self.calibration_button,7,2,1,1)
