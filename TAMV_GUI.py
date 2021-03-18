@@ -1343,7 +1343,7 @@ class App(QMainWindow):
         self.loose_box.setDisabled(True)
 
         # HBHBHB: test checkbox
-        self.detect_box = QCheckBox('Detection')
+        self.detect_box = QCheckBox('Detect ON')
         self.detect_box.setChecked(False)
         self.detect_box.stateChanged.connect(self.toggle_detect)
 
@@ -1354,22 +1354,21 @@ class App(QMainWindow):
         # add elements to grid
         # FIRST ROW
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
-        grid.addWidget(self.xray_box,1,2)
-        grid.addWidget(self.loose_box,1,3)
-        grid.addWidget(self.detect_box,1,4)
-        grid.addWidget(self.toolBox,1,5)
-
-        grid.addWidget(self.disconnection_button,1,6,1,-1,Qt.AlignLeft)
+        grid.addWidget(self.detect_box,1,2,1,1)
+        grid.addWidget(self.xray_box,1,3,1,1)
+        grid.addWidget(self.loose_box,1,4,1,1)
+        grid.addWidget(self.toolBox,1,5,1,-1)
+        grid.addWidget(self.disconnection_button,1,7,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
         # THIRD ROW
         # main image viewer
-        grid.addWidget(self.image_label,3,1,4,5)
-        grid.addWidget(self.jogpanel_button,3,6,1,1)
-        grid.addWidget(self.offsets_box,4,6,1,1)
+        grid.addWidget(self.image_label,3,1,4,6)
+        grid.addWidget(self.jogpanel_button,3,7,1,1)
+        grid.addWidget(self.offsets_box,4,7,1,1)
         if self.small_display:
-            grid.addWidget(self.exit_button,5,6,1,1)
-        grid.addWidget(self.debug_button,6,6,1,1)
+            grid.addWidget(self.exit_button,5,7,1,1)
+        grid.addWidget(self.debug_button,6,7,1,1)
         # FOURTH ROW
         grid.addWidget(self.cp_button,7,1,1,1)
         grid.addWidget(self.calibration_button,7,2,1,1)
@@ -1388,9 +1387,6 @@ class App(QMainWindow):
         self.calibration_results = []
 
     def toggle_detect(self):
-        if self.video_thread.detection_on:
-            print( 'Toggling off')
-        else: print('Toggling on')
         self.video_thread.display_crosshair = not self.video_thread.display_crosshair
         self.video_thread.detection_on = not self.video_thread.detection_on
 
