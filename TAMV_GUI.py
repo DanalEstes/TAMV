@@ -700,7 +700,7 @@ class CalibrateNozzles(QThread):
                                 self.change_pixmap_signal.emit(self.cv_img)
                             else:
                                 # reset capture
-                                print('Error capturing new frames in Detect OFF Section')
+                                print('Error capturing new frames in Detect ON Section')
                                 self.cap = cv2.VideoCapture(video_src)
                                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
@@ -818,14 +818,14 @@ class CalibrateNozzles(QThread):
                 continue
             num_keypoints=len(keypoints)
             if (num_keypoints == 0):
-                if (25 < (int(round(time() * 1000)) - rd)):
+                if (25 < (int(round(time.time() * 1000)) - rd)):
                     nocircle += 1
                     self.frame = self.putText(self.frame,'No circles found',offsety=3)
                     self.message_update.emit( 'No circles found.' )
                     self.change_pixmap_signal.emit(self.frame)
                 continue
             if (num_keypoints > 1):
-                if (25 < (int(round(time() * 1000)) - rd)):
+                if (25 < (int(round(time.time() * 1000)) - rd)):
                     self.message_update.emit( 'Too many circles found. Please stop and clean the nozzle.' )
                     self.frame = self.putText(self.frame,'Too many circles found '+str(num_keypoints),offsety=3, color=(255,255,255))
                     self.frame = cv2.drawKeypoints(self.frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
@@ -844,7 +844,7 @@ class CalibrateNozzles(QThread):
             self.message_update.emit(ts)
             # show the frame
             self.change_pixmap_signal.emit(self.frame)
-            rd = int(round(time() * 1000))
+            rd = int(round(time.time() * 1000))
             #end the loop
             break
         # and tell our parent.
@@ -855,7 +855,7 @@ class CalibrateNozzles(QThread):
 
     def calibrateTool(self, tool, rep):
         # timestamp for caluclating tool calibration runtime
-        self.startTime = time()
+        self.startTime = time.time()
         # average location of keypoints in frame
         self.average_location=[0,0]
         # current location
@@ -955,7 +955,7 @@ class CalibrateNozzles(QThread):
                     continue
                 # check if final calibration move has been completed
                 elif self.state == len(self.calibrationCoordinates):
-                    calibration_time = np.around(time() - self.startTime,3)
+                    calibration_time = np.around(time.time() - self.startTime,3)
                     self.parent().debugString += 'Camera calibration complete. (' + str(calibration_time) + 's)\n'
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Calibrating rotation.. (100%) - MPP = ' + str(self.mpp))
@@ -977,7 +977,7 @@ class CalibrateNozzles(QThread):
                     # update state tracker to next phase
                     self.state = 200
                     # start tool calibration timer
-                    self.startTime = time()
+                    self.startTime = time.time()
                     self.parent().debugString += 'Calibrating T'+str(tool)+':C'+str(rep)+': '
                     continue
                 #### Step 2: nozzle alignment stage
@@ -1003,7 +1003,7 @@ class CalibrateNozzles(QThread):
                         # Save offset to output variable
                         _return = self.tool_coordinates
                         _return['MPP'] = self.mpp
-                        _return['time'] = np.around(time() - self.startTime,3)
+                        _return['time'] = np.around(time.time() - self.startTime,3)
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
                         self.parent().debugString += '\nNozzle calibrated (' +str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
@@ -1915,7 +1915,7 @@ class App(QMainWindow):
 
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
-        self.mutex.lock()
+        #self.mutex.lock()
         self.current_frame = cv_img
         if self.crosshair:
             # Draw alignment circle on image
@@ -1936,7 +1936,7 @@ class App(QMainWindow):
         # Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
-        self.mutex.unlock()
+        #self.mutex.unlock()
 
     def convert_cv_qt(self, cv_img):
         # Convert from an opencv image to QPixmap
