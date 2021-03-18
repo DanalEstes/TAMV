@@ -1022,8 +1022,8 @@ class CalibrateNozzles(QThread):
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
                         self.parent().debugString += '\nNozzle calibrated (' + str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
-                        print('Calibration completed in ' + str(_return['time']) ' seconds.')
-                        self.message_update.emit('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) ' seconds.')
+                        print('Calibration completed in ' + str(_return['time']) + ' seconds.')
+                        self.message_update.emit('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
                         # calculate and apply offsets to printer
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
