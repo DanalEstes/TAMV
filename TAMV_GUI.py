@@ -1357,7 +1357,7 @@ class App(QMainWindow):
         grid.addWidget(self.detect_box,1,2,1,1)
         grid.addWidget(self.xray_box,1,3,1,1)
         grid.addWidget(self.loose_box,1,4,1,1)
-        grid.addWidget(self.toolBox,1,5,1,-1)
+        grid.addWidget(self.toolBox,1,5,1,1)
         grid.addWidget(self.disconnection_button,1,7,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
