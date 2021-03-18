@@ -1004,7 +1004,7 @@ class CalibrateNozzles(QThread):
                     self.state = 200
                     # start tool calibration timer
                     self.startTime = time.time()
-                    self.parent().debugString += 'Calibrating T'+str(tool)+':C'+str(rep)+':\n'
+                    self.parent().debugString += 'Calibrating T' + str(tool) + ' Cycle: '+str(rep)+'\n'
                     continue
                 #### Step 2: nozzle alignment stage
                 elif self.state == 200:
@@ -1682,14 +1682,10 @@ class App(QMainWindow):
                     self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                 # End video threads and restart default thread
                 self.video_thread.alignment = False
-                self.video_thread.display_crosshair = False
-                self.video_thread.detection_on = False
 
                 # Update GUI
                 self.xray_box.setDisabled(True)
-                self.xray_box.setChecked(False)
                 self.loose_box.setDisabled(True)
-                self.loose_box.setChecked(False)
                 self.calibration_button.setDisabled(False)
                 self.cp_button.setDisabled(False)
                 self.updateMessagebar('Ready.')
@@ -1726,14 +1722,8 @@ class App(QMainWindow):
                 self.jogpanel_button.setDisabled(False)
                 self.calibration_button.setDisabled(True)
                 self.xray_box.setDisabled(False)
-                self.xray_box.setChecked(False)
-                self.loose_box.setDisabled(False)
                 self.repeatSpinBox.setDisabled(True)
 
-                # enable detection without calibration
-                self.video_thread.alignment = False
-                self.video_thread.display_crosshair = True
-                self.video_thread.detection_on = True
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
@@ -1899,8 +1889,6 @@ class App(QMainWindow):
             if self.camera_dialog.isVisible():
                 self.camera_dialog.reject()
         except: None
-        # stop video thread
-        #self.stopVideo()
         # update GUI
         self.cp_button.setDisabled(True)
         self.jogpanel_button.setDisabled(False)
