@@ -1403,7 +1403,7 @@ class App(QMainWindow):
         self.loose_box.setDisabled(True)
         self.loose_box.setVisible(False)
 
-        # HBHBHB: test checkbox
+        # Detection checkbox
         self.detect_box = QCheckBox('Detect ON')
         self.detect_box.setChecked(False)
         self.detect_box.stateChanged.connect(self.toggle_detect)
@@ -1460,6 +1460,7 @@ class App(QMainWindow):
             self.xray_box.setVisible(False)
             self.loose_box.setDisabled(True)
             self.loose_box.setVisible(False)
+            self.updateStatusbar('Detection: OFF')
 
     def loadUserParameters(self):
         global camera_width, camera_height, video_src
