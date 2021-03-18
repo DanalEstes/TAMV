@@ -557,16 +557,17 @@ class CalibrateNozzles(QThread):
 
         self.ret, self.cv_img = self.cap.read()
         if self.ret:
-            self.change_pixmap_signal.emit(self.cv_img)
+            local_img = self.cv_img
+            self.change_pixmap_signal.emit(local_img)
         else:
-            self.cap.release()
-            self.cap = cv2.VideoCapture(video_src)
+            self.cap.open(video_src)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             self.cap.set(cv2.CAP_PROP_FPS,25)
             self.ret, self.cv_img = self.cap.read()
-            self.change_pixmap_signal.emit(self.cv_img)
+            local_img = self.cv_img
+            self.change_pixmap_signal.emit(local_img)
 
     def toggleXray(self):
         if self.xray:
@@ -642,7 +643,8 @@ class CalibrateNozzles(QThread):
                                         app.processEvents()
                                         self.ret, self.cv_img = self.cap.read()
                                         if self.ret:
-                                            self.change_pixmap_signal.emit(self.cv_img)
+                                            local_img = self.cv_img
+                                            self.change_pixmap_signal.emit(local_img)
                                         else:
                                             self.cap.release()
                                             self.cap = cv2.VideoCapture(video_src)
@@ -656,7 +658,8 @@ class CalibrateNozzles(QThread):
                                     # Fetch a new frame from the inspection camera
                                     self.ret, self.cv_img = self.cap.read()
                                     if self.ret:
-                                        self.change_pixmap_signal.emit(self.cv_img)
+                                        local_img = self.cv_img
+                                        self.change_pixmap_signal.emit(local_img)
                                     else:
                                         self.cap.release()
                                         self.cap = cv2.VideoCapture(video_src)
@@ -722,7 +725,8 @@ class CalibrateNozzles(QThread):
                             # Fetch a new frame from the inspection camera
                             self.ret, self.cv_img = self.cap.read()
                             if self.ret:
-                                self.change_pixmap_signal.emit(self.cv_img)
+                                local_img = self.cv_img
+                                self.change_pixmap_signal.emit(local_img)
                             else:
                                 # reset capture
                                 print('Error capturing new frames in Detect ON Section')
@@ -761,7 +765,8 @@ class CalibrateNozzles(QThread):
                     try:
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
-                            self.change_pixmap_signal.emit(self.cv_img)
+                            local_img = self.cv_img
+                            self.change_pixmap_signal.emit(local_img)
                         else:
                             # reset capture
                             self.cap = cv2.VideoCapture(video_src)
@@ -841,7 +846,8 @@ class CalibrateNozzles(QThread):
                 self.frame = cv2.line(self.frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1)
             else: self.frame = cleanFrame
             # update image
-            self.change_pixmap_signal.emit(self.frame)
+            local_img = self.frame
+            self.change_pixmap_signal.emit(local_img)
             if(nocircle> 25):
                 self.message_update.emit( 'Error in detecting nozzle.' )
                 nocircle = 0
@@ -852,14 +858,16 @@ class CalibrateNozzles(QThread):
                     nocircle += 1
                     self.frame = self.putText(self.frame,'No circles found',offsety=3)
                     self.message_update.emit( 'No circles found.' )
-                    self.change_pixmap_signal.emit(self.frame)
+                    local_img = self.frame
+                    self.change_pixmap_signal.emit(local_img)
                 continue
             if (num_keypoints > 1):
                 if (25 < (int(round(time.time() * 1000)) - rd)):
                     self.message_update.emit( 'Too many circles found. Please stop and clean the nozzle.' )
                     self.frame = self.putText(self.frame,'Too many circles found '+str(num_keypoints),offsety=3, color=(255,255,255))
                     self.frame = cv2.drawKeypoints(self.frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-                    self.change_pixmap_signal.emit(self.frame)
+                    local_img = self.frame
+                    self.change_pixmap_signal.emit(local_img)
                 continue
             # Found one and only one circle.  Put it on the frame.
             nocircle = 0 
@@ -873,7 +881,8 @@ class CalibrateNozzles(QThread):
             #self.frame = self.putText(self.frame, ts, offsety=2, color=(0, 255, 0), stroke=2)
             self.message_update.emit(ts)
             # show the frame
-            self.change_pixmap_signal.emit(self.frame)
+            local_img = self.frame
+            self.change_pixmap_signal.emit(local_img)
             rd = int(round(time.time() * 1000))
             #end the loop
             break
