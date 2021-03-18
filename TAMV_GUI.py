@@ -970,6 +970,7 @@ class CalibrateNozzles(QThread):
                 elif self.state == len(self.calibrationCoordinates):
                     calibration_time = np.around(time.time() - self.startTime,3)
                     self.parent().debugString += 'Camera calibration complete. (' + str(calibration_time) + 's)\n'
+                    print('Camera calibration complete. (' + str(calibration_time) + 's)\n')
                     self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n'
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Calibrating rotation.. (100%) - MPP = ' + str(self.mpp))
@@ -1020,7 +1021,9 @@ class CalibrateNozzles(QThread):
                         _return['time'] = np.around(time.time() - self.startTime,3)
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
-                        self.parent().debugString += '\nNozzle calibrated (' +str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
+                        self.parent().debugString += '\nNozzle calibrated (' + str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
+                        print('Calibration completed in ' + str(_return['time']) ' seconds.')
+                        self.message_update.emit('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
                         # calculate and apply offsets to printer
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
