@@ -95,6 +95,7 @@ class printerDriver:
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
+    change_status = pyqtSignal(str)
 
     def __init__(self, src=0, width=640, height=480):
         super().__init__()
@@ -110,6 +111,8 @@ class VideoThread(QThread):
         self.contrast = -1
         self.saturation = -1
         self.hue = -1
+
+        self.test_flag = False
 
     def run(self):
         try:
@@ -131,8 +134,7 @@ class VideoThread(QThread):
                     self.change_pixmap_signal.emit(cv_img)
                 app.processEvents()
         except Exception as v1:
-            print('Exception in video thread: ')
-            print(v1)
+            self.change_status.emit('VERROR: ' + str(v1))
         # shut down capture system
         self.cap.release()
 
@@ -326,8 +328,6 @@ class DebugDialog(QDialog):
         try:
             if self.parent().video_thread.isRunning():
                 temp_text += 'Video thread running\n'
-            if self.parent().detect_thread.isRunning():
-                temp_text += 'Detect thread running\n'
         except Exception as e1:
             None
         if len(message) > 0:
@@ -344,19 +344,13 @@ class CameraSettingsDialog(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        # Find out which feed is running
-        try:
-            if self.parent().video_thread.isRunning():
-                self.active_thread = 'video'
-            else: self.active_thread = 'detect'
-        except Exception: self.active_thread = 'detect'
 
-        if self.active_thread == 'video':
-            # Get camera settings from video thread
+        # Get camera settings from video thread
+        try:
             (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
-        else:
-            # Get camera settings from detect thread
-            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().detect_thread.getProperties()
+        except Exception as set1:
+            self.updateStatusbar('Error fetching camera parameters.')
+            print('ERROR: Camera Settings: ' + str(set1))
         
         # Set layout details
         self.layout = QVBoxLayout()
@@ -440,12 +434,8 @@ class CameraSettingsDialog(QDialog):
         self.layout.addWidget(self.buttonBox)
 
     def resetDefaults(self):
-        if self.active_thread == 'video':
-            self.parent().video_thread.resetProperties()
-            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
-        else:
-            self.parent().detect_thread.resetProperties()
-            (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().detect_thread.getProperties()
+        self.parent().video_thread.resetProperties()
+        (brightness_input, contrast_input, saturation_input, hue_input) = self.parent().video_thread.getProperties()
         
         brightness_input = int(brightness_input)
         contrast_input = int(contrast_input)
@@ -463,10 +453,7 @@ class CameraSettingsDialog(QDialog):
     def changeBrightness(self):
         parameter = int(self.brightness_slider.value())
         try:
-            if self.active_thread == 'video':
-                self.parent().video_thread.setProperty(brightness=parameter)
-            else:
-                self.parent().detect_thread.setProperty(brightness=parameter)
+            self.parent().video_thread.setProperty(brightness=parameter)
         except:
             None
         self.brightness_label.setText(str(parameter))
@@ -474,10 +461,7 @@ class CameraSettingsDialog(QDialog):
     def changeContrast(self):
         parameter = int(self.contrast_slider.value())
         try:
-            if self.active_thread == 'video':
-                self.parent().video_thread.setProperty(contrast=parameter)
-            else:
-                self.parent().detect_thread.setProperty(contrast=parameter)
+            self.parent().video_thread.setProperty(contrast=parameter)
         except:
             None
         self.contrast_label.setText(str(parameter))
@@ -485,10 +469,7 @@ class CameraSettingsDialog(QDialog):
     def changeSaturation(self):
         parameter = int(self.saturation_slider.value())
         try:
-            if self.active_thread == 'video':
-                self.parent().video_thread.setProperty(saturation=parameter)
-            else:
-                self.parent().detect_thread.setProperty(saturation=parameter)
+            self.parent().video_thread.setProperty(saturation=parameter)
         except:
             None
         self.saturation_label.setText(str(parameter))
@@ -496,10 +477,7 @@ class CameraSettingsDialog(QDialog):
     def changeHue(self):
         parameter = int(self.hue_slider.value())
         try:
-            if self.active_thread == 'video':
-                self.parent().video_thread.setProperty(hue=parameter)
-            else:
-                self.parent().detect_thread.setProperty(hue=parameter)
+            self.parent().video_thread.setProperty(hue=parameter)
         except:
             None
         self.hue_label.setText(str(parameter))
@@ -524,13 +502,14 @@ class OverlayLabel(QLabel):
 
 class CalibrateNozzles(QThread):
     # Signals
-    detector_created = pyqtSignal(str)
     status_update = pyqtSignal(str)
     message_update = pyqtSignal(str)
     change_pixmap_signal = pyqtSignal(np.ndarray)
-    display_crosshair = pyqtSignal(str)
     calibration_complete = pyqtSignal()
     detection_error = pyqtSignal(str)
+
+    display_crosshair = False
+    detection_on = False
 
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=600, minCircularity=0.8,numTools=0,cycles=1, align=False):
         super(QThread,self).__init__(parent=parent)
@@ -546,6 +525,11 @@ class CalibrateNozzles(QThread):
         self.cycles = cycles
         self.alignment = align
         self.message_update.emit('Detector created, waiting for tool..')
+
+        # start with detection off
+        self.display_crosshair = False
+        self.detection_on = False
+
         # Video Parameters
         self.brightness_default = 0
         self.contrast_default = 0
@@ -615,112 +599,132 @@ class CalibrateNozzles(QThread):
         self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
 
     def run(self):
-        if self.alignment:
-            try:
-                if self.loose:
-                    self.detect_minCircularity = 0.3
-                else: self.detect_minCircularity = 0.8
-                self.createDetector()
-                self._running = True
-                # transformation matrix
-                self.transform_matrix = []
-                while self._running:
-                    for rep in range(self.cycles):
-                        for tool in range(self.parent().num_tools):
-                            # process GUI events
-                            app.processEvents()
-                            # Update status bar
-                            self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
-                            # Load next tool for calibration
-                            self.parent().printer.gCode('T'+str(tool))
-                            # Move tool to CP coordinates
-                            self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
-                            self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
-                            # Wait for moves to complete
-                            while self.parent().printer.getStatus() not in 'idle':
-                                # process GUI events
-                                app.processEvents()
-                                self.ret, self.cv_img = self.cap.read()
-                                if self.ret:
-                                    self.change_pixmap_signal.emit(self.cv_img)
-                            # Update message bar
-                            self.message_update.emit('Searching for nozzle..')
-                            # Fetch a new frame from the inspection camera
-                            self.ret, self.cv_img = self.cap.read()
-                            if self.ret:
-                                self.change_pixmap_signal.emit(self.cv_img)
-                            self.frame = self.cv_img
-                            
-                            # Process runtime algorithm changes
-                            if self.loose:
-                                self.detect_minCircularity = 0.3
-                            else: self.detect_minCircularity = 0.8
-                            if self.detector_changed:
-                                self.createDetector()
-                                self.detector_changed = False
-                            # Analyze frame for blobs
-                            (c, transform, mpp) = self.calibrateTool(tool, rep)
-                            
-                            # process GUI events
-                            app.processEvents()                        
-                            
-                            #(xy, target, rotation, radius) = self.analyzeFrame()
-
-                    # signal end of execution
-                    self._running = False
-                # Update status bar
-                self.status_update.emit('Calibration complete: Resetting machine.')
-                # Update debug window with results
-                self.parent().debugString += '\n\nCalibration output:\n'
-                for tool_result in self.parent().calibration_results:
-                    self.parent().debugString += tool_result + '\n'
-                self.parent().printer.gCode('T-1')
-                self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
-                self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
-                self.status_update.emit('Calibration complete: Done.')
-                self.calibration_complete.emit()
-            except Exception as mn1:
-                #print('Detection thread error: ', mn1)
-                self._running = False
-                self.detection_error.emit(str(mn1))
-                self.cap.release()
-            self.stop()
-        else:
-            # don't run alignment - fetch frames and detect only
-            try:
-                if self.loose:
-                    self.detect_minCircularity = 0.3
-                else: self.detect_minCircularity = 0.8
-                self.createDetector()
-                self._running = True
-                # transformation matrix
-                self.transform_matrix = []
-                while self._running:
-                    # Update status bar
-                    self.status_update.emit('Detection mode: ON')
-                    # Fetch a new frame from the inspection camera
-                    self.ret, self.cv_img = self.cap.read()
-                    if self.ret:
-                        self.change_pixmap_signal.emit(self.cv_img)
-                    self.frame = self.cv_img
-                    
-                    # Process runtime algorithm changes
+        if self.detection_on:
+            if self.alignment:
+                try:
                     if self.loose:
                         self.detect_minCircularity = 0.3
                     else: self.detect_minCircularity = 0.8
-                    if self.detector_changed:
-                        self.createDetector()
-                        self.detector_changed = False
-                    # Run detection and update output
-                    (xy, target, rotation, radius) = self.analyzeFrame()
-                    # process GUI events
+                    self.createDetector()
+                    self._running = True
+                    # transformation matrix
+                    self.transform_matrix = []
+                    while self._running:
+                        for rep in range(self.cycles):
+                            for tool in range(self.parent().num_tools):
+                                # process GUI events
+                                app.processEvents()
+                                # Update status bar
+                                self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
+                                # Load next tool for calibration
+                                self.parent().printer.gCode('T'+str(tool))
+                                # Move tool to CP coordinates
+                                self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
+                                self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+                                # Wait for moves to complete
+                                while self.parent().printer.getStatus() not in 'idle':
+                                    # process GUI events
+                                    app.processEvents()
+                                    self.ret, self.cv_img = self.cap.read()
+                                    if self.ret:
+                                        self.change_pixmap_signal.emit(self.cv_img)
+                                # Update message bar
+                                self.message_update.emit('Searching for nozzle..')
+                                # Fetch a new frame from the inspection camera
+                                self.ret, self.cv_img = self.cap.read()
+                                if self.ret:
+                                    self.change_pixmap_signal.emit(self.cv_img)
+                                self.frame = self.cv_img
+                                
+                                # Process runtime algorithm changes
+                                if self.loose:
+                                    self.detect_minCircularity = 0.3
+                                else: self.detect_minCircularity = 0.8
+                                if self.detector_changed:
+                                    self.createDetector()
+                                    self.detector_changed = False
+                                # Analyze frame for blobs
+                                (c, transform, mpp) = self.calibrateTool(tool, rep)
+                                
+                                # process GUI events
+                                app.processEvents()                        
+                                
+                                #(xy, target, rotation, radius) = self.analyzeFrame()
+
+                        # signal end of execution
+                        self._running = False
+                    # Update status bar
+                    self.status_update.emit('Calibration complete: Resetting machine.')
+                    # Update debug window with results
+                    self.parent().debugString += '\n\nCalibration output:\n'
+                    for tool_result in self.parent().calibration_results:
+                        self.parent().debugString += tool_result + '\n'
+                    self.parent().printer.gCode('T-1')
+                    self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
+                    self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+                    self.status_update.emit('Calibration complete: Done.')
+                    self.alignment = False
+                    self.detection_on = False
+                    self.display_crosshair = False
+                    self._running = False
+                    self.calibration_complete.emit()
+                except Exception as mn1:
+                    self.alignment = False
+                    self.detection_on = False
+                    self.display_crosshair = False
+                    self._running = False
+                    self.detection_error.emit(str(mn1))
+                    self.cap.release()
+                self.stop()
+            else:
+                # don't run alignment - fetch frames and detect only
+                try:
+                    if self.loose:
+                        self.detect_minCircularity = 0.3
+                    else: self.detect_minCircularity = 0.8
+                    self.createDetector()
+                    self._running = True
+                    # transformation matrix
+                    self.transform_matrix = []
+                    while self._running:
+                        # Update status bar
+                        self.status_update.emit('Detection mode: ON')
+                        # Fetch a new frame from the inspection camera
+                        self.ret, self.cv_img = self.cap.read()
+                        if self.ret:
+                            self.change_pixmap_signal.emit(self.cv_img)
+                        self.frame = self.cv_img
+                        
+                        # Process runtime algorithm changes
+                        if self.loose:
+                            self.detect_minCircularity = 0.3
+                        else: self.detect_minCircularity = 0.8
+                        if self.detector_changed:
+                            self.createDetector()
+                            self.detector_changed = False
+                        # Run detection and update output
+                        (xy, target, rotation, radius) = self.analyzeFrame()
+                        # process GUI events
+                        app.processEvents()
+                except Exception as mn1:
+                    self._running = False
+                    self.detection_error.emit(str(mn1))
+                    self.cap.release()
+                self.stop()
+        else:
+            while not self.detection_on:
+                try:
+                    self.ret, self.cv_img = self.cap.read()
+                    if self.ret:
+                        self.change_pixmap_signal.emit(self.cv_img)
                     app.processEvents()
-            except Exception as mn1:
-                #print('Frame detection thread error: ', mn1)
-                self._running = False
-                #self.detection_error.emit(str(mn1))
-                self.cap.release()
-            self.stop()
+                except Exception as mn2:
+                    self.status_update( 'Error: ' + str(mn2) )
+                    self.cap.release()
+                    self.detection_on = False
+                    self._running = False
+                    break
+        self.cap.release()
 
     def analyzeFrame(self):
         # Placeholder coordinates
@@ -754,7 +758,7 @@ class CalibrateNozzles(QThread):
                 self.detect_minCircularity = 0.3
             else: self.detect_minCircularity = 0.8
             if self.detector_changed:
-                print('Creating new detector..')
+                #print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
@@ -762,9 +766,14 @@ class CalibrateNozzles(QThread):
             # draw the timestamp on the frame AFTER the circle detector! Otherwise it finds the circles in the numbers.
             if self.xray:
                 cleanFrame = self.frame
-            self.frame = cv2.line(cleanFrame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1)
-            self.frame = cv2.line(self.frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1)
+            # check if we are displaying a crosshair
+            if self.display_crosshair:
+                self.frame = cv2.line(cleanFrame, (target[0],    target[1]-25), (target[0],    target[1]+25), (0, 255, 0), 1)
+                self.frame = cv2.line(self.frame, (target[0]-25, target[1]   ), (target[0]+25, target[1]   ), (0, 255, 0), 1)
+            else: self.frame = cleanFrame
+            # update image
             self.change_pixmap_signal.emit(self.frame)
+
             if(nocircle> 25):
                 self.message_update.emit( 'Error in detecting nozzle.' )
                 nocircle = 0
@@ -780,7 +789,7 @@ class CalibrateNozzles(QThread):
             if (num_keypoints > 1):
                 if (25 < (int(round(time() * 1000)) - rd)):
                     self.message_update.emit( 'Too many circles found. Please stop and clean the nozzle.' )
-                    self.frame = self.putText(self.frame,'Too many circles found '+str(num_keypoints),offsety=3, color=(255,255,255))                
+                    self.frame = self.putText(self.frame,'Too many circles found '+str(num_keypoints),offsety=3, color=(255,255,255))
                     self.frame = cv2.drawKeypoints(self.frame, keypoints, np.array([]), (255,255,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
                     self.change_pixmap_signal.emit(self.frame)
                 continue
@@ -793,7 +802,8 @@ class CalibrateNozzles(QThread):
             # Note its radius and position
             ts =  'U{0:3.0f} V{1:3.0f} R{2:2.0f}'.format(xy[0],xy[1],r)
             xy = np.uint16(xy)
-            self.frame = self.putText(self.frame, ts, offsety=2, color=(0, 255, 0), stroke=2)
+            #self.frame = self.putText(self.frame, ts, offsety=2, color=(0, 255, 0), stroke=2)
+            self.message_update.emit(ts)
             # show the frame
             self.change_pixmap_signal.emit(self.frame)
             rd = int(round(time() * 1000))
@@ -1007,6 +1017,7 @@ class CalibrateNozzles(QThread):
 
     def stop(self):
         self._running = False
+        self.detection_on = False
         try:
             self.parent().printer.gCode('T-1')
             self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']) + ' Y' + str(self.parent().cp_coords['Y']))
@@ -1044,7 +1055,6 @@ class CalibrateNozzles(QThread):
 
         # create detector
         self.detector = cv2.SimpleBlobDetector_create(params)
-        #self.detector_created.emit('Detector: OK')
 
     def adjust_gamma(self, image, gamma=1.2):
         # build a lookup table mapping the pixel values [0, 255] to
@@ -1083,9 +1093,6 @@ class App(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__()
-
-        #self.xray_flag = pyqtSignal()
-
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('TAMV')
         self.setWindowIcon(QIcon('jubilee.png'))
@@ -1321,6 +1328,11 @@ class App(QMainWindow):
         self.loose_box.stateChanged.connect(self.toggle_loose)
         self.loose_box.setDisabled(True)
 
+        # HBHBHB: test checkbox
+        self.detect_box = QCheckBox('Detection')
+        self.detect_box.setChecked(False)
+        self.detect_box.stateChanged.connect(self.toggle_detect)
+
         # create a grid box layout
         grid = QGridLayout()
         grid.setSpacing(3)
@@ -1330,7 +1342,11 @@ class App(QMainWindow):
         grid.addWidget(self.connection_button,1,1,Qt.AlignLeft)
         grid.addWidget(self.xray_box,1,2)
         grid.addWidget(self.loose_box,1,3)
-        grid.addWidget(self.toolBox,1,4)
+        
+        #HBHBHB
+        grid.addWidget(self.detect_box,1,4)
+        #grid.addWidget(self.toolBox,1,4)
+
         grid.addWidget(self.disconnection_button,1,5,1,-1,Qt.AlignLeft)
         # SECOND ROW
         
@@ -1358,6 +1374,16 @@ class App(QMainWindow):
         self.crosshair = False
         # object to hold final offsets
         self.calibration_results = []
+
+    def toggle_detect(self):
+        if self.detect_box.isChecked():
+            self.video_thread.display_crosshair = True
+            self.video_thread.alignment = False
+            self.video_thread.detection_on = True
+        else: 
+            self.video_thread.display_crosshair = False
+            self.video_thread.alignment = False
+            self.video_thread.detection_on = False
 
     def loadUserParameters(self):
         global camera_width, camera_height, video_src
@@ -1438,9 +1464,15 @@ class App(QMainWindow):
 
     def startVideo(self):
         # create the video capture thread
-        self.video_thread = VideoThread(src=video_src, width=camera_width, height=camera_height)
+        self.video_thread = CalibrateNozzles(parent=self,numTools=0, cycles=1,minArea=600, align=False)
         # connect its signal to the update_image slot
+        # connect its signal to the update_image slot
+        self.video_thread.detection_error.connect(self.updateStatusbar)
+        self.video_thread.status_update.connect(self.updateStatusbar)
+        self.video_thread.message_update.connect(self.updateMessagebar)
         self.video_thread.change_pixmap_signal.connect(self.update_image)
+        self.video_thread.calibration_complete.connect(self.applyCalibration)
+
         # start the thread
         self.video_thread.start()
 
@@ -1448,16 +1480,17 @@ class App(QMainWindow):
         try:
             if self.video_thread.isRunning():
                 self.video_thread.stop()
-        except:
-            None
+        except Exception as vs2:
+            self.updateStatusbar('ERROR: cannot stop video')
+            print('ERROR: cannot stop video')
+            print(vs2)
 
     def closeEvent(self, event):
         try:
             self.video_thread.stop()
-        except Exception: None
-        try:
-            self.detect_thread.stop()
-        except Exception: None
+        except Exception as close1:
+            print('ERROR ending video thread: ')
+            print(close1)
         event.accept()
 
     def connectToPrinter(self):
@@ -1515,6 +1548,7 @@ class App(QMainWindow):
                 # connection succeeded, update objects accordingly
                 self._connected_flag = True
                 self.num_tools = self.printer.getNumTools()
+                self.video_thread.numTools = self.num_tools
                 # UPDATE OFFSET INFORMATION
                 self.offsets_box.setVisible(True)
                 self.offsets_table.setRowCount(self.num_tools)
@@ -1591,15 +1625,10 @@ class App(QMainWindow):
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
                     self.printer.gCode('G1 Y' + str(tempCoords['Y']))
                 # End video threads and restart default thread
-                try:
-                    if self.detect_thread.isRunning():
-                        self.detect_thread.stop()
-                except Exception: None
-                try:
-                    if self.video_thread.isRunning():
-                        self.video_thread.stop()
-                except Exception: None
-                self.startVideo()
+                self.video_thread.alignment = False
+                self.video_thread.display_crosshair = False
+                self.video_thread.detection_on = False
+
                 # Update GUI
                 self.xray_box.setDisabled(True)
                 self.xray_box.setChecked(False)
@@ -1645,24 +1674,11 @@ class App(QMainWindow):
                 self.loose_box.setDisabled(False)
                 self.repeatSpinBox.setDisabled(True)
 
-                try:
-                    if self.detect_thread.isRunning():
-                        None
-                except:
-                    # stop video thread
-                    self.stopVideo()
-                    # create the Nozzle detection capture thread
-                    self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, minArea=600, align=False)
-                    
-                    # connect its signal to the update_image slot
-                    self.detect_thread.detector_created.connect(self.updateStatusbar)
-                    self.detect_thread.status_update.connect(self.updateStatusbar)
-                    self.detect_thread.message_update.connect(self.updateMessagebar)
-                    self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-                    #self.detect_thread.calibration_complete.connect(self.applyCalibration)
-                    self.detect_thread.detection_error.connect(self.updateStatusbar)
-                    # start the thread
-                    self.detect_thread.start()
+                # enable detection without calibration
+                self.video_thread.alignment = False
+                self.video_thread.display_crosshair = True
+                self.video_thread.detection_on = True
+                self.detect_box.setChecked(True)
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
@@ -1742,18 +1758,10 @@ class App(QMainWindow):
             self.statusBar.showMessage('New offsets applied to machine.')
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
-        # Clean up threads
-        try:
-            if self.detect_thread.isRunning():
-                self.detect_thread.stop()
-                self.startVideo()
-        except Exception:
-            try:
-                if self.video_thread.isRunning():
-                    None
-                else:
-                    self.startVideo()
-            except: self.startVideo()
+        # Clean up threads and detection
+        self.video_thread.alignment = False
+        self.video_thread.detect_on = False
+        self.video_thread.display_crosshair = False
 
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
@@ -1778,15 +1786,11 @@ class App(QMainWindow):
         self.toolBox.setVisible(False)
         self.repaint()
         # End video threads and restart default thread
-        try:
-            if self.detect_thread.isRunning():
-                self.detect_thread.stop()
-        except Exception: None
-        try:
-            if self.video_thread.isRunning():
-                self.video_thread.stop()
-        except Exception: None
-        self.startVideo()
+        # Clean up threads and detection
+        self.video_thread.alignment = False
+        self.video_thread.detect_on = False
+        self.video_thread.display_crosshair = False
+        self.detect_box.setChecked(False)
 
         # update status 
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
@@ -1852,22 +1856,13 @@ class App(QMainWindow):
         self.repeatSpinBox.setDisabled(True)
 
         # create the Nozzle detection capture thread
-        self.detect_thread = CalibrateNozzles(parent=self,numTools=self.num_tools, cycles=self.cycles,minArea=600, align=True)
-        
-        # connect its signal to the update_image slot
-        self.detect_thread.detector_created.connect(self.updateStatusbar)
-        self.detect_thread.status_update.connect(self.updateStatusbar)
-        self.detect_thread.message_update.connect(self.updateMessagebar)
-        self.detect_thread.change_pixmap_signal.connect(self.update_image_detection)
-        self.detect_thread.calibration_complete.connect(self.applyCalibration)
-        # start the thread
-        self.detect_thread.start()
+        self.video_thread.display_crosshair = True
+        self.video_thread.detection_on = True
+        self.video_thread.alignment = True
 
     def toggle_xray(self):
         try:
-            if self.detect_thread:
-                #print('Xray toggled.')
-                self.detect_thread.toggleXray()
+            self.video_thread.toggleXray()
         except Exception as e1:
             self.updateStatusbar('Detection thread not running.')
             print( 'Detection thread error in XRAY: ')
@@ -1875,8 +1870,7 @@ class App(QMainWindow):
 
     def toggle_loose(self):
         try:
-            if self.detect_thread:
-                self.detect_thread.toggleLoose()
+            self.video_thread.toggleLoose()
         except Exception as e1:
             self.updateStatusbar('Detection thread not running.')
             print( 'Detection thread error in LOOSE: ')
@@ -1889,31 +1883,6 @@ class App(QMainWindow):
     @pyqtSlot(str)
     def updateMessagebar(self, statusCode ):
         self.image_label.setText(statusCode)
-
-    @pyqtSlot(np.ndarray)
-    def update_image_detection(self, cv_img):
-        self.mutex.lock()
-        self.current_frame = cv_img
-        if self.crosshair:
-            # Draw alignment circle on image
-            cv_img = cv2.circle( 
-                cv_img, 
-                ( int(camera_width/2), int(camera_height/2) ), 
-                int( camera_width/6 ), 
-                (0,255,0), 
-                2
-            )
-            cv_img = cv2.circle( 
-                cv_img, 
-                ( int(camera_width/2), int(camera_height/2) ), 
-                5, 
-                (0,0,255), 
-                2
-            )
-        # Updates the image_label with a new opencv image
-        qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
-        self.mutex.unlock()
 
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
