@@ -722,11 +722,11 @@ class CalibrateNozzles(QThread):
                             # Update status bar
                             self.status_update.emit('Detection mode: ON')
                             # Fetch a new frame from the inspection camera
-                            self.ret, self.cv_img = self.cap.read()
-                            if self.ret:
-                                local_img = self.cv_img
+                            #self.ret, self.cv_img = self.cap.read()
+                            #if self.ret:
+                            #    local_img = self.cv_img
                             #    self.change_pixmap_signal.emit(local_img)
-                            self.frame = self.cv_img
+                            #self.frame = self.cv_img
                             # Process runtime algorithm changes
                             if self.loose:
                                 self.detect_minCircularity = 0.3
