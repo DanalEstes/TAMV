@@ -646,8 +646,7 @@ class CalibrateNozzles(QThread):
                                             local_img = self.cv_img
                                             self.change_pixmap_signal.emit(local_img)
                                         else:
-                                            self.cap.release()
-                                            self.cap = cv2.VideoCapture(video_src)
+                                            self.cap.open(video_src)
                                             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                                             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
@@ -661,14 +660,13 @@ class CalibrateNozzles(QThread):
                                         local_img = self.cv_img
                                         self.change_pixmap_signal.emit(local_img)
                                     else:
-                                        self.cap.release()
-                                        self.cap = cv2.VideoCapture(video_src)
+                                        self.cap.open(video_src)
                                         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                                         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                                         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
                                         self.cap.set(cv2.CAP_PROP_FPS,25)
                                         continue
-                                    #self.frame = self.cv_img
+                                    self.frame = self.cv_img
                                     
                                     # Process runtime algorithm changes
                                     if self.loose:
@@ -728,21 +726,7 @@ class CalibrateNozzles(QThread):
                             self.ret, self.cv_img = self.cap.read()
                             if self.ret:
                                 local_img = self.cv_img
-                                self.change_pixmap_signal.emit(local_img)
-                            else:
-                                # reset capture
-                                print('Error capturing new frames in Detect ON Section')
-                                if self.cap.isOpened():
-                                    print('Odd error. already successfully opened.')
-                                    exit()
-                                else:
-                                    self.cap.open(video_src)
-                                    #self.cap = cv2.VideoCapture(video_src)
-                                    #self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-                                    #self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-                                    #self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                                    #self.cap.set(cv2.CAP_PROP_FPS,25)
-                                continue
+                            #    self.change_pixmap_signal.emit(local_img)
                             self.frame = self.cv_img
                             
                             # Process runtime algorithm changes
@@ -771,11 +755,15 @@ class CalibrateNozzles(QThread):
                             self.change_pixmap_signal.emit(local_img)
                         else:
                             # reset capture
-                            self.cap = cv2.VideoCapture(video_src)
+                            self.cap.open(video_src)
                             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
                             self.cap.set(cv2.CAP_PROP_FPS,25)
+                            self.ret, self.cv_img = self.cap.read()
+                            if self.ret:
+                                local_img = self.cv_img
+                                self.change_pixmap_signal.emit(local_img)
                             continue
                         app.processEvents()
                     except Exception as mn2:
@@ -798,13 +786,20 @@ class CalibrateNozzles(QThread):
         nocircle = 0
         # Random time offset
         rd = int(round(time.time()*1000))
+        # reset capture
+        self.cap.open(video_src)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+        self.cap.set(cv2.CAP_PROP_FPS,25)
+
         while True and self.detection_on:
             app.processEvents()
             self.ret, self.frame = self.cap.read()
             if not self.ret:
                 # reset capture
                 print('Error capturing new frames in Detect OFF Section')
-                self.cap = cv2.VideoCapture(video_src)
+                self.cap.open(video_src)
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
