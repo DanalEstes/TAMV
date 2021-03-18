@@ -1383,14 +1383,8 @@ class App(QMainWindow):
         self.calibration_results = []
 
     def toggle_detect(self):
-        if self.detect_box.isChecked():
-            self.video_thread.display_crosshair = True
-            self.video_thread.alignment = False
-            self.video_thread.detection_on = True
-        else: 
-            self.video_thread.display_crosshair = False
-            self.video_thread.alignment = False
-            self.video_thread.detection_on = False
+        self.video_thread.display_crosshair = not self.video_thread.display_crosshair
+        self.video_thread.detection_on = not self.video_thread.detection_on
 
     def loadUserParameters(self):
         global camera_width, camera_height, video_src
