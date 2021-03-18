@@ -1551,9 +1551,8 @@ class App(QMainWindow):
             tempCoords = self.printer.getCoords()
             self.printer.gCode('T-1')
             self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
-        except Exception as ex1:
-            print('ERROR WHILE SHUTTING DOWN TAMV!')
-            print(ex1)
+        except: None
+        print('Thank you for using TAMV!')
         event.accept()
 
     def connectToPrinter(self):
