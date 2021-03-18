@@ -825,7 +825,7 @@ class CalibrateNozzles(QThread):
                 self.detect_minCircularity = 0.3
             else: self.detect_minCircularity = 0.8
             if self.detector_changed:
-                print('Creating new detector..')
+                #print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
@@ -1793,6 +1793,7 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_green)
         self.detect_box.setChecked(False)
         self.detect_box.setDisabled(False)
+        self.detect_box.setVisible(True)
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
         self.xray_box.setVisible(False)
