@@ -56,6 +56,7 @@ import DuetWebAPI as DWA
 from time import sleep, time
 import datetime
 import json
+import time
 # styles
 global style_green, style_red, style_disabled, style_orange
 style_green = 'background-color: green; color: white;'
