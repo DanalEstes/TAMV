@@ -691,7 +691,7 @@ class CalibrateNozzles(QThread):
                         self._running = True
                         # transformation matrix
                         self.transform_matrix = []
-                        while self._running:
+                        while self._running and self.detection_on:
                             # Update status bar
                             self.status_update.emit('Detection mode: ON')
                             # Fetch a new frame from the inspection camera
