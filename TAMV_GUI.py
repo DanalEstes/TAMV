@@ -732,6 +732,8 @@ class CalibrateNozzles(QThread):
                         self.detection_on = False
                         self._running = False
                         exit()
+                    app.processEvents()
+                app.processEvents()
                 break
         
         self.cap.release()
