@@ -730,7 +730,7 @@ class CalibrateNozzles(QThread):
                                     print('Odd error. already successfully opened.')
                                     exit()
                                 else:
-                                    self.cap.open()
+                                    self.cap.open(video_src)
                                     #self.cap = cv2.VideoCapture(video_src)
                                     #self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                                     #self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
