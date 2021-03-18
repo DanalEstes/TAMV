@@ -727,8 +727,14 @@ class CalibrateNozzles(QThread):
                         if self.ret:
                             self.change_pixmap_signal.emit(self.cv_img)
                         else:
+                            # reset capture
                             print('Error capturing new frames in Detect OFF Section')
-                            exit()
+                            self.cap = cv2.VideoCapture(video_src)
+                            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                            self.cap.set(cv2.CAP_PROP_FPS,25)
+                            continue
                         app.processEvents()
                     except Exception as mn2:
                         self.status_update( 'Error: ' + str(mn2) )
