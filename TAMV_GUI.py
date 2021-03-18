@@ -726,11 +726,15 @@ class CalibrateNozzles(QThread):
                             else:
                                 # reset capture
                                 print('Error capturing new frames in Detect ON Section')
-                                self.cap = cv2.VideoCapture(video_src)
-                                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-                                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-                                self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                                self.cap.set(cv2.CAP_PROP_FPS,25)
+                                if self.cap.isOpened():
+                                    print('Odd error. already successfully opened.')
+                                    exit()
+                                else:
+                                    self.cap = cv2.VideoCapture(video_src)
+                                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                                    self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                                    self.cap.set(cv2.CAP_PROP_FPS,25)
                                 continue
                             self.frame = self.cv_img
                             
