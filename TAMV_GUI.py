@@ -558,6 +558,15 @@ class CalibrateNozzles(QThread):
         self.ret, self.cv_img = self.cap.read()
         if self.ret:
             self.change_pixmap_signal.emit(self.cv_img)
+        else:
+            self.cap.release()
+            self.cap = cv2.VideoCapture(video_src)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+            self.cap.set(cv2.CAP_PROP_FPS,25)
+            self.ret, self.cv_img = self.cap.read()
+            self.change_pixmap_signal.emit(self.cv_img)
 
     def toggleXray(self):
         if self.xray:
@@ -631,15 +640,31 @@ class CalibrateNozzles(QThread):
                                     while self.parent().printer.getStatus() not in 'idle':
                                         # process GUI events
                                         app.processEvents()
-                                        #self.ret, self.cv_img = self.cap.read()
-                                        #if self.ret:
-                                        #    self.change_pixmap_signal.emit(self.cv_img)
+                                        self.ret, self.cv_img = self.cap.read()
+                                        if self.ret:
+                                            self.change_pixmap_signal.emit(self.cv_img)
+                                        else:
+                                            self.cap.release()
+                                            self.cap = cv2.VideoCapture(video_src)
+                                            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                                            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                                            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                                            self.cap.set(cv2.CAP_PROP_FPS,25)
+                                            continue
                                     # Update message bar
                                     self.message_update.emit('Searching for nozzle..')
                                     # Fetch a new frame from the inspection camera
-                                    #self.ret, self.cv_img = self.cap.read()
-                                    #if self.ret:
-                                    #    self.change_pixmap_signal.emit(self.cv_img)
+                                    self.ret, self.cv_img = self.cap.read()
+                                    if self.ret:
+                                        self.change_pixmap_signal.emit(self.cv_img)
+                                    else:
+                                        self.cap.release()
+                                        self.cap = cv2.VideoCapture(video_src)
+                                        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                                        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                                        self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                                        self.cap.set(cv2.CAP_PROP_FPS,25)
+                                        continue
                                     #self.frame = self.cv_img
                                     
                                     # Process runtime algorithm changes
