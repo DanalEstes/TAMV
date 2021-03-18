@@ -493,7 +493,7 @@ class OverlayLabel(QLabel):
         super(OverlayLabel, self).paintEvent(event)
         pos = QPoint(10, 470)
         painter = QPainter(self)
-        painter.setBrush(QColor(255,255,255,160))
+        painter.setBrush(QColor(204,204,204,230))
         painter.setPen(QColor(255, 255, 255,0))
         painter.drawRect(0,450,640,50)
         painter.setPen(QColor(0, 0, 0))
@@ -764,7 +764,7 @@ class CalibrateNozzles(QThread):
         # Random time offset
         rd = int(round(time.time()*1000))
         # reset capture
-        self.cap.open(video_src)
+        #self.cap.open(video_src)
         #self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
         #self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
         #self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
@@ -775,7 +775,7 @@ class CalibrateNozzles(QThread):
             self.ret, self.frame = self.cap.read()
             if not self.ret:
                 # reset capture
-                print('Error capturing new frames in Detect OFF Section')
+                print('Error capturing new frames in analyze()')
                 self.cap.open(video_src)
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
@@ -806,7 +806,7 @@ class CalibrateNozzles(QThread):
                 self.detect_minCircularity = 0.3
             else: self.detect_minCircularity = 0.8
             if self.detector_changed:
-                #print('Creating new detector..')
+                print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
