@@ -630,16 +630,16 @@ class CalibrateNozzles(QThread):
                                     while self.parent().printer.getStatus() not in 'idle':
                                         # process GUI events
                                         app.processEvents()
-                                        self.ret, self.cv_img = self.cap.read()
-                                        if self.ret:
-                                            self.change_pixmap_signal.emit(self.cv_img)
+                                        #self.ret, self.cv_img = self.cap.read()
+                                        #if self.ret:
+                                        #    self.change_pixmap_signal.emit(self.cv_img)
                                     # Update message bar
                                     self.message_update.emit('Searching for nozzle..')
                                     # Fetch a new frame from the inspection camera
-                                    self.ret, self.cv_img = self.cap.read()
-                                    if self.ret:
-                                        self.change_pixmap_signal.emit(self.cv_img)
-                                    self.frame = self.cv_img
+                                    #self.ret, self.cv_img = self.cap.read()
+                                    #if self.ret:
+                                    #    self.change_pixmap_signal.emit(self.cv_img)
+                                    #self.frame = self.cv_img
                                     
                                     # Process runtime algorithm changes
                                     if self.loose:
@@ -748,9 +748,9 @@ class CalibrateNozzles(QThread):
         rd = int(round(time()*1000))
         while True:
             app.processEvents()
-            if not self.detection_on:
-                (xy, target, toolCoordinates, r) = (None, None, None, None)
-                break
+            #if not self.detection_on:
+            #    (xy, target, toolCoordinates, r) = (None, None, None, None)
+            #    break
             self.ret, self.frame = self.cap.read()
             try:
                 # capture tool location in machine space before processing
