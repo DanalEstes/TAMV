@@ -745,7 +745,7 @@ class CalibrateNozzles(QThread):
         nocircle = 0
         # Random time offset
         rd = int(round(time()*1000))
-        while True:
+        while True and self.detection_on:
             app.processEvents()
             #if not self.detection_on:
             #    (xy, target, toolCoordinates, r) = (None, None, None, None)
