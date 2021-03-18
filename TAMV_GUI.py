@@ -613,6 +613,7 @@ class CalibrateNozzles(QThread):
         self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
 
     def run(self):
+        self.createDetector()
         while True:
             if self.detection_on:
                 if self.alignment:
@@ -707,13 +708,11 @@ class CalibrateNozzles(QThread):
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
                 else:
-                    print('No alignment running')
                     # don't run alignment - fetch frames and detect only
                     try:
                         if self.loose:
                             self.detect_minCircularity = 0.3
                         else: self.detect_minCircularity = 0.8
-                        self.createDetector()
                         self._running = True
                         # transformation matrix
                         self.transform_matrix = []
@@ -728,7 +727,6 @@ class CalibrateNozzles(QThread):
                                 local_img = self.cv_img
                             #    self.change_pixmap_signal.emit(local_img)
                             self.frame = self.cv_img
-                            
                             # Process runtime algorithm changes
                             if self.loose:
                                 self.detect_minCircularity = 0.3
@@ -737,9 +735,7 @@ class CalibrateNozzles(QThread):
                                 self.createDetector()
                                 self.detector_changed = False
                             # Run detection and update output
-                            print('Starting analysis.')
                             self.analyzeFrame()
-                            print('Frame analyzed.')
                             # process GUI events
                             app.processEvents()
                     except Exception as mn1:
@@ -788,10 +784,10 @@ class CalibrateNozzles(QThread):
         rd = int(round(time.time()*1000))
         # reset capture
         self.cap.open(video_src)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-        self.cap.set(cv2.CAP_PROP_FPS,25)
+        #self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+        #self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+        #self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+        #self.cap.set(cv2.CAP_PROP_FPS,25)
 
         while True and self.detection_on:
             app.processEvents()
