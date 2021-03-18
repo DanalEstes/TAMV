@@ -720,6 +720,7 @@ class CalibrateNozzles(QThread):
                         self.cap.release()
             else:
                 self.status_update.emit('Detection: OFF')
+                print('Detection: OFF' + str(time.time()))
                 while not self.detection_on:
                     try:
                         self.ret, self.cv_img = self.cap.read()
@@ -735,6 +736,7 @@ class CalibrateNozzles(QThread):
                         exit()
                     app.processEvents()
                 app.processEvents()
+                continue
         print('Releasing cap device and exiting video thread.')
         self.cap.release()
 
@@ -827,7 +829,10 @@ class CalibrateNozzles(QThread):
             #end the loop
             break
         # and tell our parent.
-        return (xy, target, toolCoordinates, r)
+        if self.detection_on:
+            return (xy, target, toolCoordinates, r)
+        else:
+            return(None,None,None,None)
 
     def calibrateTool(self, tool, rep):
         # timestamp for caluclating tool calibration runtime
