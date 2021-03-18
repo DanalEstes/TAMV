@@ -1398,11 +1398,13 @@ class App(QMainWindow):
         self.xray_box.setChecked(False)
         self.xray_box.stateChanged.connect(self.toggle_xray)
         self.xray_box.setDisabled(True)
+        self.xray_box.setVisible(False)
         # Loose checkbox
         self.loose_box = QCheckBox('Loose detection')
         self.loose_box.setChecked(False)
         self.loose_box.stateChanged.connect(self.toggle_loose)
         self.loose_box.setDisabled(True)
+        self.loose_box.setVisible(False)
 
         # HBHBHB: test checkbox
         self.detect_box = QCheckBox('Detect ON')
@@ -1451,6 +1453,16 @@ class App(QMainWindow):
     def toggle_detect(self):
         self.video_thread.display_crosshair = not self.video_thread.display_crosshair
         self.video_thread.detection_on = not self.video_thread.detection_on
+        if self.video_thread.detection_on:
+            self.xray_box.setDisabled(False)
+            self.xray_box.setVisible(True)
+            self.loose_box.setDisabled(False)
+            self.loose_box.setVisible(True)
+        else:
+            self.xray_box.setDisabled(True)
+            self.xray_box.setVisible(False)
+            self.loose_box.setDisabled(True)
+            self.loose_box.setVisible(False)
 
     def loadUserParameters(self):
         global camera_width, camera_height, video_src
@@ -1577,7 +1589,10 @@ class App(QMainWindow):
         self.repeatSpinBox.setDisabled(True)
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
+        self.xray_box.setVisible(False)
         self.loose_box.setDisabled(True)
+        self.loose_box.setChecked(False)
+        self.loose_box.setVisible(False)
         self.repaint()
         try:
             # check if printerURL has already been defined (user reconnecting)
@@ -1694,9 +1709,7 @@ class App(QMainWindow):
                 # End video threads and restart default thread
                 self.video_thread.alignment = False
 
-                # Update GUI
-                self.xray_box.setDisabled(True)
-                self.loose_box.setDisabled(True)
+                # Update GUI for unloading carriage
                 self.calibration_button.setDisabled(False)
                 self.cp_button.setDisabled(False)
                 self.updateMessagebar('Ready.')
@@ -1732,7 +1745,6 @@ class App(QMainWindow):
                 self.cp_button.setDisabled(True)
                 self.jogpanel_button.setDisabled(False)
                 self.calibration_button.setDisabled(True)
-                self.xray_box.setDisabled(False)
                 self.repeatSpinBox.setDisabled(True)
 
             else:
@@ -1750,9 +1762,20 @@ class App(QMainWindow):
         self.cp_label.setText('<b>CP:</b> <i>undef</i>')
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
+        
+        self.detect_box.setChecked(False)
+        self.detect_box.setDisabled(False)
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
+        self.xray_box.setVisible(False)
         self.loose_box.setDisabled(True)
+        self.loose_box.setChecked(False)
+        self.loose_box.setVisible(False)
+        self.video_thread.detection_on = False
+        self.video_thread.loose = False
+        self.video_thread.xray = False
+        self.video_thread.alignment = False
+
         index = self.toolBoxLayout.count()-1
         while index >= 0:
             curWidget = self.toolBoxLayout.itemAt(index).widget()
@@ -1785,13 +1808,21 @@ class App(QMainWindow):
         self.cp_button.setText('Reset CP ')
         self.cp_label.setText('<b>CP:</b> ' + self.cp_string)
         self.cp_label.setStyleSheet(style_green)
+        self.detect_box.setChecked(False)
+        self.detect_box.setDisabled(False)
         self.xray_box.setDisabled(True)
         self.xray_box.setChecked(False)
+        self.xray_box.setVisible(False)
         self.loose_box.setDisabled(True)
+        self.loose_box.setChecked(False)
+        self.loose_box.setVisible(False)
+        self.video_thread.detection_on = False
+        self.video_thread.loose = False
+        self.video_thread.xray = False
+        self.video_thread.alignment = False
         self.calibration_button.setDisabled(False)
+
         self.toolBox.setVisible(True)
-        self.detect_box.setVisible(True)
-        self.detect_box.setChecked(False)
         #self.repeatSpinBox.setDisabled(False)
 
     def applyCalibration(self):
@@ -1906,7 +1937,10 @@ class App(QMainWindow):
         self.calibration_button.setDisabled(True)
         self.xray_box.setDisabled(False)
         self.xray_box.setChecked(False)
+        self.xray_box.setVisible(True)
         self.loose_box.setDisabled(False)
+        self.loose_box.setChecked(False)
+        self.loose_box.setVisible(True)
         self.toolBox.setVisible(False)
         self.detect_box.setVisible(False)
         # get number of repeat cycles
@@ -1916,6 +1950,8 @@ class App(QMainWindow):
         # create the Nozzle detection capture thread
         self.video_thread.display_crosshair = True
         self.video_thread.detection_on = True
+        self.video_thread.xray = False
+        self.video_thread.loose = False
         self.video_thread.alignment = True
 
     def toggle_xray(self):
