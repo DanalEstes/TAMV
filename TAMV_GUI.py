@@ -57,6 +57,7 @@ from time import sleep, time
 import datetime
 import json
 import time
+
 # styles
 global style_green, style_red, style_disabled, style_orange
 style_green = 'background-color: green; color: white;'
@@ -747,7 +748,7 @@ class CalibrateNozzles(QThread):
         # Counter of frames with no circle.
         nocircle = 0
         # Random time offset
-        rd = int(round(time()*1000))
+        rd = int(round(datetime.time()*1000))
         while True and self.detection_on:
             app.processEvents()
             #if not self.detection_on:
