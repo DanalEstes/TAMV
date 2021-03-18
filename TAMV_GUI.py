@@ -652,10 +652,9 @@ class CalibrateNozzles(QThread):
                                     (c, transform, mpp) = self.calibrateTool(tool, rep)
                                     
                                     # process GUI events
-                                    app.processEvents()                        
-                                    
+                                    app.processEvents()
+                                    print('Tool ' + str(tool) + ' - Cycle ' + str(rep) + ': calibration done.')
                                     #(xy, target, rotation, radius) = self.analyzeFrame()
-
                             # signal end of execution
                             self._running = False
                         # Update status bar
@@ -755,7 +754,10 @@ class CalibrateNozzles(QThread):
             try:
                 # capture tool location in machine space before processing
                 toolCoordinates = self.parent().printer.getCoords()
-            except: toolCoordinates = None
+                print('Got coordinates.')
+            except Exception as c1:
+                print('Error: ' + str(C1) )
+                toolCoordinates = None
             # capture first clean frame for display
             cleanFrame = self.frame
             # apply nozzle detection algorithm
@@ -1002,7 +1004,6 @@ class CalibrateNozzles(QThread):
                 self.avg = [0,0]
                 self.location = {'X':0,'Y':0}
                 self.count = 0
-
     def normalize_coords(self,coords):
         xdim, ydim = camera_width, camera_height
         return (coords[0] / xdim - 0.5, coords[1] / ydim - 0.5)
@@ -1683,7 +1684,6 @@ class App(QMainWindow):
                 self.video_thread.alignment = False
                 self.video_thread.display_crosshair = True
                 self.video_thread.detection_on = True
-                self.detect_box.setChecked(True)
             else:
                 self.toolButtons[int(self.sender().text()[1:])].setChecked(False)
 
