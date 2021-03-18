@@ -1553,6 +1553,7 @@ class App(QMainWindow):
             self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
         except: None
         print('Thank you for using TAMV!')
+        print('Check out www.jubilee3d.com')
         event.accept()
 
     def connectToPrinter(self):
