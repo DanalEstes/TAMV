@@ -881,7 +881,7 @@ class CalibrateNozzles(QThread):
         if len(self.transform_matrix) > 1:
             # set state flag to Step 2: nozzle alignment stage
             self.state = 200
-            self.parent().debugString += 'Calibrating T'+str(tool)+':C'+str(rep)+': '
+            self.parent().debugString += '\nCalibrating T'+str(tool)+':C'+str(rep)+': '
         
         # Space coordinates
         self.space_coordinates = []
@@ -957,6 +957,7 @@ class CalibrateNozzles(QThread):
                 elif self.state == len(self.calibrationCoordinates):
                     calibration_time = np.around(time.time() - self.startTime,3)
                     self.parent().debugString += 'Camera calibration complete. (' + str(calibration_time) + 's)\n'
+                    self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n'
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Calibrating rotation.. (100%) - MPP = ' + str(self.mpp))
                     self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
@@ -978,7 +979,7 @@ class CalibrateNozzles(QThread):
                     self.state = 200
                     # start tool calibration timer
                     self.startTime = time.time()
-                    self.parent().debugString += 'Calibrating T'+str(tool)+':C'+str(rep)+': '
+                    self.parent().debugString += 'Calibrating T'+str(tool)+':C'+str(rep)+':\n'
                     continue
                 #### Step 2: nozzle alignment stage
                 elif self.state == 200:
