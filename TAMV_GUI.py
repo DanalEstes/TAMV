@@ -680,7 +680,6 @@ class CalibrateNozzles(QThread):
                         self._running = False
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
-                    self.stop()
                 else:
                     print('No alignment running')
                     # don't run alignment - fetch frames and detect only
@@ -716,10 +715,10 @@ class CalibrateNozzles(QThread):
                         self._running = False
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
-                    self.stop()
             else:
                 print('Detection off')
                 while not self.detection_on:
+                    print('Outputting frame.')
                     try:
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
@@ -733,9 +732,9 @@ class CalibrateNozzles(QThread):
                         self._running = False
                         exit()
                     app.processEvents()
+                print('Starting detection..')
                 app.processEvents()
-                break
-        
+        print('Releasing cap device and exiting video thread.')
         self.cap.release()
 
     def analyzeFrame(self):
@@ -1388,6 +1387,9 @@ class App(QMainWindow):
         self.calibration_results = []
 
     def toggle_detect(self):
+        if self.video_thread.detection_on:
+            print( 'Toggling off')
+        else: print('Toggling on')
         self.video_thread.display_crosshair = not self.video_thread.display_crosshair
         self.video_thread.detection_on = not self.video_thread.detection_on
 
