@@ -508,6 +508,8 @@ class CalibrateNozzles(QThread):
     calibration_complete = pyqtSignal()
     detection_error = pyqtSignal(str)
 
+    alignment = False
+    _running = False
     display_crosshair = False
     detection_on = False
 
@@ -600,7 +602,9 @@ class CalibrateNozzles(QThread):
 
     def run(self):
         if self.detection_on:
+            print('Detection on')
             if self.alignment:
+                print('Alignment started.')
                 try:
                     if self.loose:
                         self.detect_minCircularity = 0.3
@@ -677,6 +681,7 @@ class CalibrateNozzles(QThread):
                     self.cap.release()
                 self.stop()
             else:
+                print('No alignment running')
                 # don't run alignment - fetch frames and detect only
                 try:
                     if self.loose:
@@ -712,6 +717,7 @@ class CalibrateNozzles(QThread):
                     self.cap.release()
                 self.stop()
         else:
+            print('Detection off')
             while not self.detection_on:
                 try:
                     self.ret, self.cv_img = self.cap.read()
@@ -720,10 +726,11 @@ class CalibrateNozzles(QThread):
                     app.processEvents()
                 except Exception as mn2:
                     self.status_update( 'Error: ' + str(mn2) )
+                    print('Error: ' + str(mn2))
                     self.cap.release()
                     self.detection_on = False
                     self._running = False
-                    break
+                    exit()
         self.cap.release()
 
     def analyzeFrame(self):
