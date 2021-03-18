@@ -688,7 +688,6 @@ class CalibrateNozzles(QThread):
                         if self.loose:
                             self.detect_minCircularity = 0.3
                         else: self.detect_minCircularity = 0.8
-                        print('Creating detector') # HBHBHB
                         self.createDetector()
                         self._running = True
                         # transformation matrix
@@ -711,7 +710,7 @@ class CalibrateNozzles(QThread):
                                 self.detector_changed = False
                             # Run detection and update output
                             print('Starting analysis.')
-                            (xy, target, rotation, radius) = self.analyzeFrame()
+                            self.analyzeFrame()
                             print('Frame analyzed.')
                             # process GUI events
                             app.processEvents()
@@ -751,9 +750,6 @@ class CalibrateNozzles(QThread):
         rd = int(round(time.time()*1000))
         while True and self.detection_on:
             app.processEvents()
-            #if not self.detection_on:
-            #    (xy, target, toolCoordinates, r) = (None, None, None, None)
-            #    break
             self.ret, self.frame = self.cap.read()
             try:
                 # capture tool location in machine space before processing
@@ -834,7 +830,7 @@ class CalibrateNozzles(QThread):
         if self.detection_on:
             return (xy, target, toolCoordinates, r)
         else:
-            return(None,None,None,None)
+            return
 
     def calibrateTool(self, tool, rep):
         # timestamp for caluclating tool calibration runtime
