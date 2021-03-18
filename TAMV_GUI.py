@@ -700,6 +700,7 @@ class CalibrateNozzles(QThread):
                             self.ret, self.cv_img = self.cap.read()
                             if self.ret:
                                 self.change_pixmap_signal.emit(self.cv_img)
+                                print('Frame sent.')
                             self.frame = self.cv_img
                             
                             # Process runtime algorithm changes
@@ -788,7 +789,7 @@ class CalibrateNozzles(QThread):
             else: self.frame = cleanFrame
             # update image
             self.change_pixmap_signal.emit(self.frame)
-
+            print('Analysis frame sent here.')
             if(nocircle> 25):
                 self.message_update.emit( 'Error in detecting nozzle.' )
                 nocircle = 0
@@ -824,7 +825,7 @@ class CalibrateNozzles(QThread):
             rd = int(round(time() * 1000))
             #end the loop
             break
-
+        print('Returning analysis result')
         # and tell our parent.
         return (xy, target, toolCoordinates, r)
 
