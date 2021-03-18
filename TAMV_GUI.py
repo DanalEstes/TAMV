@@ -605,7 +605,6 @@ class CalibrateNozzles(QThread):
     def run(self):
         while True:
             if self.detection_on:
-                print('Detection on')
                 if self.alignment:
                     print('Alignment started.')
                     try:
@@ -697,8 +696,17 @@ class CalibrateNozzles(QThread):
                             self.status_update.emit('Detection mode: ON')
                             # Fetch a new frame from the inspection camera
                             self.ret, self.cv_img = self.cap.read()
-                            #if self.ret:
-                            #    self.change_pixmap_signal.emit(self.cv_img)
+                            if self.ret:
+                                self.change_pixmap_signal.emit(self.cv_img)
+                            else:
+                                # reset capture
+                                print('Error capturing new frames in Detect OFF Section')
+                                self.cap = cv2.VideoCapture(video_src)
+                                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                                self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                                self.cap.set(cv2.CAP_PROP_FPS,25)
+                                continue
                             self.frame = self.cv_img
                             
                             # Process runtime algorithm changes
@@ -719,8 +727,6 @@ class CalibrateNozzles(QThread):
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
             else:
-                self.status_update.emit('Detection: OFF')
-                print('Detection: OFF' + str(time.time()))
                 while not self.detection_on:
                     try:
                         self.ret, self.cv_img = self.cap.read()
@@ -728,7 +734,6 @@ class CalibrateNozzles(QThread):
                             self.change_pixmap_signal.emit(self.cv_img)
                         else:
                             # reset capture
-                            print('Error capturing new frames in Detect OFF Section')
                             self.cap = cv2.VideoCapture(video_src)
                             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
@@ -759,13 +764,20 @@ class CalibrateNozzles(QThread):
         while True and self.detection_on:
             app.processEvents()
             self.ret, self.frame = self.cap.read()
+            if not self.ret:
+                # reset capture
+                print('Error capturing new frames in Detect OFF Section')
+                self.cap = cv2.VideoCapture(video_src)
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+                self.cap.set(cv2.CAP_PROP_FPS,25)
+                continue
             if self.alignment:
                 try:
                     # capture tool location in machine space before processing
                     toolCoordinates = self.parent().printer.getCoords()
-                    print('Got coordinates.')
                 except Exception as c1:
-                    print('Error: ' + str(c1) )
                     toolCoordinates = None
             # capture first clean frame for display
             cleanFrame = self.frame
