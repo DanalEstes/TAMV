@@ -714,7 +714,6 @@ class CalibrateNozzles(QThread):
                             print('Frame analyzed.')
                             # process GUI events
                             app.processEvents()
-
                     except Exception as mn1:
                         self._running = False
                         self.detection_error.emit(str(mn1))
@@ -727,6 +726,8 @@ class CalibrateNozzles(QThread):
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
                             self.change_pixmap_signal.emit(self.cv_img)
+                        else:
+                            print('Error capturing new frames in Detect OFF Section')
                         app.processEvents()
                     except Exception as mn2:
                         self.status_update( 'Error: ' + str(mn2) )
@@ -751,13 +752,14 @@ class CalibrateNozzles(QThread):
         while True and self.detection_on:
             app.processEvents()
             self.ret, self.frame = self.cap.read()
-            try:
-                # capture tool location in machine space before processing
-                toolCoordinates = self.parent().printer.getCoords()
-                print('Got coordinates.')
-            except Exception as c1:
-                print('Error: ' + str(c1) )
-                toolCoordinates = None
+            if self.alignment:
+                try:
+                    # capture tool location in machine space before processing
+                    toolCoordinates = self.parent().printer.getCoords()
+                    print('Got coordinates.')
+                except Exception as c1:
+                    print('Error: ' + str(c1) )
+                    toolCoordinates = None
             # capture first clean frame for display
             cleanFrame = self.frame
             # apply nozzle detection algorithm
