@@ -1788,6 +1788,9 @@ class App(QMainWindow):
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(True)
         self.calibration_button.setDisabled(False)
+        self.toolBox.setVisible(True)
+        self.detect_box.setVisible(True)
+        self.detect_box.setChecked(False)
         #self.repeatSpinBox.setDisabled(False)
 
     def applyCalibration(self):
@@ -1897,7 +1900,7 @@ class App(QMainWindow):
                 self.camera_dialog.reject()
         except: None
         # stop video thread
-        self.stopVideo()
+        #self.stopVideo()
         # update GUI
         self.cp_button.setDisabled(True)
         self.jogpanel_button.setDisabled(False)
@@ -1906,6 +1909,7 @@ class App(QMainWindow):
         self.xray_box.setChecked(False)
         self.loose_box.setDisabled(False)
         self.toolBox.setVisible(False)
+        self.detect_box.setVisible(False)
         # get number of repeat cycles
         self.cycles = self.repeatSpinBox.value()
         self.repeatSpinBox.setDisabled(True)
