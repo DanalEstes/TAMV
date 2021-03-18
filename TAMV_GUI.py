@@ -719,6 +719,8 @@ class CalibrateNozzles(QThread):
                         self._running = True
                         # transformation matrix
                         self.transform_matrix = []
+                        # re-open capture
+                        self.cap.open(video_src)
                         while self._running and self.detection_on:
                             # Update status bar
                             self.status_update.emit('Detection mode: ON')
