@@ -622,7 +622,9 @@ class CalibrateNozzles(QThread):
                         if self.loose:
                             self.detect_minCircularity = 0.3
                         else: self.detect_minCircularity = 0.8
-                        self.createDetector()
+                        if self.detector_changed:
+                            self.createDetector()
+                            self.detector_changed = False
                         self._running = True
                         # transformation matrix
                         self.transform_matrix = []
@@ -652,23 +654,12 @@ class CalibrateNozzles(QThread):
                                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                                             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
                                             self.cap.set(cv2.CAP_PROP_FPS,25)
+                                            self.ret, self.cv_img = self.cap.read()
+                                            local_img = self.cv_img
+                                            self.change_pixmap_signal.emit(local_img)
                                             continue
                                     # Update message bar
                                     self.message_update.emit('Searching for nozzle..')
-                                    # Fetch a new frame from the inspection camera
-                                    self.ret, self.cv_img = self.cap.read()
-                                    if self.ret:
-                                        local_img = self.cv_img
-                                        self.change_pixmap_signal.emit(local_img)
-                                    else:
-                                        self.cap.open(video_src)
-                                        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-                                        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-                                        self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                                        self.cap.set(cv2.CAP_PROP_FPS,25)
-                                        continue
-                                    self.frame = self.cv_img
-                                    
                                     # Process runtime algorithm changes
                                     if self.loose:
                                         self.detect_minCircularity = 0.3
@@ -678,11 +669,9 @@ class CalibrateNozzles(QThread):
                                         self.detector_changed = False
                                     # Analyze frame for blobs
                                     (c, transform, mpp) = self.calibrateTool(tool, rep)
-                                    
                                     # process GUI events
                                     app.processEvents()
                                     print('Tool ' + str(tool) + ' - Cycle ' + str(rep) + ': calibration done.')
-                                    #(xy, target, rotation, radius) = self.analyzeFrame()
                             # signal end of execution
                             self._running = False
                         # Update status bar
@@ -716,17 +705,9 @@ class CalibrateNozzles(QThread):
                         self._running = True
                         # transformation matrix
                         self.transform_matrix = []
-                        # re-open capture
-                        self.cap.open(video_src)
                         while self._running and self.detection_on:
                             # Update status bar
-                            self.status_update.emit('Detection mode: ON')
-                            # Fetch a new frame from the inspection camera
-                            #self.ret, self.cv_img = self.cap.read()
-                            #if self.ret:
-                            #    local_img = self.cv_img
-                            #    self.change_pixmap_signal.emit(local_img)
-                            #self.frame = self.cv_img
+                            #self.status_update.emit('Detection mode: ON')
                             # Process runtime algorithm changes
                             if self.loose:
                                 self.detect_minCircularity = 0.3
