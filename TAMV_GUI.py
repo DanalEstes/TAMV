@@ -752,6 +752,7 @@ class CalibrateNozzles(QThread):
         rd = int(round(time()*1000))
         print('Analysis loop start.')
         while True and self.detection_on:
+            app.processEvents()
             self.ret, self.frame = self.cap.read()
             try:
                 # capture tool location in machine space before processing
