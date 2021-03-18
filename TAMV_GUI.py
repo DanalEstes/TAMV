@@ -711,6 +711,7 @@ class CalibrateNozzles(QThread):
                                 self.createDetector()
                                 self.detector_changed = False
                             # Run detection and update output
+                            print('Starting analysis.')
                             (xy, target, rotation, radius) = self.analyzeFrame()
                             print('Frame analyzed.')
                             # process GUI events
@@ -749,7 +750,7 @@ class CalibrateNozzles(QThread):
         nocircle = 0
         # Random time offset
         rd = int(round(time()*1000))
-
+        print('Analysis loop start.')
         while True:
             self.ret, self.frame = self.cap.read()
             try:
@@ -825,7 +826,7 @@ class CalibrateNozzles(QThread):
             rd = int(round(time() * 1000))
             #end the loop
             break
-        print('Returning analysis result')
+        print('Analysis loop end.')
         # and tell our parent.
         return (xy, target, toolCoordinates, r)
 
