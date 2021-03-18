@@ -711,12 +711,14 @@ class CalibrateNozzles(QThread):
                                 self.detector_changed = False
                             # Run detection and update output
                             (xy, target, rotation, radius) = self.analyzeFrame()
+                            print('Frame analyzed.')
                             # process GUI events
                             app.processEvents()
                     except Exception as mn1:
                         self._running = False
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
+                    print('Next loop.')
             else:
                 print('Detection off')
                 while not self.detection_on:
@@ -771,7 +773,7 @@ class CalibrateNozzles(QThread):
                 self.detect_minCircularity = 0.3
             else: self.detect_minCircularity = 0.8
             if self.detector_changed:
-                #print('Creating new detector..')
+                print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
