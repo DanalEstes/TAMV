@@ -1091,8 +1091,9 @@ class CalibrateNozzles(QThread):
         self._running = False
         self.detection_on = False
         try:
+            tempCoords = self.printer.getCoords()
             self.parent().printer.gCode('T-1')
-            self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']) + ' Y' + str(self.parent().cp_coords['Y']))
+            self.parent().printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
             while self.parent().printer.getStatus() not in 'idle':
                 sleep(1)
         except: None
