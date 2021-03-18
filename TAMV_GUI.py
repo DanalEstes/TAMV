@@ -693,14 +693,12 @@ class CalibrateNozzles(QThread):
                         # transformation matrix
                         self.transform_matrix = []
                         while self._running and self.detection_on:
-                            print('Non alignment frame output.') # HBHBHB
                             # Update status bar
                             self.status_update.emit('Detection mode: ON')
                             # Fetch a new frame from the inspection camera
                             self.ret, self.cv_img = self.cap.read()
-                            if self.ret:
-                                self.change_pixmap_signal.emit(self.cv_img)
-                                print('Frame sent.')
+                            #if self.ret:
+                            #    self.change_pixmap_signal.emit(self.cv_img)
                             self.frame = self.cv_img
                             
                             # Process runtime algorithm changes
@@ -716,15 +714,14 @@ class CalibrateNozzles(QThread):
                             print('Frame analyzed.')
                             # process GUI events
                             app.processEvents()
+
                     except Exception as mn1:
                         self._running = False
                         self.detection_error.emit(str(mn1))
                         self.cap.release()
-                    print('Next loop.')
             else:
-                print('Detection off')
+                self.status_update.emit('Detection: OFF')
                 while not self.detection_on:
-                    print('Outputting frame.')
                     try:
                         self.ret, self.cv_img = self.cap.read()
                         if self.ret:
@@ -738,7 +735,6 @@ class CalibrateNozzles(QThread):
                         self._running = False
                         exit()
                     app.processEvents()
-                print('Starting detection..')
                 app.processEvents()
         print('Releasing cap device and exiting video thread.')
         self.cap.release()
@@ -750,7 +746,6 @@ class CalibrateNozzles(QThread):
         nocircle = 0
         # Random time offset
         rd = int(round(time()*1000))
-        print('Analysis loop start.')
         while True:
             app.processEvents()
             if not self.detection_on:
@@ -794,7 +789,6 @@ class CalibrateNozzles(QThread):
             else: self.frame = cleanFrame
             # update image
             self.change_pixmap_signal.emit(self.frame)
-            print('Analysis frame sent here.')
             if(nocircle> 25):
                 self.message_update.emit( 'Error in detecting nozzle.' )
                 nocircle = 0
@@ -830,7 +824,6 @@ class CalibrateNozzles(QThread):
             rd = int(round(time() * 1000))
             #end the loop
             break
-        print('Analysis loop end.')
         # and tell our parent.
         return (xy, target, toolCoordinates, r)
 
