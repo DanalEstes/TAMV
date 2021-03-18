@@ -756,7 +756,7 @@ class CalibrateNozzles(QThread):
                 toolCoordinates = self.parent().printer.getCoords()
                 print('Got coordinates.')
             except Exception as c1:
-                print('Error: ' + str(C1) )
+                print('Error: ' + str(c1) )
                 toolCoordinates = None
             # capture first clean frame for display
             cleanFrame = self.frame
