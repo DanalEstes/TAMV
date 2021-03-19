@@ -1810,23 +1810,23 @@ class App(QMainWindow):
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
-        msgBox.addButton('Apply',QMessageBox.YesRole)
-        msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
-        msgBox.addButton('Cancel',QMessageBox.NoRole)
+        apply_button = msgBox.addButton('Apply',QMessageBox.YesRole)
+        yes_button = msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
+        cancel_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
         #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
         returnValue = msgBox.exec()
-        if returnValue == QMessageBox.ApplyRole:
+        if msgBox.clickedButton() == yes_button:
             for tool_result in self.calibration_results:
                 self.printer.gCode(tool_result)
                 self.printer.gCode('M500') # because of Rene.
-            self.statusBar.showMessage('New offsets applied to machine.')
-        elif returnValue == QMessageBox.YesRole:
+            self.statusBar.showMessage('Offsets applied and stored using M500.')
+        elif msgBox.clickedButton() == apply_button:
             for tool_result in self.calibration_results:
                 self.printer.gCode(tool_result)
-            self.statusBar.showMessage('New offsets applied to machine.')
+            self.statusBar.showMessage('Temporary offsets applied. You must manually save these offsets.')
         else:
-            self.statusBar.showMessage('Calibration results are displayed in Debug window.')
+            self.statusBar.showMessage('Original offsets applied. Calibration results in debug window.')
         # Clean up threads and detection
         self.video_thread.alignment = False
         self.video_thread.detect_on = False
@@ -1910,22 +1910,14 @@ class App(QMainWindow):
         # prompt for user to apply results
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText('Do you want to apply the new offsets to your machine?')
-        msgBox.setWindowTitle('Calibration Results')
-        msgBox.addButton('Apply',QMessageBox.YesRole)
-        msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
-        msgBox.addButton('Cancel',QMessageBox.NoRole)
-        #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msgBox.setText('Do you want to start automated tool alignment?')
+        msgBox.setWindowTitle('Start Calibration')
+        yes_button = msgBox.addButton('Start calibration..',QMessageBox.YesRole)
+        no_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
 
-        returnValue = msgBox.exec()
-        print('returnValue =', returnValue)
-        if returnValue == QMessageBox.Apply:
-            self.updateStatusbar('Apply and Save.')
-        elif returnValue == QMessageBox.Yes:
-            self.updateStatusbar('Apply only.')
-        elif returnValue == QMessageBox.No:
-            self.updateStatusbar('Do not apply.')
-        return
+        returnValue = msgBox.exec_()
+        if msgBox.clickedButton() == no_button:
+            return
         # close camera settings dialog so it doesn't crash
         try:
             if self.camera_dialog.isVisible():
