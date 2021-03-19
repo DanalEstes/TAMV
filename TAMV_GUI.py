@@ -1810,13 +1810,20 @@ class App(QMainWindow):
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
-        msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msgBox.addButton(QPushButton('Apply',QMessageBox.YesRole))
+        msgBox.addButton(QPushButton('Apply and save',QMessageBox.ApplyRole))
+        msgBox.addButton(QPushButton('Cancel',QMessageBox.NoRole))
+        #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
         returnValue = msgBox.exec()
-        if returnValue == QMessageBox.Ok:
+        if returnValue == QMessageBox.ApplyRole:
             for tool_result in self.calibration_results:
                 self.printer.gCode(tool_result)
                 self.printer.gCode('M500') # because of Rene.
+            self.statusBar.showMessage('New offsets applied to machine.')
+        elif returnValue == QMessageBox.YesRole:
+            for tool_result in self.calibration_results:
+                self.printer.gCode(tool_result)
             self.statusBar.showMessage('New offsets applied to machine.')
         else:
             self.statusBar.showMessage('Calibration results are displayed in Debug window.')
@@ -1898,6 +1905,8 @@ class App(QMainWindow):
         self.resetConnectInterface()
 
     def runCalibration(self):
+        # reset debugString
+        self.debugString = ''
         # close camera settings dialog so it doesn't crash
         try:
             if self.camera_dialog.isVisible():
