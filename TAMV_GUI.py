@@ -969,10 +969,10 @@ class CalibrateNozzles(QThread):
                 # check if final calibration move has been completed
                 elif self.state == len(self.calibrationCoordinates):
                     calibration_time = np.around(time.time() - self.startTime,1)
-                    self.parent().debugString += 'Camera calibration completed in ' + str(calibration_time) + ' seconds.\n'
                     self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n'
-                    print('Camera calibration completed in ' + str(calibration_time) + ' seconds.')
+                    self.parent().debugString += 'Camera calibration completed in ' + str(calibration_time) + ' seconds.\n'
                     print('Millimeters per pixel: ' + str(self.mpp))
+                    print('Camera calibration completed in ' + str(calibration_time) + ' seconds.')
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Calibrating rotation.. (100%) - MPP = ' + str(self.mpp))
                     self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
@@ -1024,7 +1024,7 @@ class CalibrateNozzles(QThread):
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
                         self.parent().debugString += '\nNozzle calibrated (' + str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
                         print('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
-                        self.message_update.emit('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
+                        self.message_update.emit('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
                         # calculate final offsets and return results
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
