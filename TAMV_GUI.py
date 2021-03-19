@@ -715,8 +715,8 @@ class CalibrateNozzles(QThread):
                             if self.detector_changed:
                                 self.createDetector()
                                 self.detector_changed = False
-                                time.sleep(1)
                             # Run detection and update output
+                            print('Analyzing')
                             self.analyzeFrame()
                             # process GUI events
                             app.processEvents()
@@ -758,6 +758,7 @@ class CalibrateNozzles(QThread):
         self.cap.release()
 
     def analyzeFrame(self):
+        print('Starting analysis')
         # Placeholder coordinates
         xy = [0,0]
         # Counter of frames with no circle.
@@ -1080,7 +1081,7 @@ class CalibrateNozzles(QThread):
             self.parent().printer.gCode('T-1')
             self.parent().printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
             while self.parent().printer.getStatus() not in 'idle':
-                sleep(1)
+                time.sleep(1)
         except: None
         self.cap.release()
         self.exit()
