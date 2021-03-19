@@ -1212,20 +1212,20 @@ class App(QMainWindow):
                 background-color: blue;\
                 color: white;\
             }\
-            QPushButton#debug:hover, QMessageBox > #debug:hover {\
+            QPushButton#debug:hover, QMessageBox > QAbstractButton#debug:hover {\
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton#debug:pressed, QMessageBox > #debug:pressed {\
+            QPushButton#debug:pressed, QMessageBox > QAbstractButton#debug:pressed {\
                 background-color: #ae2776;\
                 border-style: inset;\
                 color: white;\
             }\
-            QPushButton#active, QMessageBox > #active {\
+            QPushButton#active, QMessageBox > QAbstractButton#active {\
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton#active:pressed,QMessageBox > #active:pressed {\
+            QPushButton#active:pressed,QMessageBox > QAbstractButton#active:pressed {\
                 background-color: #ae2776;\
             }\
             QPushButton#terminate {\
