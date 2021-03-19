@@ -1331,7 +1331,7 @@ class App(QMainWindow):
         # Exit
         self.exit_button = QPushButton('Quit')
         self.exit_button.setToolTip('Unload tools, disconnect, and quit TAMV.')
-        self.exit_button.clicked.connect(self.closeEvent())
+        self.exit_button.clicked.connect(self.close)
         self.exit_button.setFixedWidth(170)
         
         # OTHER ELEMENTS
