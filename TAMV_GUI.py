@@ -1810,9 +1810,9 @@ class App(QMainWindow):
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
-        msgBox.addButton(QPushButton('Apply',QMessageBox.YesRole))
-        msgBox.addButton(QPushButton('Apply and save',QMessageBox.ApplyRole))
-        msgBox.addButton(QPushButton('Cancel',QMessageBox.NoRole))
+        msgBox.addButton('Apply',QMessageBox.YesRole)
+        msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
+        msgBox.addButton('Cancel',QMessageBox.NoRole)
         #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
         returnValue = msgBox.exec()
