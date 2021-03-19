@@ -994,7 +994,7 @@ class CalibrateNozzles(QThread):
                     self.state = 200
                     # start tool calibration timer
                     self.startTime = time.time()
-                    self.parent().debugString += 'Calibrating T' + str(tool) + ' Cycle: '+str(rep)+'\n'
+                    self.parent().debugString += '\nCalibrating T'+str(tool)+':C'+str(rep)+': '
                     continue
                 #### Step 2: nozzle alignment stage
                 elif self.state == 200:
