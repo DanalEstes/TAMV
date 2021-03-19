@@ -363,7 +363,7 @@ class CameraSettingsDialog(QDialog):
 
         # Camera Combobox
         self.camera_combo = QComboBox()
-        camera_description = 'Camera ' + str(video_src) + ': ' \
+        camera_description = str(video_src) + ': ' \
             + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
             + 'x' + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + '@' \
             + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FPS)) + 'fps'
