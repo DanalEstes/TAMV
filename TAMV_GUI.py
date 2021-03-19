@@ -42,7 +42,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QCheckBox,
-    QSlider
+    QSlider,
+    QComboBox
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
@@ -360,6 +361,14 @@ class CameraSettingsDialog(QDialog):
         # apply layout
         self.setLayout(self.layout)
 
+        # Camera Combobox
+        self.camera_combo = QComboBox()
+        camera_description = 'Camera ' + str(video_src) + ': ' \
+            + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
+            + 'x' + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + '@' \
+            + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FPS)) + 'fps'
+        self.camera_combo.addItem(camera_description)
+        
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(0)
@@ -402,6 +411,13 @@ class CameraSettingsDialog(QDialog):
         self.reset_button.clicked.connect(self.resetDefaults)
         
         # Layout objects
+        # Camera drop-down
+        self.camera_box = QGroupBox('Camera')
+        self.layout.addWidget(self.camera_box)
+        cmbox = QHBoxLayout()
+        self.camera_box.setLayout(cmbox)
+        cmbox.addWidget(self.camera_combo)
+
         # Brightness
         self.brightness_box =QGroupBox('Brightness')
         self.layout.addWidget(self.brightness_box)
@@ -483,6 +499,32 @@ class CameraSettingsDialog(QDialog):
         except:
             None
         self.hue_label.setText(str(parameter))
+
+    def getCameras(self,camIndex=-1):
+        # checks the first 10 indexes.
+        if camIndex == -1:
+            index = 0
+        else: index = camIndex
+        allOutputs = []
+        i = 100
+        while i > 0:
+            cap = cv2.VideoCapture(index)
+            if cap.read()[0]:
+                api = cap.getBackendName()
+                allOutputs.append({
+                    'index' : index, 
+                    'backend' : api,
+                    'propmode' : cap.get(cv2.CAP_PROP_MODE),
+                    'width' : cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+                    'height' : cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
+                    'fps' : cap.get(cv2.CAP_PROP_FPS )
+
+                })
+                cap.release()
+            index += 1
+            i -= 1
+        cameras = [line for line in allOutputs if float(line['propmode']) > -1 ]
+        return cameras
 
 class OverlayLabel(QLabel):
     def __init__(self):
