@@ -921,7 +921,7 @@ class CalibrateNozzles(QThread):
                 
                 #### Step 1: camera calibration and transformation matrix calculation
                 if self.state == 0:
-                    self.parent().debugString += 'Camera calibrating.\n'
+                    self.parent().debugString += 'Calibrating camera...\n'
                     # Update GUI thread with current status and percentage complete
                     self.status_update.emit('Calibrating camera..')
                     self.message_update.emit('Calibrating rotation.. (10%)')
@@ -969,8 +969,8 @@ class CalibrateNozzles(QThread):
                 # check if final calibration move has been completed
                 elif self.state == len(self.calibrationCoordinates):
                     calibration_time = np.around(time.time() - self.startTime,1)
-                    self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n'
                     self.parent().debugString += 'Camera calibration completed in ' + str(calibration_time) + ' seconds.\n'
+                    self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n\n'
                     print('Millimeters per pixel: ' + str(self.mpp))
                     print('Camera calibration completed in ' + str(calibration_time) + ' seconds.')
                     # Update GUI thread with current status and percentage complete
@@ -998,7 +998,6 @@ class CalibrateNozzles(QThread):
                     continue
                 #### Step 2: nozzle alignment stage
                 elif self.state == 200:
-                    self.parent().debugString += str(self.calibration_moves) + ', '
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Tool calibration move #' + str(self.calibration_moves))
                     self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
@@ -1016,13 +1015,14 @@ class CalibrateNozzles(QThread):
                     # save position as previous position
                     self.oldxy = self.xy
                     if ( self.offsets[0] == 0.0 and self.offsets[1] == 0.0 ):
+                        self.parent().debugString += str(self.calibration_moves) + ' moves.\n'
                         # Save offset to output variable
                         _return = self.tool_coordinates
                         _return['MPP'] = self.mpp
                         _return['time'] = np.around(time.time() - self.startTime,1)
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
-                        self.parent().debugString += '\nNozzle calibrated (' + str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
+                        self.parent().debugString += 'T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.\n'
                         print('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.message_update.emit('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
@@ -1030,7 +1030,7 @@ class CalibrateNozzles(QThread):
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
-                        self.parent().debugString += '\nG10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y)
+                        self.parent().debugString += 'G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y) + '\n\n'
                         x_tableitem = QTableWidgetItem(str(np.around(final_x, 2)))
                         x_tableitem.setBackground(QColor(100,255,100,255))
                         y_tableitem = QTableWidgetItem(str(np.around(final_y, 2)))
