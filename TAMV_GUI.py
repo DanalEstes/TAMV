@@ -1912,7 +1912,7 @@ class App(QMainWindow):
         # reset debugString
         self.debugString = ''
         # prompt for user to apply results
-        msgBox = QMessageBox()
+        msgBox = QMessageBox(parent=self)
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText('Do you want to start automated tool alignment?')
         msgBox.setWindowTitle('Start Calibration')
