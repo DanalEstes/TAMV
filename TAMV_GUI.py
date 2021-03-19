@@ -969,9 +969,10 @@ class CalibrateNozzles(QThread):
                 # check if final calibration move has been completed
                 elif self.state == len(self.calibrationCoordinates):
                     calibration_time = np.around(time.time() - self.startTime,1)
-                    self.parent().debugString += 'Camera calibration completed in ' + str(calibration_time) + 'seconds.\n'
-                    print('Camera calibration complete. (' + str(calibration_time) + 's)\n')
+                    self.parent().debugString += 'Camera calibration completed in ' + str(calibration_time) + ' seconds.\n'
                     self.parent().debugString += 'Millimeters per pixel: ' + str(self.mpp) + '\n'
+                    print('Camera calibration completed in ' + str(calibration_time) + ' seconds.')
+                    print('Millimeters per pixel: ' + str(self.mpp))
                     # Update GUI thread with current status and percentage complete
                     self.message_update.emit('Calibrating rotation.. (100%) - MPP = ' + str(self.mpp))
                     self.status_update.emit('Calibrating T' + str(tool) + ', cycle: ' + str(rep+1) + '/' + str(self.cycles))
@@ -1022,10 +1023,10 @@ class CalibrateNozzles(QThread):
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
                         self.parent().debugString += '\nNozzle calibrated (' + str(_return['time']) + 's): offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) + '\n'
-                        print('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
+                        print('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.message_update.emit('T' + str(tool) + ', cycle: ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
-                        # calculate and apply offsets to printer
+                        # calculate final offsets and return results
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
@@ -1036,7 +1037,6 @@ class CalibrateNozzles(QThread):
                         y_tableitem.setBackground(QColor(100,255,100,255))
                         self.parent().offsets_table.setItem(tool,0,x_tableitem)
                         self.parent().offsets_table.setItem(tool,1,y_tableitem)
-                        
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
                         return(_return, self.transform_matrix, self.mpp)
                     else:
@@ -1810,7 +1810,9 @@ class App(QMainWindow):
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
         apply_button = msgBox.addButton('Apply',QMessageBox.YesRole)
+        apply_button.setObjectName('active')
         yes_button = msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
+        yes_button.setObjectName('debug')
         cancel_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
         #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
@@ -1820,12 +1822,15 @@ class App(QMainWindow):
                 self.printer.gCode(tool_result)
                 self.printer.gCode('M500') # because of Rene.
             self.statusBar.showMessage('Offsets applied and stored using M500.')
+            print('Offsets applied and stored using M500.')
         elif msgBox.clickedButton() == apply_button:
             for tool_result in self.calibration_results:
                 self.printer.gCode(tool_result)
             self.statusBar.showMessage('Temporary offsets applied. You must manually save these offsets.')
+            print('Temporary offsets applied. You must manually save these offsets.')
         else:
             self.statusBar.showMessage('Original offsets applied. Calibration results in debug window.')
+            print('Original offsets applied. Calibration results in debug window.')
         # Clean up threads and detection
         self.video_thread.alignment = False
         self.video_thread.detect_on = False
