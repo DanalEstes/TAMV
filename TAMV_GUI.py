@@ -1907,6 +1907,25 @@ class App(QMainWindow):
     def runCalibration(self):
         # reset debugString
         self.debugString = ''
+        # prompt for user to apply results
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText('Do you want to apply the new offsets to your machine?')
+        msgBox.setWindowTitle('Calibration Results')
+        msgBox.addButton('Apply',QMessageBox.YesRole)
+        msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
+        msgBox.addButton('Cancel',QMessageBox.NoRole)
+        #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+        returnValue = msgBox.exec()
+        print('returnValue =', returnValue)
+        if returnValue == QMessageBox.Apply:
+            self.updateStatusbar('Apply and Save.')
+        elif returnValue == QMessageBox.Yes:
+            self.updateStatusbar('Apply only.')
+        elif returnValue == QMessageBox.No:
+            self.updateStatusbar('Do not apply.')
+        return
         # close camera settings dialog so it doesn't crash
         try:
             if self.camera_dialog.isVisible():
