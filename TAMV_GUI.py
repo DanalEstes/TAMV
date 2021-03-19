@@ -1208,24 +1208,24 @@ class App(QMainWindow):
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton#debug {\
+            QPushButton#debug,QMessageBox > #debug {\
                 background-color: blue;\
                 color: white;\
             }\
-            QPushButton#debug:hover {\
+            QPushButton#debug:hover, QMessageBox > #debug:hover {\
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton#debug:pressed {\
+            QPushButton#debug:pressed, QMessageBox > #debug:pressed {\
                 background-color: #ae2776;\
                 border-style: inset;\
                 color: white;\
             }\
-            QPushButton#active {\
+            QPushButton#active, QMessageBox > #active {\
                 background-color: green;\
                 color: white;\
             }\
-            QPushButton#active:pressed {\
+            QPushButton#active:pressed,QMessageBox > #active:pressed {\
                 background-color: #ae2776;\
             }\
             QPushButton#terminate {\
