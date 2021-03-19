@@ -1354,6 +1354,7 @@ class App(QMainWindow):
         self.offsets_table.setHorizontalHeaderItem(1, QTableWidgetItem("Y"))
         self.offsets_table.resizeRowsToContents()
         vbox = QVBoxLayout()
+        vbox.setSpacing(1)
         self.offsets_box.setLayout(vbox)
         vbox.addWidget(self.offsets_table)
         self.offsets_box.setVisible(False)
