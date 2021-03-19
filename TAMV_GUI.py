@@ -1805,7 +1805,7 @@ class App(QMainWindow):
                 self.camera_dialog.reject()
         except: None
         # prompt for user to apply results
-        msgBox = QMessageBox()
+        msgBox = QMessageBox(parent=self)
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
