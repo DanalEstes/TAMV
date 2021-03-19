@@ -676,7 +676,7 @@ class CalibrateNozzles(QThread):
                         # Update status bar
                         self.status_update.emit('Calibration complete: Resetting machine.')
                         # Update debug window with results
-                        self.parent().debugString += '\n\nCalibration output:\n'
+                        self.parent().debugString += '\nCalibration output:\n'
                         for tool_result in self.parent().calibration_results:
                             self.parent().debugString += tool_result + '\n'
                         self.parent().printer.gCode('T-1')
@@ -1030,7 +1030,7 @@ class CalibrateNozzles(QThread):
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
-                        self.parent().debugString += 'G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y) + '\n\n'
+                        self.parent().debugString += 'G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y) + '\n'
                         x_tableitem = QTableWidgetItem(str(np.around(final_x, 2)))
                         x_tableitem.setBackground(QColor(100,255,100,255))
                         y_tableitem = QTableWidgetItem(str(np.around(final_y, 2)))
