@@ -1811,7 +1811,7 @@ class App(QMainWindow):
         msgBox.setWindowTitle('Calibration Results')
         apply_button = msgBox.addButton('Apply',QMessageBox.YesRole)
         apply_button.setObjectName('active')
-        apply_button.setStyleSheet('background-color: green; color: white')
+        apply_button.setStyleSheet(style_green)
         yes_button = msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
         yes_button.setObjectName('debug')
         yes_button.setStyleSheet('background-color: blue; color: white;')
