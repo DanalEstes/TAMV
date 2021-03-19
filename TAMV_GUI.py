@@ -715,6 +715,7 @@ class CalibrateNozzles(QThread):
                             if self.detector_changed:
                                 self.createDetector()
                                 self.detector_changed = False
+                                time.sleep(1)
                             # Run detection and update output
                             self.analyzeFrame()
                             # process GUI events
