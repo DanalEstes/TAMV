@@ -1810,11 +1810,9 @@ class App(QMainWindow):
         msgBox.setText('Do you want to apply the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
         apply_button = msgBox.addButton('Apply',QMessageBox.YesRole)
-        apply_button.setObjectName('active')
         apply_button.setStyleSheet(style_green)
         yes_button = msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
-        yes_button.setObjectName('debug')
-        yes_button.setStyleSheet('background-color: blue; color: white;')
+        yes_button.setStyleSheet(style_orange)
         cancel_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
         #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
