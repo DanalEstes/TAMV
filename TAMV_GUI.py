@@ -1917,6 +1917,7 @@ class App(QMainWindow):
         msgBox.setText('Do you want to start automated tool alignment?')
         msgBox.setWindowTitle('Start Calibration')
         yes_button = msgBox.addButton('Start calibration..',QMessageBox.YesRole)
+        yes_button.setObjectName('active')
         no_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
 
         returnValue = msgBox.exec_()
