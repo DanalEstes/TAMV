@@ -517,6 +517,8 @@ class CalibrateNozzles(QThread):
 
     def __init__(self, parent=None, th1=1, th2=50, thstep=1, minArea=600, minCircularity=0.8,numTools=0,cycles=1, align=False):
         super(QThread,self).__init__(parent=parent)
+        # transformation matrix
+        self.transform_matrix = []
         self.xray = False
         self.loose = False
         self.detector_changed = False
@@ -626,8 +628,6 @@ class CalibrateNozzles(QThread):
                             self.createDetector()
                             self.detector_changed = False
                         self._running = True
-                        # transformation matrix
-                        self.transform_matrix = []
                         while self._running:
                             for rep in range(self.cycles):
                                 for tool in range(self.parent().num_tools):
@@ -703,7 +703,7 @@ class CalibrateNozzles(QThread):
                         else: self.detect_minCircularity = 0.8
                         self._running = True
                         # transformation matrix
-                        self.transform_matrix = []
+                        #self.transform_matrix = []
                         while self._running and self.detection_on:
                             # Update status bar
                             #self.status_update.emit('Detection mode: ON')
@@ -1045,6 +1045,7 @@ class CalibrateNozzles(QThread):
                 self.avg = [0,0]
                 self.location = {'X':0,'Y':0}
                 self.count = 0
+
     def normalize_coords(self,coords):
         xdim, ydim = camera_width, camera_height
         return (coords[0] / xdim - 0.5, coords[1] / ydim - 0.5)
