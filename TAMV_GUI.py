@@ -775,6 +775,7 @@ class CalibrateNozzles(QThread):
         while True and self.detection_on:
             app.processEvents()
             self.ret, self.frame = self.cap.read()
+            self.ret, self.frame = self.cap.read()
             if not self.ret:
                 # reset capture
                 print('Error capturing new frames in analyze()')
