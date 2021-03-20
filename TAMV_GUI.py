@@ -2032,24 +2032,38 @@ class App(QMainWindow):
     def update_image(self, cv_img):
         #self.mutex.lock()
         self.current_frame = cv_img
-        if self.crosshair:
+        if True:#self.crosshair:
             # Draw alignment circle on image
-            cv_img = cv2.circle( 
-                cv_img, 
-                ( int(camera_width/2), int(camera_height/2) ), 
-                int( camera_width/6 ), 
+            alpha = 0.5
+            beta = 1-alpha
+            center = ( int(camera_width/2), int(camera_height/2) )
+            overlay = cv2.circle( 
+                cv_img.copy(), 
+                center, 
+                6, 
                 (0,255,0), 
-                2
+                int( camera_width/2 )
             )
-            cv_img = cv2.circle( 
-                cv_img, 
-                ( int(camera_width/2), int(camera_height/2) ), 
+            overlay = cv2.circle( 
+                overlay.copy(), 
+                center, 
                 5, 
                 (0,0,255), 
                 2
             )
+            for i in range(0,6):
+                overlay = cv2.circle( 
+                overlay.copy(), 
+                center, 
+                30*i, 
+                (0,0,0), 
+                1
+            )
+            overlay = cv2.line(overlay, (center[0],center[1]-int( camera_width/4 )), (center[0],center[1]+int( camera_width/4 )), (128, 128, 128), 1)
+            overlay = cv2.line(overlay, (center[0]-int( camera_width/4 ),center[1]), (center[0]+int( camera_width/4 ),center[1]), (128, 128, 128), 1)
+            cv_img2 = cv2.addWeighted(overlay, beta, cv_img, alpha, 0)
         # Updates the image_label with a new opencv image
-        qt_img = self.convert_cv_qt(cv_img)
+        qt_img = self.convert_cv_qt(cv_img2)
         self.image_label.setPixmap(qt_img)
         #self.mutex.unlock()
 
