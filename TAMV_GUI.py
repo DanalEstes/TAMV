@@ -2061,9 +2061,9 @@ class App(QMainWindow):
             )
             overlay = cv2.line(overlay, (center[0],center[1]-int( camera_width/4 )), (center[0],center[1]+int( camera_width/4 )), (128, 128, 128), 1)
             overlay = cv2.line(overlay, (center[0]-int( camera_width/4 ),center[1]), (center[0]+int( camera_width/4 ),center[1]), (128, 128, 128), 1)
-            cv_img2 = cv2.addWeighted(overlay, beta, cv_img, alpha, 0)
+            cv_img = cv2.addWeighted(overlay, beta, cv_img, alpha, 0)
         # Updates the image_label with a new opencv image
-        qt_img = self.convert_cv_qt(cv_img2)
+        qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
         #self.mutex.unlock()
 
