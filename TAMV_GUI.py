@@ -2032,7 +2032,7 @@ class App(QMainWindow):
     def update_image(self, cv_img):
         #self.mutex.lock()
         self.current_frame = cv_img
-        if True:#self.crosshair:
+        if self.crosshair:
             # Draw alignment circle on image
             alpha = 0.5
             beta = 1-alpha
