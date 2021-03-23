@@ -66,118 +66,6 @@ style_red = 'background-color: red; color: white;'
 style_disabled = 'background-color: #cccccc; color: #999999; border-style: solid;'
 style_orange = 'background-color: dark-grey; color: orange;'
 
-
-class printerDriver:
-    # Constructor used to connect to printerURL
-    def __init__(self, printerURL):
-        None
-
-    # Generic gcode command, returns 0 if success, error_code otherwise
-    def gCode(self, command):
-        None
-
-    # get user coordinates (not absolute machine coordinates) and return as tuple array (axis_name: position)
-    def getCoords(self):
-        None
-
-    # get firmware version and board type
-    def printerType(self):
-        None
-
-    # get number of tools defined on the machine
-    def getNumTools(self):
-        None
-
-    # get tool offset definitions
-    def getToolOffsets(self,tool):
-        None
-
-    # reset jerk, max acceleration, max feedrate, and print and travel acceleration
-    def resetMovementParameters(self):
-        None
-
-class VideoThread(QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
-    change_status = pyqtSignal(str)
-
-    def __init__(self, src=0, width=640, height=480):
-        super().__init__()
-        self._run_flag = True
-        self.src = src
-        self.width = width
-        self.height = height
-        self.brightness_default = 0
-        self.contrast_default = 0
-        self.saturation_default = 0
-        self.hue_default = 0
-        self.brightness = -1
-        self.contrast = -1
-        self.saturation = -1
-        self.hue = -1
-
-        self.test_flag = False
-
-    def run(self):
-        try:
-            # capture from web cam
-            self.cap = cv2.VideoCapture(self.src,cv2.CAP_ANY)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-            #self.cap.set(cv2.CAP_PROP_FPS,25)
-            #self.backendName = self.cap.getBackendName()
-            self.brightness_default = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
-            self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
-            self.saturation_default = self.cap.get(cv2.CAP_PROP_SATURATION)
-            self.hue_default = self.cap.get(cv2.CAP_PROP_HUE)
-            
-            while self._run_flag:
-                ret, cv_img = self.cap.read()
-                if ret:
-                    self.change_pixmap_signal.emit(cv_img)
-                app.processEvents()
-        except Exception as v1:
-            self.change_status.emit('VERROR: ' + str(v1))
-        # shut down capture system
-        self.cap.release()
-
-    def stop(self):
-        # Sets run flag to False and waits for thread to finish
-        self._run_flag = False
-        self.wait()
-
-    def setProperty(self,brightness=-1, contrast=-1, saturation=-1, hue=-1):
-        try:
-            if int(brightness) >= 0:
-                self.brightness = brightness
-                self.cap.set(cv2.CAP_PROP_BRIGHTNESS,self.brightness)
-        except Exception as b1: 
-            print('Brightness exception: ', b1 )
-        try:
-            if int(contrast) >= 0:
-                self.contrast = contrast
-                self.cap.set(cv2.CAP_PROP_CONTRAST,self.contrast)
-        except Exception as c1:
-            print('Contrast exception: ', c1 )
-        try:
-            if int(saturation) >= 0:
-                self.saturation = saturation
-                self.cap.set(cv2.CAP_PROP_SATURATION,self.saturation)
-        except Exception as s1:
-            print('Saturation exception: ', s1 )
-        try:
-            if int(hue) >= 0:
-                self.hue = hue
-                self.cap.set(cv2.CAP_PROP_HUE,self.hue)
-        except Exception as h1:
-            print('Hue exception: ', h1 )
-
-    def getProperties(self):
-        return (self.brightness_default, self.contrast_default, self.saturation_default,self.hue_default)
-
-    def resetProperties(self):
-        self.setProperty(brightness=self.brightness_default, contrast = self.contrast_default, saturation=self.saturation_default, hue=self.hue_default)
-
 class CPDialog(QDialog):
     def __init__(self,
                 parent=None,
@@ -418,11 +306,13 @@ class CameraSettingsDialog(QDialog):
         self.save_button = QPushButton('Save and Close')
         self.save_button.setToolTip('Save current parameters to settings.json file')
         self.save_button.clicked.connect(self.sendUserParameters)
+        self.save_button.setObjectName('active')
         
         # Close button
         self.close_button = QPushButton('Cancel and close')
         self.close_button.setToolTip('Cancel changes and return to main program.')
-        self.close_button.clicked.connect(self.close)
+        self.close_button.clicked.connect(self.closeCPWindow)
+        self.close_button.setObjectName('terminate')
 
         # Layout objects
         # Camera drop-down
@@ -552,6 +442,10 @@ class CameraSettingsDialog(QDialog):
         _tempSrc = self.camera_combo.currentText()
         _tempSrc = _tempSrc[:_tempSrc.find(':')]
         self.parent().saveUserParameters(cameraSrc=_tempSrc)
+        self.close()
+
+    def closeCPWindow(self):
+        self.parent().updateStatusbar('Camera changes discarded.')
         self.close()
 
 class OverlayLabel(QLabel):
