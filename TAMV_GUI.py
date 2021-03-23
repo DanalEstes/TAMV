@@ -1119,10 +1119,11 @@ class CalibrateNozzles(QThread):
         self.detection_on = False
         try:
             tempCoords = self.printer.getCoords()
-            self.parent().printer.gCode('T-1')
-            self.parent().printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
-            while self.parent().printer.getStatus() not in 'idle':
-                time.sleep(1)
+            if self.printer.isIdle():
+                self.parent().printer.gCode('T-1')
+                self.parent().printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
+                while self.parent().printer.getStatus() not in 'idle':
+                    time.sleep(1)
         except: None
         self.cap.release()
         self.exit()
@@ -1694,6 +1695,11 @@ class App(QMainWindow):
         self.cp_label.setStyleSheet(style_red)
 
     def callTool(self):
+        # handle scenario where machine is busy and user tries to select a tool.
+        if not self.printer.isIdle():
+            self.updateStatusbar('Machine is not idle, cannot select tool.')
+            return
+
         # get current active tool
         _active = self.printer.getCurrentTool()
         
@@ -1800,6 +1806,10 @@ class App(QMainWindow):
         self.repaint()
 
     def controlledPoint(self):
+        # handle scenario where machine is busy and user tries to select a tool.
+        if not self.printer.isIdle():
+            self.updateStatusbar('Machine is not idle, cannot select tool.')
+            return
         # display crosshair on video feed at center of image
         self.crosshair = True
         self.calibration_button.setDisabled(True)
