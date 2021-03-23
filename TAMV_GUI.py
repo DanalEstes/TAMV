@@ -415,7 +415,7 @@ class CameraSettingsDialog(QDialog):
         self.reset_button.clicked.connect(self.resetDefaults)
 
         # Save button
-        self.save_button = QPushButton('Save settings')
+        self.save_button = QPushButton('Save and Close')
         self.save_button.setToolTip('Save current parameters to settings.json file')
         self.save_button.clicked.connect(self.sendUserParameters)
         
@@ -1638,10 +1638,7 @@ class App(QMainWindow):
 
     def displayCameraSettings(self):
         self.camera_dialog = CameraSettingsDialog(parent=self)
-        if self.camera_dialog.exec_():
-            self.updateStatusbar('Camera settings saved.')
-            #self.saveUserParameters()
-        else: self.updateStatusbar('Camera settings discarded.')
+        self.camera_dialog.exec_()
 
     def displayDebug(self):
         dbg = DebugDialog(parent=self,message=self.debugString)
