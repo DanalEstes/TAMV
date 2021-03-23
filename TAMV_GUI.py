@@ -124,7 +124,7 @@ class VideoThread(QThread):
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-            self.cap.set(cv2.CAP_PROP_FPS,25)
+            #self.cap.set(cv2.CAP_PROP_FPS,25)
             #self.backendName = self.cap.getBackendName()
             self.brightness_default = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
             self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
@@ -365,10 +365,14 @@ class CameraSettingsDialog(QDialog):
         self.camera_combo = QComboBox()
         camera_description = str(video_src) + ': ' \
             + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
-            + 'x' + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + '@' \
+            + 'x' + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + ' @ ' \
             + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FPS)) + 'fps'
         self.camera_combo.addItem(camera_description)
-        
+        #self.camera_combo.currentIndexChanged.connect(self.parent().video_thread.changeVideoSrc)
+        # Get cameras button
+        self.camera_button = QPushButton('Get cameras')
+        self.camera_button.clicked.connect(self.getCameras)
+
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(0)
@@ -417,6 +421,7 @@ class CameraSettingsDialog(QDialog):
         cmbox = QHBoxLayout()
         self.camera_box.setLayout(cmbox)
         cmbox.addWidget(self.camera_combo)
+        cmbox.addWidget(self.camera_button)
 
         # Brightness
         self.brightness_box =QGroupBox('Brightness')
@@ -500,31 +505,36 @@ class CameraSettingsDialog(QDialog):
             None
         self.hue_label.setText(str(parameter))
 
-    def getCameras(self,camIndex=-1):
+    def getCameras(self):
         # checks the first 10 indexes.
-        if camIndex == -1:
-            index = 0
-        else: index = camIndex
-        allOutputs = []
-        i = 100
+        i = 10
+        index = 0
+        self.camera_combo.clear()
+        _cameras = []
+        original_camera_description = str(video_src) + ': ' \
+            + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
+            + 'x' + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + ' @ ' \
+            + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FPS)) + 'fps'
+        _cameras.append(original_camera_description)
         while i > 0:
-            cap = cv2.VideoCapture(index)
-            if cap.read()[0]:
-                api = cap.getBackendName()
-                allOutputs.append({
-                    'index' : index, 
-                    'backend' : api,
-                    'propmode' : cap.get(cv2.CAP_PROP_MODE),
-                    'width' : cap.get(cv2.CAP_PROP_FRAME_WIDTH),
-                    'height' : cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
-                    'fps' : cap.get(cv2.CAP_PROP_FPS )
-
-                })
-                cap.release()
+            if i != video_src:
+                tempCap = cv2.VideoCapture(i)
+                if tempCap.read()[0]:
+                    api = tempCap.getBackendName()
+                    camera_description = str(i) + ': ' \
+                        + str(tempCap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
+                        + 'x' + str(tempCap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + ' @ ' \
+                        + str(tempCap.get(cv2.CAP_PROP_FPS)) + 'fps'
+                    _cameras.append(camera_description)
+                    tempCap.release()
             index += 1
             i -= 1
-        cameras = [line for line in allOutputs if float(line['propmode']) > -1 ]
-        return cameras
+        #cameras = [line for line in allOutputs if float(line['propmode']) > -1 ]
+        _cameras.sort()
+        for camera in _cameras:
+            self.camera_combo.addItem(camera)
+        self.camera_combo.setCurrentText(original_camera_description)
+        #return cameras
 
 class OverlayLabel(QLabel):
     def __init__(self):
@@ -593,7 +603,7 @@ class CalibrateNozzles(QThread):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-        self.cap.set(cv2.CAP_PROP_FPS,25)
+        #self.cap.set(cv2.CAP_PROP_FPS,25)
         self.brightness_default = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
         self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
         self.saturation_default = self.cap.get(cv2.CAP_PROP_SATURATION)
@@ -608,7 +618,7 @@ class CalibrateNozzles(QThread):
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-            self.cap.set(cv2.CAP_PROP_FPS,25)
+            #self.cap.set(cv2.CAP_PROP_FPS,25)
             self.ret, self.cv_img = self.cap.read()
             local_img = self.cv_img
             self.change_pixmap_signal.emit(local_img)
@@ -694,7 +704,7 @@ class CalibrateNozzles(QThread):
                                             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                                             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                                            self.cap.set(cv2.CAP_PROP_FPS,25)
+                                            #self.cap.set(cv2.CAP_PROP_FPS,25)
                                             self.ret, self.cv_img = self.cap.read()
                                             local_img = self.cv_img
                                             self.change_pixmap_signal.emit(local_img)
@@ -776,7 +786,7 @@ class CalibrateNozzles(QThread):
                             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                            self.cap.set(cv2.CAP_PROP_FPS,25)
+                            #self.cap.set(cv2.CAP_PROP_FPS,25)
                             self.ret, self.cv_img = self.cap.read()
                             if self.ret:
                                 local_img = self.cv_img
@@ -818,7 +828,7 @@ class CalibrateNozzles(QThread):
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-                self.cap.set(cv2.CAP_PROP_FPS,25)
+                #self.cap.set(cv2.CAP_PROP_FPS,25)
                 continue
             if self.alignment:
                 try:
@@ -1179,6 +1189,34 @@ class CalibrateNozzles(QThread):
             ,int(offsety * offpix[0][1]) + int(frame.shape[0]/2) + int(textpix[0][1]/2)),
             cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, stroke)
         return(frame)
+
+    def changeVideoSrc(self, newSrc=-1):
+        self.cap.release()
+        video_src = newSrc
+        # Start Video feed
+        self.cap.open(video_src)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+        #self.cap.set(cv2.CAP_PROP_FPS,25)
+        self.brightness_default = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
+        self.contrast_default = self.cap.get(cv2.CAP_PROP_CONTRAST)
+        self.saturation_default = self.cap.get(cv2.CAP_PROP_SATURATION)
+        self.hue_default = self.cap.get(cv2.CAP_PROP_HUE)
+
+        self.ret, self.cv_img = self.cap.read()
+        if self.ret:
+            local_img = self.cv_img
+            self.change_pixmap_signal.emit(local_img)
+        else:
+            self.cap.open(video_src)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+            #self.cap.set(cv2.CAP_PROP_FPS,25)
+            self.ret, self.cv_img = self.cap.read()
+            local_img = self.cv_img
+            self.change_pixmap_signal.emit(local_img)
 
 class App(QMainWindow):
     cp_coords = {}
