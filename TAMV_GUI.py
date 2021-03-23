@@ -413,6 +413,11 @@ class CameraSettingsDialog(QDialog):
         self.reset_button = QPushButton("Reset to defaults")
         self.reset_button.setToolTip('Reset camera settings to defaults.')
         self.reset_button.clicked.connect(self.resetDefaults)
+
+        # Save button
+        self.save_button = QPushButton('Save settings')
+        self.save_button.setToolTip('Save current parameters to settings.json file')
+        self.save_button.clicked.connect(self.parent().saveUserParameters)
         
         # Layout objects
         # Camera drop-down
@@ -453,6 +458,8 @@ class CameraSettingsDialog(QDialog):
         hvbox.addWidget(self.hue_label)
         # Reset button
         self.layout.addWidget(self.reset_button)
+        self.layout.addWidget(self.save_button)
+
         # OK Cancel buttons
         self.layout.addWidget(self.buttonBox)
 
@@ -1570,6 +1577,28 @@ class App(QMainWindow):
             except Exception as e1:
                 print('Error writing user settings file.')
                 print(e1)
+    
+    def saveUserParameters(self):
+        global camera_width, camera_height, video_src
+        try:
+            # create parameter file with standard parameters
+            options = {}
+            options['camera'] = []
+            options['camera'].append( {
+                'video_src': video_src,
+                'display_width': camera_width,
+                'display_height': camera_height
+            } )
+            options['printer'] = []
+            options['printer'].append( {
+                'address': self.printerURL,
+                'name': 'Default printer'
+            } )
+            with open('settings.json','w') as outputfile:
+                json.dump(options, outputfile)
+        except Exception as e1:
+            print('Error writing user settings file.')
+            print(e1)
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
