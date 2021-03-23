@@ -376,7 +376,7 @@ class CameraSettingsDialog(QDialog):
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(0)
-        self.brightness_slider.setMaximum(96)
+        self.brightness_slider.setMaximum(255)
         self.brightness_slider.setValue(int(brightness_input))
         self.brightness_slider.valueChanged.connect(self.changeBrightness)
         self.brightness_slider.setTickPosition(QSlider.TicksBelow)
@@ -385,7 +385,7 @@ class CameraSettingsDialog(QDialog):
         # Contrast slider
         self.contrast_slider = QSlider(Qt.Horizontal)
         self.contrast_slider.setMinimum(0)
-        self.contrast_slider.setMaximum(64)
+        self.contrast_slider.setMaximum(255)
         self.contrast_slider.setValue(int(contrast_input))
         self.contrast_slider.valueChanged.connect(self.changeContrast)
         self.contrast_slider.setTickPosition(QSlider.TicksBelow)
@@ -394,7 +394,7 @@ class CameraSettingsDialog(QDialog):
         # Saturation slider
         self.saturation_slider = QSlider(Qt.Horizontal)
         self.saturation_slider.setMinimum(0)
-        self.saturation_slider.setMaximum(128)
+        self.saturation_slider.setMaximum(255)
         self.saturation_slider.setValue(int(saturation_input))
         self.saturation_slider.valueChanged.connect(self.changeSaturation)
         self.saturation_slider.setTickPosition(QSlider.TicksBelow)
