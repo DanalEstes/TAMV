@@ -561,6 +561,8 @@ class DuetWebAPI:
         if (self.pt == 3):
             URL=(f'{self._base_url}'+'/machine/code/')
             r = self.requests.post(URL, data='G31')
+            # Reply is of the format:
+            # "Z probe 0: current reading 0, threshold 500, trigger height 0.000, offsets X0.0 Y0.0"
             reply = r.text
             start = reply.find('trigger height')
             triggerHeight = reply[start+15:]
