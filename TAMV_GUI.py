@@ -343,10 +343,10 @@ class CameraSettingsDialog(QDialog):
         self.setWindowFlag(Qt.WindowContextHelpButtonHint,False)
         self.setWindowTitle('Camera Settings')
         
-        QBtn = QDialogButtonBox.Close
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        #QBtn = QDialogButtonBox.Close
+        #self.buttonBox = QDialogButtonBox(QBtn)
+        #self.buttonBox.accepted.connect(self.accept)
+        #self.buttonBox.rejected.connect(self.reject)
 
         # Get camera settings from video thread
         try:
@@ -419,6 +419,11 @@ class CameraSettingsDialog(QDialog):
         self.save_button.setToolTip('Save current parameters to settings.json file')
         self.save_button.clicked.connect(self.sendUserParameters)
         
+        # Close button
+        self.close_button = QPushButton('Cancel and close')
+        self.close_button.setToolTip('Cancel changes and return to main program.')
+        self.close_button.clicked.connect(self.close)
+
         # Layout objects
         # Camera drop-down
         self.camera_box = QGroupBox('Camera')
@@ -459,9 +464,10 @@ class CameraSettingsDialog(QDialog):
         # Reset button
         self.layout.addWidget(self.reset_button)
         self.layout.addWidget(self.save_button)
+        self.layout.addWidget(self.close_button)
 
         # OK Cancel buttons
-        self.layout.addWidget(self.buttonBox)
+        #self.layout.addWidget(self.buttonBox)
 
     def resetDefaults(self):
         self.parent().video_thread.resetProperties()
@@ -546,7 +552,8 @@ class CameraSettingsDialog(QDialog):
         _tempSrc = self.camera_combo.currentText()
         _tempSrc = _tempSrc[:_tempSrc.find(':')]
         self.parent().saveUserParameters(cameraSrc=_tempSrc)
-        
+        self.close()
+
 class OverlayLabel(QLabel):
     def __init__(self):
         super(OverlayLabel, self).__init__()
@@ -1605,7 +1612,9 @@ class App(QMainWindow):
         except Exception as e1:
             print('Error saving user settings file.')
             print(e1)
-        self.video_thread.changeVideoSrc(newSrc=cameraSrc)
+        if int(video_src) != cameraSrc:
+            self.video_thread.changeVideoSrc(newSrc=cameraSrc)
+        self.updateStatusbar('Camera profile saved to settings.json')
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
