@@ -1475,6 +1475,27 @@ class App(QMainWindow):
             self.loose_box.setVisible(False)
             self.updateStatusbar('Detection: OFF')
 
+    def cleanPrinterURL(self, inputString='http://localhost'):
+        _errCode = 0
+        _errMsg = ''
+        _printerURL = 'http://localhost'
+        from urllib.parse import urlparse
+        u = urlparse(inputString)
+        scheme = u[0]
+        netlocation = u[1]
+        if len(scheme) < 4 or scheme.lower() not in ['http']:
+            _errCode = 1
+            _errMsg = 'Invalid scheme. Please only use http connections.'
+        elif len(netlocation) < 1:
+            _errCode = 2
+            _errMsg = 'Invalid IP/network address.'
+        elif scheme.lower() in ['https']:
+            _errCode = 3
+            _errMsg = 'Cannot use https connections for Duet controllers'
+        else:
+            _printerURL = scheme + '://' + netlocation
+        return( _errCode, _errMsg, _printerURL )
+
     def loadUserParameters(self):
         global camera_width, camera_height, video_src
         try:
@@ -1486,7 +1507,13 @@ class App(QMainWindow):
             video_src = camera_settings['video_src']
             if len(str(video_src)) == 1: video_src = int(video_src)
             printer_settings = options['printer'][0]
-            self.printerURL = printer_settings['address']
+            tempURL = printer_settings['address']
+            ( _errCode, _errMsg, self.printerURL ) = self.cleanPrinterURL(tempURL)
+            if _errCode > 0:
+                # invalid input
+                print('Invalid printer URL detected in settings.json!')
+                print('Defaulting to \"http://localhost\"...')
+                self.printerURL = 'http://localhost'
         except FileNotFoundError:
             # create parameter file with standard parameters
             options = {}
@@ -1619,7 +1646,18 @@ class App(QMainWindow):
         text, ok = QInputDialog.getText(self, 'Machine URL','Machine IP address or hostname: ', QLineEdit.Normal, self.printerURL)
         # Handle clicking OK/Connect
         if ok and text != '' and len(text) > 5:
-            self.printerURL = text
+            ( _errCode, _errMsg, tempURL ) = self.cleanPrinterURL(text)
+            while _errCode != 0:
+                # Invalid URL detected, pop-up window to correct this
+                text, ok = QInputDialog.getText(self, 'Machine URL', _errMsg + '\nMachine IP address or hostname: ', QLineEdit.Normal, text)
+                if ok:
+                    ( _errCode, _errMsg, tempURL ) = self.cleanPrinterURL(text)
+                else:
+                    self.updateStatusbar('Connection request cancelled.')
+                    self.resetConnectInterface()
+                    return
+            # input has been parsed and is clean, proceed
+            self.printerURL = tempURL
         # Handle clicking cancel
         elif not ok:
             self.updateStatusbar('Connection request cancelled.')
