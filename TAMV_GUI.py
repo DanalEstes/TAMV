@@ -513,8 +513,8 @@ class CameraSettingsDialog(QDialog):
         self.hue_label.setText(str(parameter))
 
     def getCameras(self):
-        # checks the first 10 indexes.
-        i = 10
+        # checks the first 6 indexes.
+        i = 6
         index = 0
         self.camera_combo.clear()
         _cameras = []
