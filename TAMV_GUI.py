@@ -1642,6 +1642,7 @@ class App(QMainWindow):
                 self.printer.gCode('T-1')
                 self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
         except Exception as ce1: None # no printer connected usually.
+        print()
         print('Thank you for using TAMV!')
         print('Check out www.jubilee3d.com')
         event.accept()
