@@ -370,9 +370,9 @@ class CameraSettingsDialog(QDialog):
         self.camera_combo.addItem(camera_description)
         #self.camera_combo.currentIndexChanged.connect(self.parent().video_thread.changeVideoSrc)
         # Get cameras button
-        self.camera_button = QPushButton('Get cameras')
-        self.camera_button.clicked.connect(self.getCameras)
-
+        #self.camera_button = QPushButton('Get cameras')
+        #self.camera_button.clicked.connect(self.getCameras)
+        self.getCameras()
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(0)
@@ -417,7 +417,7 @@ class CameraSettingsDialog(QDialog):
         # Save button
         self.save_button = QPushButton('Save settings')
         self.save_button.setToolTip('Save current parameters to settings.json file')
-        self.save_button.clicked.connect(self.parent().saveUserParameters)
+        self.save_button.clicked.connect(self.sendUserParameters)
         
         # Layout objects
         # Camera drop-down
@@ -426,7 +426,7 @@ class CameraSettingsDialog(QDialog):
         cmbox = QHBoxLayout()
         self.camera_box.setLayout(cmbox)
         cmbox.addWidget(self.camera_combo)
-        cmbox.addWidget(self.camera_button)
+        #cmbox.addWidget(self.camera_button)
 
         # Brightness
         self.brightness_box =QGroupBox('Brightness')
@@ -524,11 +524,11 @@ class CameraSettingsDialog(QDialog):
             + str(self.parent().video_thread.cap.get(cv2.CAP_PROP_FPS)) + 'fps'
         _cameras.append(original_camera_description)
         while i > 0:
-            if i != video_src:
-                tempCap = cv2.VideoCapture(i)
+            if index != video_src:
+                tempCap = cv2.VideoCapture(index)
                 if tempCap.read()[0]:
                     api = tempCap.getBackendName()
-                    camera_description = str(i) + ': ' \
+                    camera_description = str(index) + ': ' \
                         + str(tempCap.get(cv2.CAP_PROP_FRAME_WIDTH)) \
                         + 'x' + str(tempCap.get(cv2.CAP_PROP_FRAME_HEIGHT)) + ' @ ' \
                         + str(tempCap.get(cv2.CAP_PROP_FPS)) + 'fps'
@@ -541,8 +541,12 @@ class CameraSettingsDialog(QDialog):
         for camera in _cameras:
             self.camera_combo.addItem(camera)
         self.camera_combo.setCurrentText(original_camera_description)
-        #return cameras
 
+    def sendUserParameters(self):
+        _tempSrc = self.camera_combo.currentText()
+        _tempSrc = _tempSrc[:_tempSrc.find(':')]
+        self.parent().saveUserParameters(cameraSrc=_tempSrc)
+        
 class OverlayLabel(QLabel):
     def __init__(self):
         super(OverlayLabel, self).__init__()
@@ -1578,10 +1582,12 @@ class App(QMainWindow):
                 print('Error writing user settings file.')
                 print(e1)
     
-    def saveUserParameters(self):
+    def saveUserParameters(self, cameraSrc=-2):
         global camera_width, camera_height, video_src
+        cameraSrc = int(cameraSrc)
         try:
-            # create parameter file with standard parameters
+            if cameraSrc > -2:
+                video_src = cameraSrc
             options = {}
             options['camera'] = []
             options['camera'].append( {
@@ -1597,8 +1603,9 @@ class App(QMainWindow):
             with open('settings.json','w') as outputfile:
                 json.dump(options, outputfile)
         except Exception as e1:
-            print('Error writing user settings file.')
+            print('Error saving user settings file.')
             print(e1)
+        self.video_thread.changeVideoSrc(newSrc=cameraSrc)
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
@@ -1624,7 +1631,7 @@ class App(QMainWindow):
         self.camera_dialog = CameraSettingsDialog(parent=self)
         if self.camera_dialog.exec_():
             self.updateStatusbar('Camera settings saved.')
-            # HBHBHB: call save settings
+            #self.saveUserParameters()
         else: self.updateStatusbar('Camera settings discarded.')
 
     def displayDebug(self):
