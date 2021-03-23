@@ -238,8 +238,10 @@ class DuetWebAPI:
                 URL=(f'{self._base_url}'+'/machine/status')
                 r = self.requests.get(URL,timeout=8)
                 j = self.json.loads(r.text)
-                if 'result' in j: j = j['result']
-                return(j['state']['status'])
+                if 'result' in j: 
+                    j = j['result']
+                _status = str(j['state']['status'])
+                return( _status.lower() )
         except Exception as e1:
             print('Error in getStatus: ',e1 )
             return 'Error'
@@ -426,6 +428,57 @@ class DuetWebAPI:
         except Exception as e1:
             print('Error in getStatus: ',e1 )
 
+    def isIdle(self):
+        try:
+            if (self.pt == 2):
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                if not r.ok:
+                    print('Error in getStatus session: ', r)
+                buffer_size = 0
+                while buffer_size < 150:
+                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                    buffer_request = self.requests.get(bufferURL,timeout=8)
+                    try:
+                        buffer_response = buffer_request.json()
+                        buffer_size = int(buffer_response['buff'])
+                    except:
+                        buffer_size = 149
+                    replyURL = (f'{self._base_url}'+'/rr_reply')
+                    reply = self.requests.get(replyURL,timeout=8)
+                    if buffer_size < 150:
+                        print('Buffer low: ', buffer_size)
+                        time.sleep(0.6)
+                URL=(f'{self._base_url}'+'/rr_status?type=2')
+                r = self.requests.get(URL,timeout=8)
+                j = self.json.loads(r.text)
+                s=j['status']
+                replyURL = (f'{self._base_url}'+'/rr_reply')
+                reply = self.requests.get(replyURL,timeout=8)
+                endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+                r2 = self.requests.get(endsessionURL,timeout=8)
+                if not r2.ok:
+                    print('Error in getStatus end session: ', r2)
+                    return False
+                if ('I' in s):
+                    return True
+                else: 
+                    return False
+
+            if (self.pt == 3):
+                URL=(f'{self._base_url}'+'/machine/status')
+                r = self.requests.get(URL,timeout=8)
+                j = self.json.loads(r.text)
+                if 'result' in j: 
+                    j = j['result']
+                status = str(j['state']['status'])
+                if status.upper() == 'IDLE':
+                    return True
+                else:
+                    return False
+        except Exception as e1:
+            print('Error in isIdle(): ',e1 )
+            return False
 ####
 # The following methods provide services built on the atomics above. 
 ####

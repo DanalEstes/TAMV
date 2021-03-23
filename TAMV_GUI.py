@@ -1576,10 +1576,11 @@ class App(QMainWindow):
 
     def closeEvent(self, event):
         try:
-            tempCoords = self.printer.getCoords()
-            self.printer.gCode('T-1')
-            self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
-        except: None
+            if self.printer.isIdle():
+                tempCoords = self.printer.getCoords()
+                self.printer.gCode('T-1')
+                self.printer.gCode('G1 X' + str(tempCoords['X']) + ' Y' + str(tempCoords['Y']))
+        except Exception as ce1: None # no printer connected usually.
         print('Thank you for using TAMV!')
         print('Check out www.jubilee3d.com')
         event.accept()
@@ -1912,15 +1913,16 @@ class App(QMainWindow):
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
         # Wait for printer to stop moving and unload tools
         _ret_error = self.printer.gCode('M400')
-        tempCoords = self.printer.getCoords()
-        _ret_error += self.printer.gCode('T-1')
-        # return carriage to controlled point position
-        if len(self.cp_coords) > 0:
-            _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
-            _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
-        else:
-            _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
-            _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+        if self.printer.isIdle():
+            tempCoords = self.printer.getCoords()
+            _ret_error += self.printer.gCode('T-1')
+            # return carriage to controlled point position
+            if len(self.cp_coords) > 0:
+                _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
+                _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+            else:
+                _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
+                _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
         # update status with disconnection state
         if _ret_error == 0:
             self.updateStatusbar('Disconnected.')
