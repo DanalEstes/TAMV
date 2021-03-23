@@ -529,3 +529,46 @@ class DuetWebAPI:
         for each in [line for line in c if (('M566 ' in line) or ('M201 ' in line) or ('M204 ' in line) or ('M203 ' in line))]:
             commandBuffer.append(each)
         self.gCodeBatch(commandBuffer)
+
+    def getTriggerHeight(self):
+        triggerHeight = 0
+        if (self.pt == 2):
+            sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+            r = self.requests.get(sessionURL,timeout=8)
+            buffer_size = 0
+            while buffer_size < 150:
+                bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                buffer_request = self.requests.get(bufferURL,timeout=8)
+                try:
+                    buffer_response = buffer_request.json()
+                    buffer_size = int(buffer_response['buff'])
+                except:
+                    buffer_size = 149
+                if buffer_size < 150:
+                    print('Buffer low: ', buffer_size)
+                    time.sleep(0.6)
+            URL=(f'{self._base_url}'+'/rr_gcode?gcode=G31')
+            r = self.requests.get(URL,timeout=8)
+            replyURL = (f'{self._base_url}'+'/rr_reply')
+            reply = self.requests.get(replyURL,timeout=8)
+            # Reply is of the format:
+            # "Z probe 0: current reading 0, threshold 500, trigger height 0.000, offsets X0.0 Y0.0 U0.0"
+            start = reply.find('trigger height')
+            triggerHeight = reply[start+15:]
+            triggerHeight = float(triggerHeight[:triggerHeight.find(',')])
+            endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+            r2 = self.requests.get(endsessionURL,timeout=8)
+        if (self.pt == 3):
+            URL=(f'{self._base_url}'+'/machine/code/')
+            r = self.requests.post(URL, data='G31')
+            reply = r.text
+            start = reply.find('trigger height')
+            triggerHeight = reply[start+15:]
+            triggerHeight = float(triggerHeight[:triggerHeight.find(',')])
+        if (r.ok):
+           return triggerHeight
+        else:
+            print("getTriggerHeight command return code = ",r.status_code)
+            print(r.reason)
+            return(r.status_code)
+    
