@@ -661,7 +661,6 @@ class CalibrateNozzles(QThread):
         while True:
             if self.detection_on:
                 if self.alignment:
-                    #print('Alignment started.')
                     try:
                         if self.loose:
                             self.detect_minCircularity = 0.3
@@ -757,7 +756,6 @@ class CalibrateNozzles(QThread):
                                 self.createDetector()
                                 self.detector_changed = False
                             # Run detection and update output
-                            #print('Analyzing')
                             self.analyzeFrame()
                             # process GUI events
                             app.processEvents()
@@ -795,7 +793,6 @@ class CalibrateNozzles(QThread):
                     app.processEvents()
                 app.processEvents()
                 continue
-        #print('Releasing cap device and exiting video thread.')
         self.cap.release()
 
     def analyzeFrame(self):
@@ -817,7 +814,6 @@ class CalibrateNozzles(QThread):
             self.ret, self.frame = self.cap.read()
             if not self.ret:
                 # reset capture
-                #print('Error capturing new frames in analyze()')
                 self.cap.open(video_src)
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
@@ -848,7 +844,6 @@ class CalibrateNozzles(QThread):
                 self.detect_minCircularity = 0.3
             else: self.detect_minCircularity = 0.8
             if self.detector_changed:
-                #print('Creating new detector..')
                 self.createDetector()
                 self.detector_changed = False
             # run nozzle detection for keypoints
