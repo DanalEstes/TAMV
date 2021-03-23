@@ -370,9 +370,9 @@ class CameraSettingsDialog(QDialog):
         self.camera_combo.addItem(camera_description)
         #self.camera_combo.currentIndexChanged.connect(self.parent().video_thread.changeVideoSrc)
         # Get cameras button
-        #self.camera_button = QPushButton('Get cameras')
-        #self.camera_button.clicked.connect(self.getCameras)
-        self.getCameras()
+        self.camera_button = QPushButton('Get cameras')
+        self.camera_button.clicked.connect(self.getCameras)
+        #self.getCameras()
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(0)
@@ -426,7 +426,7 @@ class CameraSettingsDialog(QDialog):
         cmbox = QHBoxLayout()
         self.camera_box.setLayout(cmbox)
         cmbox.addWidget(self.camera_combo)
-        #cmbox.addWidget(self.camera_button)
+        cmbox.addWidget(self.camera_button)
 
         # Brightness
         self.brightness_box =QGroupBox('Brightness')
