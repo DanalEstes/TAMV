@@ -1482,7 +1482,7 @@ class App(QMainWindow):
             except Exception as e1:
                 print('Error writing user settings file.')
                 print(e1)
-    
+
     def saveUserParameters(self, cameraSrc=-2):
         global camera_width, camera_height, video_src
         cameraSrc = int(cameraSrc)
@@ -1517,6 +1517,11 @@ class App(QMainWindow):
         menuBar.addMenu(fileMenu)
         fileMenu.addAction(self.debugAction)
         fileMenu.addAction(self.cameraAction)
+        fileMenu.addSeparator()
+        fileMenu.addAction(self.saveAction)
+        fileMenu.addSeparator()
+        fileMenu.addAction(self.quitAction)
+        
 
     def _createActions(self):
         # Creating action using the first constructor
@@ -1524,11 +1529,17 @@ class App(QMainWindow):
         self.debugAction.setText('&Debug info')
         self.cameraAction = QAction(self)
         self.cameraAction.setText('&Camera settings')
+        self.quitAction = QAction(self)
+        self.quitAction.setText('&Quit')
+        self.saveAction = QAction(self)
+        self.saveAction.setText('&Save current settings')
 
     def _connectActions(self):
         # Connect File actions
         self.debugAction.triggered.connect(self.displayDebug)
         self.cameraAction.triggered.connect(self.displayCameraSettings)
+        self.quitAction.triggered.connect(self.close)
+        self.saveAction.triggered.connect(self.saveUserParameters)
 
     def displayCameraSettings(self):
         self.camera_dialog = CameraSettingsDialog(parent=self)
