@@ -1507,7 +1507,7 @@ class App(QMainWindow):
             print(e1)
         if int(video_src) != cameraSrc:
             self.video_thread.changeVideoSrc(newSrc=cameraSrc)
-        self.updateStatusbar('Camera profile saved to settings.json')
+        self.updateStatusbar('Current profile saved to settings.json')
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
