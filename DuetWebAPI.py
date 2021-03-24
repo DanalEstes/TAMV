@@ -22,17 +22,29 @@ class DuetWebAPI:
     import datetime
     pt = 0
     _base_url = ''
+    _rrf2 = False
 
 
     def __init__(self,base_url):
         self._base_url = base_url
         try:
-            URL=(f'{self._base_url}'+'/rr_status?type=1')
+            print('connecting to ', base_url)
+            URL=(f'{self._base_url}'+'/rr_status?type=2')
             r = self.requests.get(URL,timeout=(2,60))
             replyURL = (f'{self._base_url}'+'/rr_reply')
             reply = self.requests.get(replyURL,timeout=8)
             j = self.json.loads(r.text)
             _=j['coords']
+            firmwareName = j['firmwareName']
+
+            try:
+                firmwareVersion = j['firmwareVersion']
+                print('Firmware v', firmwareVersion)
+                if firmwareVersion[0] == "2":
+                    self._rrf2 = True
+            except Exception as e:
+                print('pop')
+                self._rrf2 = True
             self.pt = 2
             return
         except:
@@ -60,24 +72,26 @@ class DuetWebAPI:
         import time
         try:
             if (self.pt == 2):
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                if not r.ok:
-                    print('Error in getStatus session: ', r)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    try:
-                        buffer_response = buffer_request.json()
-                        buffer_size = int(buffer_response['buff'])
-                    except:
-                        buffer_size = 149
-                    replyURL = (f'{self._base_url}'+'/rr_reply')
-                    reply = self.requests.get(replyURL,timeout=8)
-                    if buffer_size < 150:
-                        print('Buffer low: ', buffer_size)
-                        time.sleep(0.6)
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    if not r.ok:
+                        print('Error in getStatus session: ', r)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        try:
+                            buffer_response = buffer_request.json()
+                            buffer_size = int(buffer_response['buff'])
+                        except:
+                            buffer_size = 149
+                        replyURL = (f'{self._base_url}'+'/rr_reply')
+                        reply = self.requests.get(replyURL,timeout=8)
+                        if buffer_size < 150:
+                            print('Buffer low: ', buffer_size)
+                            time.sleep(0.6)
                 while self.getStatus() not in "idle":
                     time.sleep(0.5)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
@@ -201,34 +215,37 @@ class DuetWebAPI:
         import time
         try:
             if (self.pt == 2):
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                if not r.ok:
-                    print('Error in getStatus session: ', r)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    try:
-                        buffer_response = buffer_request.json()
-                        buffer_size = int(buffer_response['buff'])
-                    except:
-                        buffer_size = 149
-                    replyURL = (f'{self._base_url}'+'/rr_reply')
-                    reply = self.requests.get(replyURL,timeout=8)
-                    if buffer_size < 150:
-                        print('Buffer low: ', buffer_size)
-                        time.sleep(0.6)
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    if not r.ok:
+                        print('Error in getStatus session: ', r)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        try:
+                            buffer_response = buffer_request.json()
+                            buffer_size = int(buffer_response['buff'])
+                        except:
+                            buffer_size = 149
+                        replyURL = (f'{self._base_url}'+'/rr_reply')
+                        reply = self.requests.get(replyURL,timeout=8)
+                        if buffer_size < 150:
+                            print('Buffer low: ', buffer_size)
+                            time.sleep(0.6)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
                 r = self.requests.get(URL,timeout=8)
                 j = self.json.loads(r.text)
                 s=j['status']
                 replyURL = (f'{self._base_url}'+'/rr_reply')
                 reply = self.requests.get(replyURL,timeout=8)
-                endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
-                r2 = self.requests.get(endsessionURL,timeout=8)
-                if not r2.ok:
-                    print('Error in getStatus end session: ', r2)
+                if not self._rrf2:
+                    endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+                    r2 = self.requests.get(endsessionURL,timeout=8)
+                    if not r2.ok:
+                        print('Error in getStatus end session: ', r2)
                 if ('I' in s): return('idle')
                 if ('P' in s): return('processing')
                 if ('S' in s): return('paused')
@@ -248,28 +265,31 @@ class DuetWebAPI:
 
     def gCode(self,command):
         if (self.pt == 2):
-            import time
-            sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-            r = self.requests.get(sessionURL,timeout=8)
-            buffer_size = 0
-            while buffer_size < 150:
-                bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                buffer_request = self.requests.get(bufferURL,timeout=8)
-                try:
-                    buffer_response = buffer_request.json()
-                    buffer_size = int(buffer_response['buff'])
-                except:
-                    buffer_size = 149
-                if buffer_size < 150:
-                    print('Buffer low: ', buffer_size)
-                    time.sleep(0.6)
+            if not self._rrf2:
+                #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                import time
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                buffer_size = 0
+                while buffer_size < 150:
+                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                    buffer_request = self.requests.get(bufferURL,timeout=8)
+                    try:
+                        buffer_response = buffer_request.json()
+                        buffer_size = int(buffer_response['buff'])
+                    except:
+                        buffer_size = 149
+                    if buffer_size < 150:
+                        print('Buffer low: ', buffer_size)
+                        time.sleep(0.6)
             URL=(f'{self._base_url}'+'/rr_gcode?gcode='+command)
             r = self.requests.get(URL,timeout=8)
             replyURL = (f'{self._base_url}'+'/rr_reply')
             reply = self.requests.get(replyURL,timeout=8)
-            #print( command, ' -> ', reply )
-            endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
-            r2 = self.requests.get(endsessionURL,timeout=8)
+            if not self._rrf2:
+                #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+                r2 = self.requests.get(endsessionURL,timeout=8)
         if (self.pt == 3):
             URL=(f'{self._base_url}'+'/machine/code/')
             r = self.requests.post(URL, data=command)
@@ -283,16 +303,18 @@ class DuetWebAPI:
     def gCodeBatch(self,commands):
         for command in commands:
             if (self.pt == 2):
-                import time
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    buffer_response = buffer_request.json()
-                    buffer_size = int(buffer_response['buff'])
-                    time.sleep(0.5)
+                if not self._rrf2:
+                #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    import time
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        buffer_response = buffer_request.json()
+                        buffer_size = int(buffer_response['buff'])
+                        time.sleep(0.5)
                 URL=(f'{self._base_url}'+'/rr_gcode?gcode='+command)
                 r = self.requests.get(URL,timeout=8)
                 replyURL = (f'{self._base_url}'+'/rr_reply')
@@ -310,8 +332,10 @@ class DuetWebAPI:
                 endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
                 r2 = self.requests.get(endsessionURL,timeout=8)
                 return(r.status_code)
-        endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
-        r2 = self.requests.get(endsessionURL,timeout=8)
+        if not self._rrf2:
+            #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+            endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+            r2 = self.requests.get(endsessionURL,timeout=8)
 
     def getFilenamed(self,filename):
         if (self.pt == 2):
@@ -350,24 +374,26 @@ class DuetWebAPI:
         import time
         try:
             if (self.pt == 2):
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                if not r.ok:
-                    print('Error in getStatus session: ', r)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    try:
-                        buffer_response = buffer_request.json()
-                        buffer_size = int(buffer_response['buff'])
-                    except:
-                        buffer_size = 149
-                    replyURL = (f'{self._base_url}'+'/rr_reply')
-                    reply = self.requests.get(replyURL,timeout=8)
-                    if buffer_size < 150:
-                        print('Buffer low: ', buffer_size)
-                        time.sleep(0.6)
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    if not r.ok:
+                        print('Error in getStatus session: ', r)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        try:
+                            buffer_response = buffer_request.json()
+                            buffer_size = int(buffer_response['buff'])
+                        except:
+                            buffer_size = 149
+                        replyURL = (f'{self._base_url}'+'/rr_reply')
+                        reply = self.requests.get(replyURL,timeout=8)
+                        if buffer_size < 150:
+                            print('Buffer low: ', buffer_size)
+                            time.sleep(0.6)
                 while self.getStatus() not in "idle":
                     time.sleep(0.5)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
@@ -391,24 +417,26 @@ class DuetWebAPI:
         import time
         try:
             if (self.pt == 2):
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                if not r.ok:
-                    print('Error in getStatus session: ', r)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    try:
-                        buffer_response = buffer_request.json()
-                        buffer_size = int(buffer_response['buff'])
-                    except:
-                        buffer_size = 149
-                    replyURL = (f'{self._base_url}'+'/rr_reply')
-                    reply = self.requests.get(replyURL,timeout=8)
-                    if buffer_size < 150:
-                        print('Buffer low: ', buffer_size)
-                        time.sleep(0.6)
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    if not r.ok:
+                        print('Error in getStatus session: ', r)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        try:
+                            buffer_response = buffer_request.json()
+                            buffer_size = int(buffer_response['buff'])
+                        except:
+                            buffer_size = 149
+                        replyURL = (f'{self._base_url}'+'/rr_reply')
+                        reply = self.requests.get(replyURL,timeout=8)
+                        if buffer_size < 150:
+                            print('Buffer low: ', buffer_size)
+                            time.sleep(0.6)
                 while self.getStatus() not in "idle":
                     time.sleep(0.5)
                 URL=(f'{self._base_url}'+'/rr_status')
@@ -431,35 +459,39 @@ class DuetWebAPI:
     def isIdle(self):
         try:
             if (self.pt == 2):
-                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-                r = self.requests.get(sessionURL,timeout=8)
-                if not r.ok:
-                    print('Error in getStatus session: ', r)
-                buffer_size = 0
-                while buffer_size < 150:
-                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                    buffer_request = self.requests.get(bufferURL,timeout=8)
-                    try:
-                        buffer_response = buffer_request.json()
-                        buffer_size = int(buffer_response['buff'])
-                    except:
-                        buffer_size = 149
-                    replyURL = (f'{self._base_url}'+'/rr_reply')
-                    reply = self.requests.get(replyURL,timeout=8)
-                    if buffer_size < 150:
-                        print('Buffer low: ', buffer_size)
-                        time.sleep(0.6)
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                    r = self.requests.get(sessionURL,timeout=8)
+                    if not r.ok:
+                        print('Error in getStatus session: ', r)
+                    buffer_size = 0
+                    while buffer_size < 150:
+                        bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                        buffer_request = self.requests.get(bufferURL,timeout=8)
+                        try:
+                            buffer_response = buffer_request.json()
+                            buffer_size = int(buffer_response['buff'])
+                        except:
+                            buffer_size = 149
+                        replyURL = (f'{self._base_url}'+'/rr_reply')
+                        reply = self.requests.get(replyURL,timeout=8)
+                        if buffer_size < 150:
+                            print('Buffer low: ', buffer_size)
+                            time.sleep(0.6)
                 URL=(f'{self._base_url}'+'/rr_status?type=2')
                 r = self.requests.get(URL,timeout=8)
                 j = self.json.loads(r.text)
                 s=j['status']
                 replyURL = (f'{self._base_url}'+'/rr_reply')
                 reply = self.requests.get(replyURL,timeout=8)
-                endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
-                r2 = self.requests.get(endsessionURL,timeout=8)
-                if not r2.ok:
-                    print('Error in getStatus end session: ', r2)
-                    return False
+                if not self._rrf2:
+                    #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                    endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+                    r2 = self.requests.get(endsessionURL,timeout=8)
+                    if not r2.ok:
+                        print('Error in getStatus end session: ', r2)
+                        return False
                 if ('I' in s):
                     return True
                 else: 
@@ -535,20 +567,22 @@ class DuetWebAPI:
         _errMsg = ''
         triggerHeight = 0
         if (self.pt == 2):
-            sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
-            r = self.requests.get(sessionURL,timeout=8)
-            buffer_size = 0
-            while buffer_size < 150:
-                bufferURL = (f'{self._base_url}'+'/rr_gcode')
-                buffer_request = self.requests.get(bufferURL,timeout=8)
-                try:
-                    buffer_response = buffer_request.json()
-                    buffer_size = int(buffer_response['buff'])
-                except:
-                    buffer_size = 149
-                if buffer_size < 150:
-                    print('Buffer low: ', buffer_size)
-                    time.sleep(0.6)
+            if not self._rrf2:
+                #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
+                r = self.requests.get(sessionURL,timeout=8)
+                buffer_size = 0
+                while buffer_size < 150:
+                    bufferURL = (f'{self._base_url}'+'/rr_gcode')
+                    buffer_request = self.requests.get(bufferURL,timeout=8)
+                    try:
+                        buffer_response = buffer_request.json()
+                        buffer_size = int(buffer_response['buff'])
+                    except:
+                        buffer_size = 149
+                    if buffer_size < 150:
+                        print('Buffer low: ', buffer_size)
+                        time.sleep(0.6)
             URL=(f'{self._base_url}'+'/rr_gcode?gcode=G31')
             r = self.requests.get(URL,timeout=8)
             replyURL = (f'{self._base_url}'+'/rr_reply')
@@ -558,8 +592,10 @@ class DuetWebAPI:
             start = reply.find('trigger height')
             triggerHeight = reply[start+15:]
             triggerHeight = float(triggerHeight[:triggerHeight.find(',')])
-            endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
-            r2 = self.requests.get(endsessionURL,timeout=8)
+            if not self._rrf2:
+                #RRF 3 on a Duet Ethernet/Wifi board, apply buffer checking
+                endsessionURL = (f'{self._base_url}'+'/rr_disconnect')
+                r2 = self.requests.get(endsessionURL,timeout=8)
         if (self.pt == 3):
             URL=(f'{self._base_url}'+'/machine/code/')
             r = self.requests.post(URL, data='G31')
