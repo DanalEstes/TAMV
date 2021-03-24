@@ -222,6 +222,12 @@ else:
 # restore all endstop definitions to the config.g defaults
 prt.resetEndstops()
 
+# Get probe offsets from machine
+(_errCode, _errMsg, probeOffset) = prt.getTriggerHeight()
+if _errCode != 0:
+    probeOffset = 0
+    print('Error in retrieving probe offsets. Setting offset to 0 to avoid collisions.')
+
 # Display Results and actually set G10 offsets
 print()
 print('########### Probing results')
@@ -231,7 +237,7 @@ if (tool == -1):
         print("Final offset for tool "+str(tn)+": "+str(toolCoords[tn]))
     print()
     for tn in range(len(toolCoords)):
-        finalOffset = (poffs-toolCoords[tn])-0.1
+        finalOffset = (poffs-toolCoords[tn])-0.1-probeOffset
         print('G10 P'+str(tn)+' Z{:0.3f}'.format(finalOffset))
         # wait for probing to complete before setting offsets
         #while prt.getStatus() is 'processing':
@@ -240,7 +246,7 @@ if (tool == -1):
 else:
     print("Final offset for tool "+str(tool)+": "+str(toolCoords[0]))
     print()
-    finalOffset = (poffs-toolCoords[0])-0.1
+    finalOffset = (poffs-toolCoords[0])-0.1-probeOffset
     print('G10 P'+str(tool)+' Z{:0.3f}'.format(finalOffset))
     # wait for probing to complete before setting offsets
     #while prt.getStatus() is 'processing':

@@ -531,6 +531,8 @@ class DuetWebAPI:
         self.gCodeBatch(commandBuffer)
 
     def getTriggerHeight(self):
+        _errCode = 0
+        _errMsg = ''
         triggerHeight = 0
         if (self.pt == 2):
             sessionURL = (f'{self._base_url}'+'/rr_connect?password=reprap')
@@ -568,9 +570,11 @@ class DuetWebAPI:
             triggerHeight = reply[start+15:]
             triggerHeight = float(triggerHeight[:triggerHeight.find(',')])
         if (r.ok):
-           return triggerHeight
+           return (_errCode, _errMsg, triggerHeight )
         else:
+            _errCode = float(r.status_code)
+            _errMsg = r.reason
             print("getTriggerHeight command return code = ",r.status_code)
             print(r.reason)
-            return(r.status_code)
+            return (_errCode, _errMsg, None )
     
