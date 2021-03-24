@@ -13,7 +13,6 @@
 # Requires network connection to Duet based printer running Duet/RepRap V2 or V3
 #
 
-#from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
     QWidget, 
     QApplication, 
@@ -195,7 +194,7 @@ class CPDialog(QDialog):
                 
         # apply layout
         self.setLayout(self.layout)
-    
+
     def setSummaryText(self, message):
         self.cp_info.setText(message)
 
@@ -1521,7 +1520,6 @@ class App(QMainWindow):
         fileMenu.addAction(self.saveAction)
         fileMenu.addSeparator()
         fileMenu.addAction(self.quitAction)
-        
 
     def _createActions(self):
         # Creating action using the first constructor
