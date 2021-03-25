@@ -986,6 +986,7 @@ class CalibrateNozzles(QThread):
                         string_final_y = "{:.3f}".format(final_y)
                         # Save offset to output variable
                         # HBHBHBHB
+                        _return = {}
                         _return['X'] = final_x
                         _return['Y'] = final_y
                         _return['MPP'] = self.mpp
