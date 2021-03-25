@@ -592,6 +592,7 @@ class CalibrateNozzles(QThread):
                             self.detector_changed = False
                         self._running = True
                         while self._running:
+                            self.cycles = self.parent().cycles
                             for rep in range(self.cycles):
                                 for tool in range(self.parent().num_tools):
                                     # process GUI events
