@@ -1872,6 +1872,7 @@ class App(QMainWindow):
         self.video_thread.xray = False
         self.video_thread.alignment = False
         self.calibration_button.setDisabled(False)
+        self.cp_button.setDisabled(False)
 
         self.toolBox.setVisible(True)
         #self.repeatSpinBox.setDisabled(False)
@@ -2080,7 +2081,7 @@ class App(QMainWindow):
                 center, 
                 6, 
                 (0,255,0), 
-                int( camera_width/2 )
+                int( camera_width/1.8 )
             )
             overlay = cv2.circle( 
                 overlay.copy(), 
@@ -2089,7 +2090,7 @@ class App(QMainWindow):
                 (0,0,255), 
                 2
             )
-            for i in range(0,6):
+            for i in range(0,8):
                 overlay = cv2.circle( 
                 overlay.copy(), 
                 center, 
