@@ -1935,7 +1935,7 @@ class App(QMainWindow):
         print('+---------------------------------------------------------------------------------------------------------------------------+')
         print('|   |                   X                             |                        Y                        |')
         print('| T |   Avg   |   Max   |   Min   |  StdDev |  Range  |   Avg   |   Max   |   Min   |  StdDev |  Range  |')
-        for index in range self.num_tools:
+        for index in range(self.num_tools):
             # create array of results for current tool
             _rawCalibrationData = [line for line in self.calibrationResults if line['tool'] == str(index)]
             x_array = [float(line['X']) for line in _rawCalibrationData]
