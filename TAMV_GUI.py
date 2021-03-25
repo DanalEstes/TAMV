@@ -976,12 +976,8 @@ class CalibrateNozzles(QThread):
                     self.oldxy = self.xy
                     if ( self.offsets[0] == 0.0 and self.offsets[1] == 0.0 ):
                         self.parent().debugString += str(self.calibration_moves) + ' moves.\n'
-                        # Update GUI with progress
-                        self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
-                        self.parent().debugString += 'T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.\n'
-                        print('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
-                        self.message_update.emit('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
                         self.parent().printer.gCode( 'G1 F13200' )
+                        # Update GUI with progress
                         # calculate final offsets and return results
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
@@ -990,9 +986,16 @@ class CalibrateNozzles(QThread):
                         string_final_y = "{:.3f}".format(final_y)
                         # Save offset to output variable
                         # HBHBHBHB
-                        _return = (final_x, final_y)
+                        _return['X'] = final_x
+                        _return['Y'] = final_y
                         _return['MPP'] = self.mpp
                         _return['time'] = np.around(time.time() - self.startTime,1)
+                        self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
+                        self.parent().debugString += 'T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.\n'
+                        print('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
+                        self.message_update.emit('T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.')
+                        self.parent().printer.gCode( 'G1 F13200' )
+
                         self.parent().debugString += 'G10 P' + str(tool) + ' X' + string_final_x + ' Y' + string_final_y + '\n'
                         x_tableitem = QTableWidgetItem(string_final_x)
                         x_tableitem.setBackground(QColor(100,255,100,255))
