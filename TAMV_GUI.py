@@ -1931,7 +1931,7 @@ class App(QMainWindow):
         # Report on repeated executions
         ###################################################################################
         print('')
-        print('Repeatability statistics for '+str(repeatInput)+' repeats:')
+        print('Repeatability statistics for '+str(self.cycles)+' repeats:')
         print('+---------------------------------------------------------------------------------------------------------------------------+')
         print('|   |                   X                             |                        Y                        |')
         print('| T |   Avg   |   Max   |   Min   |  StdDev |  Range  |   Avg   |   Max   |   Min   |  StdDev |  Range  |')
