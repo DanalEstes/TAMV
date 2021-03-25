@@ -1341,7 +1341,7 @@ class App(QMainWindow):
         self.repeat_label = QLabel('Cycles: ')
         self.repeat_label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.repeatSpinBox = QSpinBox()
-        self.repeatSpinBox.setValue(1)
+        self.repeatSpinBox.setValue(2)
         self.repeatSpinBox.setMinimum(1)
         self.repeatSpinBox.setSingleStep(1)
         self.repeatSpinBox.setDisabled(True)
@@ -1932,7 +1932,7 @@ class App(QMainWindow):
         ###################################################################################
         print('')
         print('Repeatability statistics for '+str(self.cycles)+' repeats:')
-        print('+---------------------------------------------------------------------------------------------------------------------------+')
+        print('+-------------------------------------------------------------------------------------------------------+')
         print('|   |                   X                             |                        Y                        |')
         print('| T |   Avg   |   Max   |   Min   |  StdDev |  Range  |   Avg   |   Max   |   Min   |  StdDev |  Range  |')
         for index in range(self.num_tools):
@@ -1940,6 +1940,7 @@ class App(QMainWindow):
             _rawCalibrationData = [line for line in self.calibrationResults if line['tool'] == str(index)]
             x_array = [float(line['X']) for line in _rawCalibrationData]
             y_array = [float(line['Y']) for line in _rawCalibrationData]
+            mpp_value = np.average([float(line['mpp']) for line in _rawCalibrationData])
             cycles = np.max(
                 [float(line['cycle']) for line in _rawCalibrationData]
             )
@@ -1967,7 +1968,7 @@ class App(QMainWindow):
                 + '|'
             )        
         print('+-------------------------------------------------------------------------------------------------------+')
-        print('Note: Repeatability cannot be better than one pixel (MPP=' + str(self.mpp) + ').')
+        print('Note: Repeatability cannot be better than one pixel (MPP=' + str(mpp_value) + ').')
 
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
