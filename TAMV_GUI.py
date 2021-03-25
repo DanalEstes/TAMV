@@ -1007,6 +1007,7 @@ class CalibrateNozzles(QThread):
                         self.result_update.emit({
                             'tool': str(tool),
                             'cycle': str(rep),
+                            'mpp': str(self.mpp),
                             'X': string_final_x,
                             'Y': string_final_y
                         })
@@ -1895,19 +1896,19 @@ class App(QMainWindow):
         # prompt for user to apply results
         msgBox = QMessageBox(parent=self)
         msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText('Do you want to apply the new offsets to your machine?')
+        msgBox.setText('Do you want to save the new offsets to your machine?')
         msgBox.setWindowTitle('Calibration Results')
-        apply_button = msgBox.addButton('Apply',QMessageBox.YesRole)
-        apply_button.setStyleSheet(style_green)
-        yes_button = msgBox.addButton('Apply and save',QMessageBox.ApplyRole)
-        yes_button.setStyleSheet(style_orange)
-        cancel_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
-        #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        self.debugString += 'Calibration results:\n'
+        yes_button = msgBox.addButton('Apply offsets and save (M500)',QMessageBox.ApplyRole)
+        yes_button.setStyleSheet(style_green)
+        cancel_button = msgBox.addButton('Apply offsets',QMessageBox.NoRole)
+        
+        # Update debug string
+        self.debugString += '\nCalibration results:\n'
         for result in self.calibrationResults:
             calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
             self.debugString += calibrationCode + '\n'
 
+        # Prompt user
         returnValue = msgBox.exec()
         if msgBox.clickedButton() == yes_button:
             for result in self.calibrationResults:
@@ -1916,19 +1917,57 @@ class App(QMainWindow):
                 self.printer.gCode('M500') # because of Rene.
             self.statusBar.showMessage('Offsets applied and stored using M500.')
             print('Offsets applied and stored using M500.')
-        elif msgBox.clickedButton() == apply_button:
-            for result in self.calibrationResults:
-                calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
-                self.printer.gCode(calibrationCode)
-            self.statusBar.showMessage('Temporary offsets applied. You must manually save these offsets.')
-            print('Temporary offsets applied. You must manually save these offsets.')
         else:
-            self.statusBar.showMessage('Original offsets applied. Calibration results in debug window.')
-            print('Original offsets applied. Calibration results in debug window.')
+            self.statusBar.showMessage('Temporary offsets applied. You must manually save these offsets.')
         # Clean up threads and detection
         self.video_thread.alignment = False
         self.video_thread.detect_on = False
         self.video_thread.display_crosshair = False
+        # run stats
+        self.analyzeResults()
+
+    def analyzeResults(self):
+        ###################################################################################
+        # Report on repeated executions
+        ###################################################################################
+        print('')
+        print('Repeatability statistics for '+str(repeatInput)+' repeats:')
+        print('+---------------------------------------------------------------------------------------------------------------------------+')
+        print('|   |                   X                             |                        Y                        |')
+        print('| T |   Avg   |   Max   |   Min   |  StdDev |  Range  |   Avg   |   Max   |   Min   |  StdDev |  Range  |')
+        for index in range self.num_tools:
+            # create array of results for current tool
+            _rawCalibrationData = [line for line in self.calibrationResults if line['tool'] == str(index)]
+            x_array = [float(line['X']) for line in _rawCalibrationData]
+            y_array = [float(line['Y']) for line in _rawCalibrationData]
+            cycles = np.max(
+                [float(line['cycle']) for line in _rawCalibrationData]
+            )
+            x_avg = np.average(x_array)
+            y_avg = np.average(y_array)
+            x_min = np.min(x_array)
+            y_min = np.min(y_array)
+            x_max = np.max(x_array)
+            y_max = np.max(y_array)
+            x_std = np.std(x_array)
+            y_std = np.std(y_array)
+            x_ran = x_max - x_min
+            y_ran = y_max - y_min
+            print('| {0:1.0f} '.format(index) 
+                + '| {0:7.3f} '.format(x_avg)
+                + '| {0:7.3f} '.format(x_max)
+                + '| {0:7.3f} '.format(x_min)
+                + '| {0:7.3f} '.format(x_std)
+                + '| {0:7.3f} '.format(x_ran)
+                + '| {0:7.3f} '.format(y_avg)
+                + '| {0:7.3f} '.format(y_max)
+                + '| {0:7.3f} '.format(y_min)
+                + '| {0:7.3f} '.format(y_std)
+                + '| {0:7.3f} '.format(y_ran)
+                + '|'
+            )        
+        print('+-------------------------------------------------------------------------------------------------------+')
+        print('Note: Repeatability cannot be better than one pixel (MPP=' + str(self.mpp) + ').')
 
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
