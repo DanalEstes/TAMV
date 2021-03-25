@@ -28,7 +28,7 @@ class DuetWebAPI:
     def __init__(self,base_url):
         self._base_url = base_url
         try:
-            print('connecting to ', base_url)
+            print('Connecting to ', base_url, '..')
             URL=(f'{self._base_url}'+'/rr_status?type=2')
             r = self.requests.get(URL,timeout=(2,60))
             replyURL = (f'{self._base_url}'+'/rr_reply')
@@ -39,7 +39,7 @@ class DuetWebAPI:
 
             try:
                 firmwareVersion = j['firmwareVersion']
-                print('Duet Firmware v', firmwareVersion)
+                print('Duet Firmware:', firmwareVersion)
                 if firmwareVersion[0] == "2":
                     self._rrf2 = True
             except Exception as e:
