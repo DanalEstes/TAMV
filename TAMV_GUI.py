@@ -1342,7 +1342,7 @@ class App(QMainWindow):
         self.repeat_label = QLabel('Cycles: ')
         self.repeat_label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.repeatSpinBox = QSpinBox()
-        self.repeatSpinBox.setValue(2)
+        self.repeatSpinBox.setValue(1)
         self.repeatSpinBox.setMinimum(1)
         self.repeatSpinBox.setSingleStep(1)
         self.repeatSpinBox.setDisabled(True)
@@ -1884,7 +1884,7 @@ class App(QMainWindow):
         self.cp_button.setDisabled(False)
 
         self.toolBox.setVisible(True)
-        #self.repeatSpinBox.setDisabled(False)
+        self.repeatSpinBox.setDisabled(False)
 
     def applyCalibration(self):
         # update GUI
@@ -2087,8 +2087,8 @@ class App(QMainWindow):
             self.offsets_table.setItem(i,0,x_tableitem)
             self.offsets_table.setItem(i,1,y_tableitem)
         # get number of repeat cycles
-        self.cycles = self.repeatSpinBox.value()
         self.repeatSpinBox.setDisabled(True)
+        self.cycles = self.repeatSpinBox.value()
 
         # create the Nozzle detection capture thread
         self.video_thread.display_crosshair = True
