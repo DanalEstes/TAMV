@@ -634,14 +634,15 @@ class CalibrateNozzles(QThread):
                                     (c, transform, mpp) = self.calibrateTool(tool, rep)
                                     # process GUI events
                                     app.processEvents()
+                                    # apply offsets to machine
+                                    self.parent().printer.gCode( 'G10 P' + str(tool) + ' X' + str(c[0]) + ' Y' + str(c[1]) )
                             # signal end of execution
                             self._running = False
                         # Update status bar
                         self.status_update.emit('Calibration complete: Resetting machine.')
+                        # HBHBHB
                         # Update debug window with results
-                        self.parent().debugString += '\nCalibration output:\n'
-                        for tool_result in self.parent().calibration_results:
-                            self.parent().debugString += tool_result + '\n'
+                        # self.parent().debugString += '\nCalibration output:\n'
                         self.parent().printer.gCode('T-1')
                         self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                         self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
@@ -975,10 +976,6 @@ class CalibrateNozzles(QThread):
                     self.oldxy = self.xy
                     if ( self.offsets[0] == 0.0 and self.offsets[1] == 0.0 ):
                         self.parent().debugString += str(self.calibration_moves) + ' moves.\n'
-                        # Save offset to output variable
-                        _return = self.tool_coordinates
-                        _return['MPP'] = self.mpp
-                        _return['time'] = np.around(time.time() - self.startTime,1)
                         # Update GUI with progress
                         self.message_update.emit('Nozzle calibrated: offset coordinates X' + str(_return['X']) + ' Y' + str(_return['Y']) )
                         self.parent().debugString += 'T' + str(tool) + ', cycle ' + str(rep+1) + ' completed in ' + str(_return['time']) + ' seconds.\n'
@@ -991,6 +988,11 @@ class CalibrateNozzles(QThread):
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
                         string_final_x = "{:.3f}".format(final_x)
                         string_final_y = "{:.3f}".format(final_y)
+                        # Save offset to output variable
+                        # HBHBHBHB
+                        _return = (final_x, final_y)
+                        _return['MPP'] = self.mpp
+                        _return['time'] = np.around(time.time() - self.startTime,1)
                         self.parent().debugString += 'G10 P' + str(tool) + ' X' + string_final_x + ' Y' + string_final_y + '\n'
                         x_tableitem = QTableWidgetItem(string_final_x)
                         x_tableitem.setBackground(QColor(100,255,100,255))
@@ -998,9 +1000,8 @@ class CalibrateNozzles(QThread):
                         y_tableitem.setBackground(QColor(100,255,100,255))
                         self.parent().offsets_table.setItem(tool,0,x_tableitem)
                         self.parent().offsets_table.setItem(tool,1,y_tableitem)
-                        self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + string_final_x + ' Y' + string_final_y)
                         self.result_update.emit({
-                            'tool': 'T'+str(tool),
+                            'tool': str(tool),
                             'cycle': str(rep),
                             'X': string_final_x,
                             'Y': string_final_y
@@ -1411,8 +1412,6 @@ class App(QMainWindow):
         self.startVideo()
         # flag to draw circle
         self.crosshair = False
-        # object to hold final offsets
-        self.calibration_results = []
 
     def toggle_detect(self):
         self.video_thread.display_crosshair = not self.video_thread.display_crosshair
@@ -1900,17 +1899,23 @@ class App(QMainWindow):
         yes_button.setStyleSheet(style_orange)
         cancel_button = msgBox.addButton('Cancel',QMessageBox.NoRole)
         #msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        self.debugString += 'Calibration results:\n'
+        for result in self.calibrationResults:
+            calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
+            self.debugString += calibrationCode + '\n'
 
         returnValue = msgBox.exec()
         if msgBox.clickedButton() == yes_button:
-            for tool_result in self.calibration_results:
-                self.printer.gCode(tool_result)
+            for result in self.calibrationResults:
+                calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
+                self.printer.gCode(calibrationCode)
                 self.printer.gCode('M500') # because of Rene.
             self.statusBar.showMessage('Offsets applied and stored using M500.')
             print('Offsets applied and stored using M500.')
         elif msgBox.clickedButton() == apply_button:
-            for tool_result in self.calibration_results:
-                self.printer.gCode(tool_result)
+            for result in self.calibrationResults:
+                calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
+                self.printer.gCode(calibrationCode)
             self.statusBar.showMessage('Temporary offsets applied. You must manually save these offsets.')
             print('Temporary offsets applied. You must manually save these offsets.')
         else:
@@ -2120,7 +2125,7 @@ class App(QMainWindow):
         return QPixmap.fromImage(p)
 
     def addCalibrationResult(self, result={}):
-        print( 'Signal for result:', result )
+        self.calibrationResults.append(result)
 
 if __name__=='__main__':
     os.putenv("QT_LOGGING_RULES","qt5ct.debug=false")
