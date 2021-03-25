@@ -38,8 +38,9 @@ class DuetWebAPI:
             firmwareName = j['firmwareName']
 
             try:
+                firmwareName = j['firmwareName']
                 firmwareVersion = j['firmwareVersion']
-                print('Duet Firmware:', firmwareVersion)
+                print('Duet Firmware:', firmwareName, '- V'+firmwareVersion)
                 if firmwareVersion[0] == "2":
                     self._rrf2 = True
             except Exception as e:
