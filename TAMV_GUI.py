@@ -472,6 +472,7 @@ class CalibrateNozzles(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
     calibration_complete = pyqtSignal()
     detection_error = pyqtSignal(str)
+    result_update = pyqtSignal(object)
 
     alignment = False
     _running = False
@@ -996,6 +997,12 @@ class CalibrateNozzles(QThread):
                         self.parent().offsets_table.setItem(tool,0,x_tableitem)
                         self.parent().offsets_table.setItem(tool,1,y_tableitem)
                         self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
+                        self.result_update.emit({
+                            'tool': 'T'+str(tool),
+                            'cycle': str(rep),
+                            'X': str(final_x),
+                            'Y': str(final_y)
+                        })
                         return(_return, self.transform_matrix, self.mpp)
                     else:
                         self.state = 200
@@ -1135,6 +1142,7 @@ class App(QMainWindow):
     current_frame = np.ndarray
     mutex = QMutex()
     debugString = ''
+    calibrationResults = []
 
     def __init__(self, parent=None):
         super().__init__()
@@ -1567,6 +1575,7 @@ class App(QMainWindow):
         self.video_thread.message_update.connect(self.updateMessagebar)
         self.video_thread.change_pixmap_signal.connect(self.update_image)
         self.video_thread.calibration_complete.connect(self.applyCalibration)
+        self.video_thread.result_update.connect(self.addCalibrationResult)
 
         # start the thread
         self.video_thread.start()
@@ -2104,6 +2113,9 @@ class App(QMainWindow):
         convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(display_width, display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
+
+    def addCalibrationResult(self, result={}):
+        print( 'Signal for result:', result )
 
 if __name__=='__main__':
     os.putenv("QT_LOGGING_RULES","qt5ct.debug=false")
