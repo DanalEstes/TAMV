@@ -989,19 +989,21 @@ class CalibrateNozzles(QThread):
                         self.tool_offsets = self.parent().printer.getG10ToolOffset(tool)
                         final_x = np.around( (self.cp_coordinates['X'] + self.tool_offsets['X']) - self.tool_coordinates['X'], 3 )
                         final_y = np.around( (self.cp_coordinates['Y'] + self.tool_offsets['Y']) - self.tool_coordinates['Y'], 3 )
-                        self.parent().debugString += 'G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y) + '\n'
-                        x_tableitem = QTableWidgetItem(str(np.around(final_x, 2)))
+                        string_final_x = "{:.3f}".format(final_x)
+                        string_final_y = "{:.3f}".format(final_y)
+                        self.parent().debugString += 'G10 P' + str(tool) + ' X' + string_final_x + ' Y' + string_final_y + '\n'
+                        x_tableitem = QTableWidgetItem(string_final_x)
                         x_tableitem.setBackground(QColor(100,255,100,255))
-                        y_tableitem = QTableWidgetItem(str(np.around(final_y, 2)))
+                        y_tableitem = QTableWidgetItem(string_final_y)
                         y_tableitem.setBackground(QColor(100,255,100,255))
                         self.parent().offsets_table.setItem(tool,0,x_tableitem)
                         self.parent().offsets_table.setItem(tool,1,y_tableitem)
-                        self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + str(final_x) + ' Y' + str(final_y))
+                        self.parent().calibration_results.append('G10 P' + str(tool) + ' X' + string_final_x + ' Y' + string_final_y)
                         self.result_update.emit({
                             'tool': 'T'+str(tool),
                             'cycle': str(rep),
-                            'X': str(final_x),
-                            'Y': str(final_y)
+                            'X': string_final_x,
+                            'Y': string_final_y
                         })
                         return(_return, self.transform_matrix, self.mpp)
                     else:
@@ -1676,8 +1678,10 @@ class App(QMainWindow):
                 self.offsets_table.setRowCount(self.num_tools)
                 for i in range(self.num_tools):
                     current_tool = self.printer.getG10ToolOffset(i)
-                    x_tableitem = QTableWidgetItem(str(current_tool['X']))
-                    y_tableitem = QTableWidgetItem(str(current_tool['Y']))
+                    offset_x = "{:.3f}".format(current_tool['X'])
+                    offset_y = "{:.3f}".format(current_tool['Y'])
+                    x_tableitem = QTableWidgetItem(offset_x)
+                    y_tableitem = QTableWidgetItem(offset_y)
                     x_tableitem.setBackground(QColor(255,255,255,255))
                     y_tableitem.setBackground(QColor(255,255,255,255))
                     self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
@@ -2081,7 +2085,7 @@ class App(QMainWindow):
                 center, 
                 6, 
                 (0,255,0), 
-                int( camera_width/1.8 )
+                int( camera_width/1.75 )
             )
             overlay = cv2.circle( 
                 overlay.copy(), 
@@ -2094,12 +2098,12 @@ class App(QMainWindow):
                 overlay = cv2.circle( 
                 overlay.copy(), 
                 center, 
-                30*i, 
+                25*i, 
                 (0,0,0), 
                 1
             )
-            overlay = cv2.line(overlay, (center[0],center[1]-int( camera_width/4 )), (center[0],center[1]+int( camera_width/4 )), (128, 128, 128), 1)
-            overlay = cv2.line(overlay, (center[0]-int( camera_width/4 ),center[1]), (center[0]+int( camera_width/4 ),center[1]), (128, 128, 128), 1)
+            overlay = cv2.line(overlay, (center[0],center[1]-int( camera_width/3 )), (center[0],center[1]+int( camera_width/3 )), (128, 128, 128), 1)
+            overlay = cv2.line(overlay, (center[0]-int( camera_width/3 ),center[1]), (center[0]+int( camera_width/3 ),center[1]), (128, 128, 128), 1)
             cv_img = cv2.addWeighted(overlay, beta, cv_img, alpha, 0)
         # Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
