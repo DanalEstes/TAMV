@@ -635,7 +635,7 @@ class CalibrateNozzles(QThread):
                                     # process GUI events
                                     app.processEvents()
                                     # apply offsets to machine
-                                    self.parent().printer.gCode( 'G10 P' + str(tool) + ' X' + str(c[0]) + ' Y' + str(c[1]) )
+                                    self.parent().printer.gCode( 'G10 P' + str(tool) + ' X' + str(c['X']) + ' Y' + str(c['Y']) )
                             # signal end of execution
                             self._running = False
                         # Update status bar
