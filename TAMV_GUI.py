@@ -1545,10 +1545,11 @@ class App(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(self.quitAction)
 
-        analysisMenu = QMenu('&Analyze',self)
-        menuBar.addMenu(analysisMenu)
-        analysisMenu.addAction(self.graphAction)
-        analysisMenu.addAction(self.exportAction)
+        self.analysisMenu = QMenu('&Analyze',self)
+        menuBar.addMenu(self.analysisMenu)
+        self.analysisMenu.addAction(self.graphAction)
+        self.analysisMenu.addAction(self.exportAction)
+        self.analysisMenu.setDisabled(True)
 
     def _createActions(self):
         # Creating action using the first constructor
@@ -1746,6 +1747,7 @@ class App(QMainWindow):
         self.disconnection_button.setDisabled(False)
         self.cp_button.setDisabled(False)
         self.jogpanel_button.setDisabled(False)
+        self.analysisMenu.setDisabled(True)
         # update connection status indicator to green
         self.connection_status.setStyleSheet(style_green)
         self.cp_label.setStyleSheet(style_red)
@@ -1838,7 +1840,7 @@ class App(QMainWindow):
         self.cp_label.setText('<b>CP:</b> <i>undef</i>')
         self.cp_label.setStyleSheet(style_red)
         self.repeatSpinBox.setDisabled(True)
-        
+        self.analysisMenu.setDisabled(True)
         self.detect_box.setChecked(False)
         self.detect_box.setDisabled(False)
         self.xray_box.setDisabled(True)
@@ -1906,6 +1908,11 @@ class App(QMainWindow):
 
         self.toolBox.setVisible(True)
         self.repeatSpinBox.setDisabled(False)
+
+        if len(self.calibrationResults) > 1:
+            self.analysisMenu.setDisabled(False)
+        else:
+            self.analysisMenu.setDisabled(True)
 
     def applyCalibration(self):
         # update GUI
@@ -2069,7 +2076,6 @@ class App(QMainWindow):
                 print('Error exporting data:')
                 print(e1)
                 self.updateStatusbar('Error exporting data, please check terminal for details.')
-        
 
     def stats(self):
         ###################################################################################
