@@ -268,6 +268,9 @@ class CameraSettingsDialog(QDialog):
         # Get cameras button
         self.camera_button = QPushButton('Get cameras')
         self.camera_button.clicked.connect(self.getCameras)
+        if self.parent().video_thread.alignment:
+            self.camera_button.setDisabled(True)
+        else: self.camera_button.setDisabled(False)
         #self.getCameras()
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Horizontal)
