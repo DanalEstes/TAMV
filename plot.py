@@ -34,18 +34,15 @@ def loadDataFile( filename="./output.json" ):
 def parseData( rawData ):
     # create empty output array
     toolDataResult = []
+    # get number of tools
+    _numTools = np.max([ int(line['tool']) for line in rawData ]) + 1
+    _cycles = np.max([ int(line['cycle']) for line in rawData ])
     
-    for i, tool in enumerate(rawData['tools']):
-        # x, y are temp objects to calculate stats
-        x = []
-        y = []
+    for i in range(_numTools):
+        x = [float(line['X']) for line in rawData if int(line['tool']) == i]
+        y = [float(line['Y']) for line in rawData if int(line['tool']) == i]
         # variable to hold return data coordinates per tool formatted as a 2D array [x_value, y_value]
         tempPairs = []
-        # loop over coordinates and form results
-        for run in tool['runs']:
-            x.append(np.around(float(run['X']),3))
-            y.append(np.around(float(run['Y']),3))
-            mpp = float(run['MPP'])
 
         # calculate stats
         # mean values
@@ -81,12 +78,11 @@ def parseData( rawData ):
         print('')
     
     # return dataset
-    return toolDataResult
+    return ( _numTools, _cycles, toolDataResult )
 
 def main():
     # parse command line arguments
     dataFilename = init()
-    
 
     # set up color and colormap arrays
     colorMap = ["Greens","Oranges","Blues", "Reds"] #["Blues", "Reds","Greens","Oranges"]
@@ -98,15 +94,12 @@ def main():
     if j == -1:
         return
 
+    # get data as 3 dimensional array [tool][axis][datapoints] normalized around mean of each axis
+    ( numTools, totalRuns, toolData ) = parseData(j)
     # data file has been loaded, proceed with processing the data
-    numTools = len(j['tools'])
-    totalRuns = len(j['tools'][0]['runs'])
     print('')
     print( "Found data for {} tools".format(numTools) + " and " + str(totalRuns) + " alignment cycles.")
     print('')
-
-    # get data as 3 dimensional array [tool][axis][datapoints] normalized around mean of each axis
-    toolData = parseData(j)
 
     # initiate graph data - 1 tool per column
     # Row 0: scatter plot with standard deviation box
