@@ -13,40 +13,42 @@
 # Requires network connection to Duet based printer running Duet/RepRap V2 or V3
 #
 
+# GUI imports
 from PyQt5.QtWidgets import (
-    QWidget, 
-    QApplication, 
-    QLabel, 
-    QGridLayout,
-    QMainWindow,
-    QPushButton,
-    QLineEdit,
-    QDialog,
-    QStatusBar,
-    QDialogButtonBox,
-    QMenuBar,
-    QMenu,
     QAction,
-    QTextEdit,
-    QSpinBox,
+    QApplication,
     QCheckBox,
-    QInputDialog,
-    QMessageBox,
+    QCheckBox,
+    QComboBox,
     QDesktopWidget,
+    QDialog,
+    QDialogButtonBox,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMenu,
+    QMenuBar,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QStatusBar,
     QStyle,
     QTableWidget,
     QTableWidgetItem,
-    QHeaderView,
-    QGroupBox,
+    QTextEdit,
     QVBoxLayout,
-    QHBoxLayout,
-    QCheckBox,
-    QSlider,
-    QComboBox
+    QWidget
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QIcon
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QMutex, QPoint, QSize
 
+# Core imports
 import os
 import sys
 import cv2
@@ -57,6 +59,13 @@ from time import sleep, time
 import datetime
 import json
 import time
+
+# graphing imports
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.patches as patches
+from matplotlib.ticker import FormatStrFormatter
 
 # styles
 global style_green, style_red, style_disabled, style_orange
@@ -1536,6 +1545,11 @@ class App(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(self.quitAction)
 
+        analysisMenu = QMenu('&Analyze',self)
+        menuBar.addMenu(analysisMenu)
+        analysisMenu.addAction(self.graphAction)
+        analysisMenu.addAction(self.exportAction)
+
     def _createActions(self):
         # Creating action using the first constructor
         self.debugAction = QAction(self)
@@ -1546,6 +1560,10 @@ class App(QMainWindow):
         self.quitAction.setText('&Quit')
         self.saveAction = QAction(self)
         self.saveAction.setText('&Save current settings')
+        self.graphAction = QAction(self)
+        self.graphAction.setText('&Graph calibration data..')
+        self.exportAction = QAction(self)
+        self.exportAction.setText('&Export to output.json')
 
     def _connectActions(self):
         # Connect File actions
@@ -1553,6 +1571,9 @@ class App(QMainWindow):
         self.cameraAction.triggered.connect(self.displayCameraSettings)
         self.quitAction.triggered.connect(self.close)
         self.saveAction.triggered.connect(self.saveUserParameters)
+
+        self.graphAction.triggered.connect(lambda: self.analyzeResults(graph=True))
+        self.exportAction.triggered.connect(lambda: self.analyzeResults(export=True))
 
     def displayCameraSettings(self):
         self.camera_dialog = CameraSettingsDialog(parent=self)
@@ -1927,7 +1948,128 @@ class App(QMainWindow):
         # run stats
         self.analyzeResults()
 
-    def analyzeResults(self):
+    def analyzeResults(self, graph=False, export=False):
+        if len(self.calibrationResults) < 1:
+            self.updateStatusbar('No calibration data found.')
+            return
+        if graph or export:
+            # get data as 3 dimensional array [tool][axis][datapoints] normalized around mean of each axis
+            (numTools, totalRuns, toolData) = self.parseData(self.calibrationResults)
+        if graph:
+            matplotlib.use('Qt5Agg',force=True)
+            # set up color and colormap arrays
+            colorMap = ["Greens","Oranges","Blues", "Reds"] #["Blues", "Reds","Greens","Oranges"]
+            colors = ['blue','red','green','orange']
+            # initiate graph data - 1 tool per column
+            # Row 0: scatter plot with standard deviation box
+            # Row 1: histogram of X axis data
+            # Row 2: histogram of Y axis data
+            
+            # Set backend (if needed)
+            #plt.switch_backend('Qt4Agg')
+
+            fig, axes = plt.subplots(ncols=3,nrows=numTools,constrained_layout=False)
+
+            for i, data in enumerate(toolData):
+                # create a color array the length of the number of tools in the data
+                color = np.arange(len(data[0]))
+
+                # Axis formatting
+                # Major ticks
+                axes[i][0].xaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+                axes[i][0].yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+                # Minor ticks
+                axes[i][0].xaxis.set_minor_formatter(FormatStrFormatter('%.3f'))
+                axes[i][0].yaxis.set_minor_formatter(FormatStrFormatter('%.3f'))
+                # Draw 0,0 lines
+                axes[i][0].axhline()
+                axes[i][0].axvline()
+                # x&y std deviation box
+                x_sigma = np.around(np.std(data[0]),3)
+                y_sigma = np.around(np.std(data[1]),3)
+                axes[i][0].add_patch(patches.Rectangle((-1*x_sigma,-1*y_sigma), 2*x_sigma, 2*y_sigma, color="green",fill=False, linestyle='dotted'))
+                axes[i][0].add_patch(patches.Rectangle((-2*x_sigma,-2*y_sigma), 4*x_sigma, 4*y_sigma, color="red",fill=False, linestyle='-.'))
+                
+                # scatter plot for tool data
+                axes[i][0].scatter(data[0], data[1], c=color, cmap=colorMap[i])
+                axes[i][0].autoscale = True
+                
+                # Histogram data setup
+                # Calculate number of bins per axis
+                x_intervals = int(np.around(math.sqrt(len(data[0])),0)+1)
+                y_intervals = int(np.around(math.sqrt(len(data[1])),0)+1)
+                
+                # plot histograms
+                x_kwargs = dict(alpha=0.5, bins=x_intervals,rwidth=.92, density=True)
+                n, bins, hist_patches = axes[i][1].hist([data[0],data[1]],**x_kwargs, color=[colors[0],colors[1]], label=['X','Y'])
+                axes[i][2].hist2d(data[0], data[1], bins=x_intervals, cmap='Blues')
+                axes[i][1].legend()
+
+
+                # add a 'best fit' line
+                # calculate mean and std deviation per axis
+                x_mean = np.mean(data[0])
+                y_mean = np.mean(data[1])
+                x_sigma = np.around(np.std(data[0]),3)
+                y_sigma = np.around(np.std(data[1]),3)
+                # calculate function lines for best fit
+                x_best = ((1 / (np.sqrt(2 * np.pi) * x_sigma)) *
+                    np.exp(-0.5 * (1 / x_sigma * (bins - x_mean))**2))
+                y_best = ((1 / (np.sqrt(2 * np.pi) * y_sigma)) *
+                    np.exp(-0.5 * (1 / y_sigma * (bins - y_mean))**2))
+                # add best fit line to plots
+                axes[i][1].plot(bins, x_best, '-.',color=colors[0])
+                axes[i][1].plot(bins, y_best, '--',color=colors[1])
+
+                x_count = int(sum( p == True for p in ((data[0] >= (x_mean - x_sigma)) & (data[0] <= (x_mean + x_sigma))) )/len(data[0])*100)
+                y_count = int(sum( p == True for p in ((data[1] >= (y_mean - y_sigma)) & (data[1] <= (y_mean + y_sigma))) )/len(data[1])*100)
+                # annotate std dev values
+                annotation_text = "Xσ: " + str(x_sigma) + " ("+str(x_count) + "%)"
+                if x_count < 68:
+                    x_count = int(sum( p == True for p in ((data[0] >= (x_mean - 2*x_sigma)) & (data[0] <= (x_mean + 2*x_sigma))) )/len(data[0])*100) 
+                    annotation_text += " --> 2σ: " + str(x_count) + "%"
+                    if x_count < 95 and x_sigma*2 > 0.1:
+                        annotation_text += " -- check axis!"
+                    else: annotation_text += " -- OK"
+                annotation_text += "\nYσ: " + str(y_sigma) + " ("+str(y_count) + "%)"
+                if y_count < 68: 
+                    y_count = int(sum( p == True for p in ((data[1] >= (y_mean - 2*y_sigma)) & (data[1] <= (y_mean + 2*y_sigma))) )/len(data[1])*100) 
+                    annotation_text += " --> 2σ: " + str(y_count) + "%"
+                    if y_count < 95 and y_sigma*2 > 0.1:
+                        annotation_text += " -- check axis!"
+                    else: annotation_text += " -- OK"
+                axes[i][0].annotate(annotation_text, (10,10),xycoords='axes pixels')
+                axes[i][0].annotate('σ',(1.1*x_sigma,-1.1*y_sigma),xycoords='data',color='green')
+                axes[i][0].annotate('2σ',(1.1*2*x_sigma,-1.1*2*y_sigma),xycoords='data',color='red')
+                # # place title for graph
+                axes[i][0].set_ylabel("Tool " + str(i) + "\nY")
+                axes[i][0].set_xlabel("X")
+                axes[i][2].set_ylabel("Y")
+                axes[i][2].set_xlabel("X")
+                
+                if i == 0:
+                    axes[i][0].set_title('Scatter Plot')
+                    axes[i][1].set_title('Histogram')
+                    axes[i][2].set_title('2D Histogram')
+            plt.tight_layout()
+            figManager = plt.get_current_fig_manager()
+            figManager.window.showMaximized()
+            plt.ion()
+            plt.show()
+
+        if export:
+            # export JSON data to file
+            try:
+                with open('output.json','w') as outputfile:
+                    json.dump(self.calibrationResults, outputfile)
+            except Exception as e1:
+                print('Error exporting data:')
+                print(e1)
+                self.updateStatusbar('Error exporting data, please check terminal for details.')
+        # display stats to terminal
+        self.stats()
+
+    def stats(self):
         ###################################################################################
         # Report on repeated executions
         ###################################################################################
@@ -1970,6 +2112,46 @@ class App(QMainWindow):
             )        
         print('+-------------------------------------------------------------------------------------------------------+')
         print('Note: Repeatability cannot be better than one pixel (MPP=' + str(mpp_value) + ').')
+
+    def parseData( self, rawData ):
+        # create empty output array
+        toolDataResult = []
+        # get number of tools
+        _numTools = np.max([ int(line['tool']) for line in rawData ]) + 1
+        _cycles = np.max([ int(line['cycle']) for line in rawData ])
+        
+        for i in range(_numTools):
+            x = [float(line['X']) for line in rawData if int(line['tool']) == i]
+            y = [float(line['Y']) for line in rawData if int(line['tool']) == i]
+            # variable to hold return data coordinates per tool formatted as a 2D array [x_value, y_value]
+            tempPairs = []
+
+            # calculate stats
+            # mean values
+            x_mean = np.around(np.mean(x),3)
+            y_mean = np.around(np.mean(y),3)
+            # median values
+            x_median = np.around(np.median(x),3)
+            y_median = np.around(np.median(y),3)
+            # ranges (max - min per axis)
+            x_range = np.around(np.max(x) - np.min(x),3)
+            y_range = np.around(np.max(y) - np.min(y),3)
+            # standard deviations
+            x_sig = np.around(np.std(x),3)
+            y_sig = np.around(np.std(y),3)
+
+            # normalize data around mean
+            x -= x_mean
+            y -= y_mean
+            
+            # temporary object to append coordinate pairs into return value
+            tempPairs.append(x)
+            tempPairs.append(y)
+
+            # add data to return object
+            toolDataResult.append(tempPairs)
+        # return dataset
+        return ( _numTools, _cycles, toolDataResult )
 
     def disconnectFromPrinter(self):
         # temporarily suspend GUI and display status message
@@ -2079,8 +2261,8 @@ class App(QMainWindow):
         self.detect_box.setVisible(False)
         for i in range(self.num_tools):
             current_tool = self.printer.getG10ToolOffset(i)
-            x_tableitem = QTableWidgetItem(str(current_tool['X']))
-            y_tableitem = QTableWidgetItem(str(current_tool['Y']))
+            x_tableitem = QTableWidgetItem("{:.3f}".format(current_tool['X']))
+            y_tableitem = QTableWidgetItem("{:.3f}".format(current_tool['Y']))
             x_tableitem.setBackground(QColor(255,255,255,255))
             y_tableitem.setBackground(QColor(255,255,255,255))
             self.offsets_table.setVerticalHeaderItem(i,QTableWidgetItem('T'+str(i)))
