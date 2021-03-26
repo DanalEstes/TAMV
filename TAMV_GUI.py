@@ -2192,6 +2192,7 @@ class App(QMainWindow):
         self.video_thread.detect_on = False
         self.video_thread.display_crosshair = False
         self.detect_box.setChecked(False)
+        self.detect_box.setVisible(True)
 
         # update status 
         self.updateStatusbar('Unloading tools and disconnecting from machine..')
