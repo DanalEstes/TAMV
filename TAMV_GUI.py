@@ -1955,6 +1955,9 @@ class App(QMainWindow):
         if graph or export:
             # get data as 3 dimensional array [tool][axis][datapoints] normalized around mean of each axis
             (numTools, totalRuns, toolData) = self.parseData(self.calibrationResults)
+        else:
+            # display stats to terminal
+            self.stats()
         if graph:
             matplotlib.use('Qt5Agg',force=True)
             # set up color and colormap arrays
@@ -2066,8 +2069,7 @@ class App(QMainWindow):
                 print('Error exporting data:')
                 print(e1)
                 self.updateStatusbar('Error exporting data, please check terminal for details.')
-        # display stats to terminal
-        self.stats()
+        
 
     def stats(self):
         ###################################################################################
