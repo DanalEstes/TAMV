@@ -118,7 +118,7 @@ _[back to top](#table-of-contents)_
    
    Open a terminal window on your Raspberry pi
    
-   type `cd ~/`, and hit enter
+   type `cd`, and hit enter
    
    type `git clone https://github.com/HaythamB/TAMV` and hit enter
    
