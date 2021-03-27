@@ -1946,7 +1946,7 @@ class App(QMainWindow):
             for result in self.calibrationResults:
                 calibrationCode = 'G10 P' + str(result['tool']) + ' X' + str(result['X']) + ' Y' + str(result['Y'])
                 self.printer.gCode(calibrationCode)
-                self.printer.gCode('M500') # because of Rene.
+                self.printer.gCode('M500 P10') # because of Rene.
             self.statusBar.showMessage('Offsets applied and stored using M500.')
             print('Offsets applied and stored using M500.')
         else:
