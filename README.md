@@ -115,9 +115,13 @@ _[back to top](#table-of-contents)_
 _[back to top](#table-of-contents)_
 # How do I install OpenCV on my Raspberry Pi?
 1. Clone this repository into your home folder
+   
    Open a terminal window on your Raspberry pi
+   
    type `cd ~/`, and hit enter
+   
    type `git clone https://github.com/HaythamB/TAMV` and hit enter
+   
 2. type `cd TAMV` and press enter
 3. Run `~/TAMV/install_opencv.sh`
 4. Wait an hour or two for everything to be installed
