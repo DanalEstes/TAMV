@@ -616,6 +616,7 @@ class CalibrateNozzles(QThread):
                                     # Move tool to CP coordinates
                                     self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                                     self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+                                    self.parent().printer.gCode('G1 Z' + str(self.parent().cp_coords['Z']))
                                     # Wait for moves to complete
                                     while self.parent().printer.getStatus() not in 'idle':
                                         # process GUI events
@@ -659,6 +660,7 @@ class CalibrateNozzles(QThread):
                         self.parent().printer.gCode('T-1')
                         self.parent().printer.gCode('G1 X' + str(self.parent().cp_coords['X']))
                         self.parent().printer.gCode('G1 Y' + str(self.parent().cp_coords['Y']))
+                        self.parent().printer.gCode('G1 Z' + str(self.parent().cp_coords['Z']))
                         self.status_update.emit('Calibration complete: Done.')
                         self.alignment = False
                         self.detection_on = False
@@ -1782,11 +1784,13 @@ class App(QMainWindow):
                     self.printer.gCode('T-1')
                     self.printer.gCode('G1 X' + str(self.cp_coords['X']))
                     self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+                    self.printer.gCode('G1 Z' + str(self.cp_coords['Z']))
                 else:
                     tempCoords = self.printer.getCoords()
                     self.printer.gCode('T-1')
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
                     self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+                    self.printer.gCode('G1 Z' + str(tempCoords['Z']))
                 # End video threads and restart default thread
                 self.video_thread.alignment = False
 
@@ -1810,12 +1814,14 @@ class App(QMainWindow):
                     self.printer.gCode(sender.text())
                     self.printer.gCode('G1 X' + str(self.cp_coords['X']))
                     self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+                    self.printer.gCode('G1 Z' + str(self.cp_coords['Z']))
                 else:
                     tempCoords = self.printer.getCoords()
                     self.printer.gCode('T-1')
                     self.printer.gCode(self.sender().text())
                     self.printer.gCode('G1 X' + str(tempCoords['X']))
                     self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+                    self.printer.gCode('G1 Z' + str(tempCoords['Z']))
                 # START DETECTION THREAD HANDLING
                 # close camera settings dialog so it doesn't crash
                 try:
@@ -1877,7 +1883,7 @@ class App(QMainWindow):
 
         if len(self.cp_coords) > 0:
             self.printer.gCode('T-1')
-            self.printer.gCode('G90 G1 X'+ str(self.cp_coords['X']) + ' Y' + str(self.cp_coords['Y']) )
+            self.printer.gCode('G90 G1 X'+ str(self.cp_coords['X']) + ' Y' + str(self.cp_coords['Y']) + ' Z' + str(self.cp_coords['Z']) )
         dlg = CPDialog(parent=self)
         if dlg.exec_():
             self.cp_coords = self.printer.getCoords()
@@ -2205,9 +2211,11 @@ class App(QMainWindow):
             if len(self.cp_coords) > 0:
                 _ret_error += self.printer.gCode('G1 X' + str(self.cp_coords['X']))
                 _ret_error += self.printer.gCode('G1 Y' + str(self.cp_coords['Y']))
+                _ret_error += self.printer.gCode('G1 Z' + str(self.cp_coords['Z']))
             else:
                 _ret_error += self.printer.gCode('G1 X' + str(tempCoords['X']))
                 _ret_error += self.printer.gCode('G1 Y' + str(tempCoords['Y']))
+                _ret_error += self.printer.gCode('G1 Z' + str(tempCoords['Z']))
         # update status with disconnection state
         if _ret_error == 0:
             self.updateStatusbar('Disconnected.')
