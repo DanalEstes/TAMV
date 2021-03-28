@@ -129,8 +129,9 @@ _[back to top](#table-of-contents)_
 _[back to top](#table-of-contents)_
 # How do I run these packages?
 ## TAMV_GUI
-1. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
-2. Follow the buttons and prompts on-screen. There are tooltips everywhere to guide you!
+1. Connect your microscope/webcam to a USB port (preferably only connect 1 when starting it for the first time)
+2. Open a terminal window *from the Raspbian desktop and NOT AN SSH SESSION* and run `~/TAMV/TAMV_GUI.py`
+3. Follow the buttons and prompts on-screen. There are tooltips everywhere to guide you!
 
 TAMV.py = Tool Align Machine Vision - for Duet based tool changing 3D printers.
 
