@@ -125,6 +125,13 @@ _[back to top](#table-of-contents)_
 2. type `cd TAMV` and press enter
 3. Run `~/TAMV/install_opencv.sh`
 4. Wait an hour or two for everything to be installed
+ 
+ Note for Raspberry Pi 3 users: you will probably have to increase the default SWAP size to at least 2GB for the install to run successfully. Here's the commands to run before installing openCV to set up a 2GB swap file. Run a Google search on "how to increase raspberry pi 3 swap size" for more info.
+ 
+```sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=2048/g' /etc/dphys-swapfile
+sudo /etc/init.d/dphys-swapfile stop
+sudo /etc/init.d/dphys-swapfile start
+```
 
 _[back to top](#table-of-contents)_
 # How do I run these packages?
