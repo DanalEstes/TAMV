@@ -8,5 +8,5 @@ PyQt5-Qt==5.15.2
 PyQt5-sip==12.8.1
 pyqtgraph==0.11.1
 requests==2.25.1
-urllib3~> 1.26.4
+urllib3>= 1.26.4
 wincertstore==0.2
