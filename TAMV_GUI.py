@@ -1492,14 +1492,14 @@ class App(QMainWindow):
             options = {}
             options['camera'] = []
             options['camera'].append( {
-                'video_src': 0,
+                'video_src': 1,
                 'display_width': '640',
                 'display_height': '480'
             } )
             options['printer'] = []
             options['printer'].append( {
                 'address': 'http://localhost',
-                'name': 'Hermoine'
+                'name': 'Localhost'
             } )
             try:
                 camera_width = 640
