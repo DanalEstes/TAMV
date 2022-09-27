@@ -14,7 +14,7 @@ sudo apt-get -y install python3-pyqt5
 sudo apt-get -y install qtbase5-dev
 sudo apt-get -y install curl
 cd ~
-curl https://boostrap.pypa.io/get-pip.py -o get-pip.py
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 sudo python3 get-pip.py
 rm get-pip.py
 pip install imutils
