@@ -1,5 +1,6 @@
 *.js
 *.json
+*.old
 !drivers.json
 *.pyc
 **/__pycache__/ 
