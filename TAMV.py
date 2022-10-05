@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse, logging, os, sys, traceback, time
 from tkinter import E
 from json import tool
