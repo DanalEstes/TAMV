@@ -1,7 +1,10 @@
-
+*.js
 *.json
+!drivers.json
 *.pyc
 **/__pycache__/ 
 *.vscode
-
 *.log
+**/log/
+**/config/
+**/exports/

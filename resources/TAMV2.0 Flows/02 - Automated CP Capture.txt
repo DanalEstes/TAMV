@@ -1,0 +1,16 @@
+App.setupCP
+  App.disableButtonsCP
+App.startAutoCPCapture
+  App.disableButtonsCP
+  CalibrateNozzles.calibrateTool
+# camera calibration started
+    CalibrateNozzles.analyzeEndstop (xn)
+    CalibrateNozzles.getDistance
+    CalibrateNozzles.normalize_coords
+    CalibrateNozzles.least_square_mapping
+# camera calibration ended
+# endstop calibration started
+    CalibrateNozzles.analyzeEndstop
+# endstop calibration ended
+  App.readyToCalibrate
+  App.updateCrosshairDisplay

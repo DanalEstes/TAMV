@@ -1,0 +1,12 @@
+	App.connectToPrinter
+	App.setupCP
+	Jog around
+	App.captureOffset
+		App.captureControlPoint
+			App.readyToCalibrate
+second try:
+	App.captureOffset
+		App.captureControlPoint
+			App.readyToCalibrate
+
+#HBHBHBHB DEBUG: this may cause issues
