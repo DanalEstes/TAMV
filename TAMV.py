@@ -509,7 +509,7 @@ class App(QMainWindow):
             ##### Main image preview
             if(True):
                 self.image = QLabel(self)
-                self.image.resize(self.__activeCamera['display_width'], self.__activeCamera['display_height'])
+                self.image.resize(self._cameraWidth, self._cameraHeight)
                 self.image.setMinimumWidth(self.__activeCamera['display_width'])
                 self.image.setMinimumHeight(self.__activeCamera['display_height'])
                 self.image.setAlignment(Qt.AlignLeft)
