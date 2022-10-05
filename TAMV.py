@@ -1319,8 +1319,8 @@ class App(QMainWindow):
                 self.__stateAutoCPCapture = False
                 self.__stateEndstopAutoCalibrate = False
                 self.toggleEndstopAutoDetectionSignal.emit(False)
-                self.pollCoordinatesSignal.emit()
                 self.haltCPAutoCapture()
+                self.pollCoordinatesSignal.emit()
             elif(self.__stateAutoNozzleAlignment is True):
                 updateMessage = 'Failed to detect nozzle. Try manual override.'
                 self.updateStatusbarMessage(updateMessage)
