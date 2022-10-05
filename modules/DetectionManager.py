@@ -420,26 +420,27 @@ class DetectionManager(QObject):
         preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
         preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
 
-        # apply combo 1 (standard detector, preprocessor 0)
-        keypoints = self.detector.detect(preprocessorImage0)
-        keypointColor = (0,0,255)
-        if(len(keypoints) != 1):
-            # apply combo 2 (standard detector, preprocessor 1)
-            keypoints = self.detector.detect(preprocessorImage1)
-            keypointColor = (0,255,0)
+        if( self.__nozzleAutoDetectionActive is True ):
+            # apply combo 1 (standard detector, preprocessor 0)
+            keypoints = self.detector.detect(preprocessorImage0)
+            keypointColor = (0,0,255)
             if(len(keypoints) != 1):
-                # apply combo 3 (standard detector, preprocessor 0)
-                keypoints = self.relaxedDetector.detect(preprocessorImage0)
-                keypointColor = (255,0,0)
+                # apply combo 2 (standard detector, preprocessor 1)
+                keypoints = self.detector.detect(preprocessorImage1)
+                keypointColor = (0,255,0)
                 if(len(keypoints) != 1):
-                    # apply combo 4 (standard detector, preprocessor 1)
-                    keypoints = self.relaxedDetector.detect(preprocessorImage1)
-                    keypointColor = (39,127,255)
+                    # apply combo 3 (standard detector, preprocessor 0)
+                    keypoints = self.relaxedDetector.detect(preprocessorImage0)
+                    keypointColor = (255,0,0)
                     if(len(keypoints) != 1):
-                        # failed to detect a nozzle, correct return value object
-                        keypoints = None
+                        # apply combo 4 (standard detector, preprocessor 1)
+                        keypoints = self.relaxedDetector.detect(preprocessorImage1)
+                        keypointColor = (39,127,255)
+                        if(len(keypoints) != 1):
+                            # failed to detect a nozzle, correct return value object
+                            keypoints = None
         # process keypoint
-        if(keypoints is not None):
+        if(keypoints is not None and):
             # create center object
             (x,y) = np.around(keypoints[0].pt)
             x,y = int(x), int(y)
