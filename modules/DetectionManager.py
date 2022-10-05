@@ -440,7 +440,7 @@ class DetectionManager(QObject):
                             # failed to detect a nozzle, correct return value object
                             keypoints = None
         # process keypoint
-        if(keypoints is not None and):
+        if(keypoints is not None):
             # create center object
             (x,y) = np.around(keypoints[0].pt)
             x,y = int(x), int(y)
