@@ -9,3 +9,5 @@
 **/log/
 **/config/
 **/exports/
+**/flowcharts/
+getDict.py

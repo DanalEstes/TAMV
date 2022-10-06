@@ -1146,7 +1146,7 @@ class App(QMainWindow):
             self.state = 200
         self.space_coordinates = []
         self.camera_coordinates = []
-        self.calibration_moves = 0
+        self.calibrationMoves = 0
         self.retries = 0
         self.stateCPSetup()
         self.repaint()
@@ -1178,6 +1178,146 @@ class App(QMainWindow):
         # send exiting to log
         _logger.debug('*** exiting App.setupCPAutoCapture')
 
+    def haltCPAutoCapture(self):
+        self.resetCalibration()
+        self.statusBar.showMessage('CP calibration cancelled.')
+        # Reset GUI
+        self.stateConnected()
+
+    def haltNozzleCapture(self):
+        self.resetNozzleAlignment()
+        self.statusBar.showMessage('Nozzle calibration halted.')
+        # Reset GUI
+        self.stateCalibrateReady()
+    
+    def manualToolOffsetCapture(self):
+        self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # set tool alignment state to trigger offset calculation
+        self.state = 100
+        self.pollCoordinatesSignal.emit()
+
+    def resetCalibration(self):
+        # Reset program state, and frame capture control to defaults
+        self.mpp = None
+        self.transform_matrix = None
+        self.transform_input = None
+        self.state = 0
+        self.__stateSetupCPCapture = False
+        self.__stateManualCPCapture = False
+        self.__stateAutoCPCapture = False
+        self.__stateEndstopAutoCalibrate = False
+        self.toggleEndstopAutoDetectionSignal.emit(False)
+        # self.callTool(-1)
+        self.getVideoFrameSignal.emit()
+    
+    def resetNozzleAlignment(self):
+        # Reset program state, and frame capture control to defaults
+        self.__stateEndstopAutoCalibrate = False
+        self.__stateAutoCPCapture = False
+        self.__stateSetupCPCapture = False
+        self.__stateManualNozzleAlignment = False
+        self.__stateAutoNozzleAlignment = False
+        self.toggleEndstopAutoDetectionSignal.emit(False)
+        self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleDetectionSignal.emit(False)
+        self.retries = 0
+        if(self.transform_matrix is None or self.mpp is None):
+            self.state = 0
+        else:
+            self.state = 200
+        self.calibrationMoves = 0
+        self.callTool(-1)
+        self.getVideoFrameSignal.emit()
+
+    def startAlignTools(self):
+        # send calling to log
+        _logger.debug('*** calling App.startAlignTools')
+        self.startTime = time.time()
+        self.__stateManualNozzleAlignment = True
+        self.__stateAutoNozzleAlignment = True
+        self.uv = [None, None]
+
+        # Update GUI state
+        self.stateCalibtrateRunning()
+        self.updateStatusbarMessage('Starting tool alignment..')
+
+        # Create array for tools included in alignment process
+        self.alignmentToolSet = []
+        self.workingToolset = None
+        for checkbox in self.toolCheckboxes:
+            if(checkbox.isChecked()):
+                self.alignmentToolSet.append(int(checkbox.objectName()[13:]))
+        if(len(self.alignmentToolSet) > 0):
+            self.toggleNozzleAutoDetectionSignal.emit(True)
+            if(self.transform_matrix is None or self.mpp is None):
+                self.state = 0
+            else:
+                self.state = 200
+            self.calibrateTools(self.alignmentToolSet)
+        else:
+            # tell user no tools selected
+            errorMsg = 'No tools selected for alignment'
+            self.updateStatusbarMessage(errorMsg)
+            _logger.info(errorMsg)
+            self.haltNozzleCapture()
+        # send exiting to log
+        _logger.debug('*** exiting App.startAlignTools')
+
+    def identifyToolButton(self):
+        sender = self.sender()
+        for button in self.toolButtons:
+            if button.objectName() != sender.objectName():
+                button.setChecked(False)
+        toolIndex = int(sender.objectName()[11:])
+        self.callTool(toolIndex)
+    
+    def calibrateTools(self, toolset=None):
+        # toolset is passed the first time we call the function
+        # this creates the workingToolset, from which we pop each tool on each cycle
+        if(toolset is not None):
+            self.workingToolset = toolset
+        # check if we still have tools to calibrate in the workingToolset list
+        if(len(self.workingToolset)>0):
+            # grab the first item in the list (FIFO)
+            toolIndex = self.workingToolset[0]
+            _logger.info('Calibrating T' + str(toolIndex) +'..')
+            # delete the tool from the list before processing it
+            self.workingToolset.pop(0)
+            # update toolButtons GUI to indiciate which tool we're working on
+            for button in self.toolButtons:
+                buttonName = 'toolButton_' + str(toolIndex)
+                if(button.objectName() == buttonName):
+                    button.setStyleSheet(self.styleOrange)
+            #### Initialize calibration parameters
+            # self.state to indicate if we need to run a camera alignment
+            if(self.transform_matrix is None or self.mpp is None):
+                self.state = 0
+            else:
+                self.state = 200
+            # self.retries to reset detection
+            self.retries = 0
+            # self.calibrationMoves for GUI updates
+            self.calibrationMoves = 0
+            # main program state flags
+            self.__stateManualNozzleAlignment = True
+            self.__stateAutoNozzleAlignment = True
+            # DetectionManager state flag
+            self.toggleNozzleAutoDetectionSignal.emit(True)
+            # Capture start time of tool calibration run
+            self.toolTime = time.time()
+            # Call tool and start calibration
+            self.callTool(toolIndex)
+        else:
+            # entire list has been processed, output results
+            calibration_time = np.around(time.time() - self.startTime,1)
+            _logger.info('Calibration completed (' + str(calibration_time) + 's) with a resolution of ' + str(self.mpp) + '/pixel')
+            # reset GUI
+            self.stateCalibrateComplete()
+            self.repaint()
+            # reset state flags for main program and Detection Manager
+            self.resetNozzleAlignment()
+
     def autoCalibrate(self):
         self.tabPanel.setDisabled(True)
         if(self.uv is not None):
@@ -1189,7 +1329,7 @@ class App(QMainWindow):
                     # Reset space and camera coordinates
                     self.space_coordinates = []
                     self.camera_coordinates = []
-                    self.calibration_moves = 0
+                    self.calibrationMoves = 0
                     self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                     self.camera_coordinates.append((self.uv[0], self.uv[1]))
                     # move carriage for calibration
@@ -1255,12 +1395,12 @@ class App(QMainWindow):
                     return
                 elif(self.state == 200):
                     if(self.__stateEndstopAutoCalibrate):
-                        updateMessage = 'Endstop calibration step ' + str(self.calibration_moves) + '.. (MPP=' + str(self.mpp) +')'
+                        updateMessage = 'Endstop calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     else:
-                        updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' calibration step ' + str(self.calibration_moves) + '.. (MPP=' + str(self.mpp) +')'
+                        updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     self.updateStatusbarMessage(updateMessage)
                     # increment moves counter
-                    self.calibration_moves += 1
+                    self.calibrationMoves += 1
                     # nozzle detected, frame rotation is set, start
                     self.cx,self.cy = self.normalize_coords(self.uv)
                     self.v = [self.cx**2, self.cy**2, self.cx*self.cy, self.cx, self.cy, 0]
@@ -1281,7 +1421,7 @@ class App(QMainWindow):
                         # auto calibration complete - end process
                         if(self.__stateEndstopAutoCalibrate):
                             # endstop calibration handling
-                            updateMessage = 'Endstop auto-calibrated in ' + str(self.calibration_moves) + ' steps. (MPP=' + str(self.mpp) +')'
+                            updateMessage = 'Endstop auto-calibrated in ' + str(self.calibrationMoves) + ' steps. (MPP=' + str(self.mpp) +')'
                             self.__stateAutoCPCapture = False
                             self.__stateEndstopAutoCalibrate = False
                             self.toggleEndstopAutoDetectionSignal.emit(False)
@@ -1339,129 +1479,6 @@ class App(QMainWindow):
                 self.toggleNozzleAutoDetectionSignal.emit(False)
                 self.toggleNozzleDetectionSignal.emit(True)
                 self.toggleDetectionSignal.emit(True)
-
-    def haltCPAutoCapture(self):
-        self.resetCalibration()
-        self.statusBar.showMessage('CP calibration cancelled.')
-        # Reset GUI
-        self.stateConnected()
-
-    def haltNozzleCapture(self):
-        self.resetNozzleAlignment()
-        self.statusBar.showMessage('Nozzle calibration halted.')
-        # Reset GUI
-        self.stateCalibrateReady()
-    
-    def manualToolOffsetCapture(self):
-        self.manualToolOffsetCaptureButton.setDisabled(True)
-        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
-        # set tool alignment state to trigger offset calculation
-        self.state = 100
-        self.pollCoordinatesSignal.emit()
-
-    def resetCalibration(self):
-        # Reset program state, and frame capture control to defaults
-        self.mpp = None
-        self.transform_matrix = None
-        self.transform_input = None
-        self.state = 0
-        self.__stateSetupCPCapture = False
-        self.__stateManualCPCapture = False
-        self.__stateAutoCPCapture = False
-        self.__stateEndstopAutoCalibrate = False
-        self.toggleEndstopAutoDetectionSignal.emit(False)
-        # self.callTool(-1)
-        self.getVideoFrameSignal.emit()
-    
-    def resetNozzleAlignment(self):
-        # Reset program state, and frame capture control to defaults
-        self.__stateEndstopAutoCalibrate = False
-        self.__stateAutoCPCapture = False
-        self.__stateSetupCPCapture = False
-        self.__stateManualNozzleAlignment = False
-        self.__stateAutoNozzleAlignment = False
-        self.toggleEndstopAutoDetectionSignal.emit(False)
-        self.toggleNozzleAutoDetectionSignal.emit(False)
-        self.toggleDetectionSignal.emit(False)
-        self.retries = 0
-        if(self.transform_matrix is None or self.mpp is None):
-            self.state = 0
-        else:
-            self.state = 200
-        self.calibration_moves = 0
-        self.callTool(-1)
-        self.getVideoFrameSignal.emit()
-
-    def startAlignTools(self):
-        # send calling to log
-        _logger.debug('*** calling App.startAlignTools')
-        self.startTime = time.time()
-        self.__stateManualNozzleAlignment = True
-        self.__stateAutoNozzleAlignment = True
-        self.uv = [None, None]
-
-        # Update GUI state
-        self.stateCalibtrateRunning()
-        self.updateStatusbarMessage('Starting tool alignment..')
-
-        # Create array for tools included in alignment process
-        self.alignmentToolSet = []
-        self.workingToolset = None
-        for checkbox in self.toolCheckboxes:
-            if(checkbox.isChecked()):
-                self.alignmentToolSet.append(int(checkbox.objectName()[13:]))
-        if(len(self.alignmentToolSet) > 0):
-            self.toggleNozzleAutoDetectionSignal.emit(True)
-            if(self.transform_matrix is None or self.mpp is None):
-                self.state = 0
-            else:
-                self.state = 200
-            self.calibrateTools(self.alignmentToolSet)
-        else:
-            # tell user no tools selected
-            errorMsg = 'No tools selected for alignment'
-            self.updateStatusbarMessage(errorMsg)
-            _logger.info(errorMsg)
-            self.haltNozzleCapture()
-        # send exiting to log
-        _logger.debug('*** exiting App.startAlignTools')
-
-    def identifyToolButton(self):
-        sender = self.sender()
-        for button in self.toolButtons:
-            if button.objectName() != sender.objectName():
-                button.setChecked(False)
-        toolIndex = int(sender.objectName()[11:])
-        self.callTool(toolIndex)
-    
-    def calibrateTools(self, toolset=None):
-        if(toolset is not None):
-            self.workingToolset = toolset
-        if(len(self.workingToolset)>0):
-            toolIndex = self.workingToolset[0]
-            _logger.info('Calibrating T' + str(toolIndex) +'..')
-            self.workingToolset.pop(0)
-            for button in self.toolButtons:
-                buttonName = 'toolButton_' + str(toolIndex)
-                if(button.objectName() == buttonName):
-                    button.setStyleSheet(self.styleOrange)
-            if(self.transform_matrix is None or self.mpp is None):
-                self.state = 0
-            else:
-                self.state = 200
-            self.retries = 0
-            self.calibration_moves = 0
-            self.__stateManualNozzleAlignment = True
-            self.__stateAutoNozzleAlignment = True
-            self.toggleNozzleAutoDetectionSignal.emit(True)
-            self.toolTime = time.time()
-            self.callTool(toolIndex)
-        else:
-            calibration_time = np.around(time.time() - self.startTime,1)
-            _logger.info('Calibration completed (' + str(calibration_time) + 's) with a resolution of ' + str(self.mpp) + '/pixel')
-            self.stateCalibrateComplete()
-            self.repaint()
-            self.resetNozzleAlignment()
 
 
     ########################################################################### Module interfaces and handlers
@@ -1653,29 +1670,6 @@ class App(QMainWindow):
             self.disconnectSignal.emit(params)
         self.updateStatusbarMessage('Printer disconnected.')
 
-    def callTool(self, toolNumber=-1):
-        # disable detection
-        self.toggleDetectionSignal.emit(False)
-        toolNumber = int(toolNumber)
-        try:
-            if(toolNumber == int(self.__activePrinter['currentTool'])):
-                self.callToolSignal.emit(-1)
-            else:
-                self.callToolSignal.emit(toolNumber)
-        except:
-            errorMsg = 'Unable to call tool from printer: ' + str(toolNumber)
-            _logger.error(errorMsg)
-            self.printerError(errorMsg)
-
-    @pyqtSlot()
-    def toolLoaded(self):
-        self.pollCurrentToolSignal.emit()
-        if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
-            params = {'protected':True,'moveSpeed': 5000, 'position':{'X': self.__cpCoordinates['X'], 'Y': self.__cpCoordinates['Y'], 'Z': self.__cpCoordinates['Z']}}
-        else:
-            params = {'protected':True,'moveSpeed': 5000, 'position':{'X': self.__currentPosition['X'], 'Y': self.__currentPosition['Y'], 'Z': self.__cpCoordinates['Z']}}
-        self.moveAbsoluteSignal.emit(params)
-
     @pyqtSlot(object)
     def printerConnected(self, printerJSON):
         # send calling to log
@@ -1733,6 +1727,29 @@ class App(QMainWindow):
         self.printerDisconnected(message=message)
         self.statusBar.setStyleSheet(self.styleRed)
 
+    def callTool(self, toolNumber=-1):
+        # disable detection
+        self.toggleDetectionSignal.emit(False)
+        toolNumber = int(toolNumber)
+        try:
+            if(toolNumber == int(self.__activePrinter['currentTool'])):
+                self.callToolSignal.emit(-1)
+            else:
+                self.callToolSignal.emit(toolNumber)
+        except:
+            errorMsg = 'Unable to call tool from printer: ' + str(toolNumber)
+            _logger.error(errorMsg)
+            self.printerError(errorMsg)
+
+    @pyqtSlot()
+    def toolLoaded(self):
+        self.pollCurrentToolSignal.emit()
+        if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
+            params = {'protected':True,'moveSpeed': 5000, 'position':{'X': self.__cpCoordinates['X'], 'Y': self.__cpCoordinates['Y'], 'Z': self.__cpCoordinates['Z']}}
+        else:
+            params = {'protected':True,'moveSpeed': 5000, 'position':{'X': self.__currentPosition['X'], 'Y': self.__currentPosition['Y'], 'Z': self.__currentPosition['Z']}}
+        self.moveAbsoluteSignal.emit(params)
+
     @pyqtSlot(int)
     def registerActiveTool(self, toolIndex):
         self.__activePrinter['currentTool'] = toolIndex
@@ -1741,6 +1758,32 @@ class App(QMainWindow):
                 button.setChecked(False)
             else:
                 button.setChecked(True)
+
+    @pyqtSlot()
+    def printerMoveComplete(self):
+        self.tabPanel.setDisabled(False)
+        if(self.__stateAutoCPCapture and self.__stateEndstopAutoCalibrate):
+            # enable detection
+            self.toggleDetectionSignal.emit(True)
+            _logger.debug('Endstop auto detection active')
+            # Calibrating camera, go based on state
+            self.tabPanel.setDisabled(True)
+        elif(self.__stateAutoNozzleAlignment is True):
+            # enable detection
+            self.toggleDetectionSignal.emit(True)
+            _logger.debug('Nozzle auto detection active')
+            # calibrating nozzle auto
+            self.tabPanel.setDisabled(True)
+        elif(self.__stateManualNozzleAlignment is True):
+            # enable detection
+            self.toggleDetectionSignal.emit(True)
+            _logger.debug('Nozzle manual detection active')
+            # calibrating nozzle manual
+            self.alignToolsButton.setVisible(False)
+            self.alignToolsButton.setDisabled(True)
+            self.manualCPCaptureButton.setVisible(True)
+            return
+        self.pollCoordinatesSignal.emit()
 
     @pyqtSlot(object)
     def saveCurrentPosition(self, coordinates):
@@ -1784,32 +1827,6 @@ class App(QMainWindow):
             _logger.debug('saveCurrentPosition: firstConnection')
             self.__restorePosition = copy.deepcopy(self.__currentPosition)
             self.__firstConnection = False
-
-    @pyqtSlot()
-    def printerMoveComplete(self):
-        self.tabPanel.setDisabled(False)
-        if(self.__stateAutoCPCapture and self.__stateEndstopAutoCalibrate):
-            # enable detection
-            self.toggleDetectionSignal.emit(True)
-            _logger.debug('Endstop auto detection active')
-            # Calibrating camera, go based on state
-            self.tabPanel.setDisabled(True)
-        elif(self.__stateAutoNozzleAlignment is True):
-            # enable detection
-            self.toggleDetectionSignal.emit(True)
-            _logger.debug('Nozzle auto detection active')
-            # calibrating nozzle auto
-            self.tabPanel.setDisabled(True)
-        elif(self.__stateManualNozzleAlignment is True):
-            # enable detection
-            self.toggleDetectionSignal.emit(True)
-            _logger.debug('Nozzle manual detection active')
-            # calibrating nozzle manual
-            self.alignToolsButton.setVisible(False)
-            self.alignToolsButton.setDisabled(True)
-            self.manualCPCaptureButton.setVisible(True)
-            return
-        self.pollCoordinatesSignal.emit()
 
     @pyqtSlot(object)
     def calibrateOffsetsApplied(self, params=None):
