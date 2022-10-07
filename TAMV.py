@@ -510,8 +510,8 @@ class App(QMainWindow):
             if(True):
                 self.image = QLabel(self)
                 self.image.resize(self._cameraWidth, self._cameraHeight)
-                self.image.setMinimumWidth(self.__activeCamera['display_width'])
-                self.image.setMinimumHeight(self.__activeCamera['display_height'])
+                self.image.setMinimumWidth(self._cameraWidth)
+                self.image.setMinimumHeight(self._cameraHeight)
                 self.image.setAlignment(Qt.AlignLeft)
                 # self.image.setStyleSheet('text-align:center; border: 1px solid black')
                 self.image.setPixmap(self.standbyImage)
