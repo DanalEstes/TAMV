@@ -789,8 +789,6 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
-        # Jog panel tab
-        self.tabPanel.setDisabled(True)
         # Delete tool buttons
         count = self.jogPanel.count()
         for i in range(11,count):
@@ -799,6 +797,8 @@ class App(QMainWindow):
             widget.setVisible(False)
             # widget.deleteLater()
         self.resetCalibration()
+        # Jog panel tab
+        self.tabPanel.setDisabled(True)
 
     def stateConnected(self):
         # Settings option in menu
@@ -848,8 +848,7 @@ class App(QMainWindow):
         for i in range(11,count):
             item = self.jogPanel.itemAt(i)
             widget = item.widget()
-            widget.setVisible(False)
-            # widget.deleteLater()
+            widget.deleteLater()
         for tool in range(numTools+1):
             # add tool buttons
             toolButton = QPushButton('T' + str(tool))
