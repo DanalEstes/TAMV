@@ -216,7 +216,8 @@ class DetectionManager(QObject):
                 retObject.append(qpixmap)
                 retObject.append(self.__uv)
                 self.detectionManagerNewFrameSignal.emit(retObject)
-            except: pass
+            except: 
+                raise SystemExit('Fatal error in Detection Manager.')
 
     @pyqtSlot(bool)
     def enableDetection(self, state=False):
