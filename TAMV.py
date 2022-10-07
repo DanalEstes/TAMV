@@ -1820,6 +1820,7 @@ class App(QMainWindow):
     @pyqtSlot(object)
     def saveCurrentPosition(self, coordinates):
         self.__currentPosition = coordinates
+        _logger.debug('Coordinates received:', coordinates)
         self.toggleDetectionSignal.emit(True)
         if(self.__stateManualCPCapture is True):
             _logger.debug('saveCurrentPosition: manual CP capture')
@@ -1831,7 +1832,10 @@ class App(QMainWindow):
             self.repaint()
         elif(self.__stateEndstopAutoCalibrate is True or self.__stateAutoNozzleAlignment is True):
             if(self.state != 100):
-                _logger.debug('saveCurrentPosition: autoCalibrate nozzle for T' + str(int(self.__activePrinter['currentTool'])))
+                if(int(self.__activePrinter['currentTool']) > -1):
+                    _logger.debug('saveCurrentPosition: autoCalibrate nozzle for T' + str(int(self.__activePrinter['currentTool'])))
+                else:
+                    _logger.debug('saveCurrentPosition: autoCalibrate endstop.')
                 self.autoCalibrate()
             else:
                 _logger.debug('saveCurrentPosition: autoCalibrate nozzle set offsets for T' + str(int(self.__activePrinter['currentTool'])))
