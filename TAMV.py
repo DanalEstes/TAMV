@@ -42,6 +42,7 @@ class App(QMainWindow):
     moveRelativeSignal = pyqtSignal(object)
     moveAbsoluteSignal = pyqtSignal(object)
     callToolSignal = pyqtSignal(int)
+    unloadToolSignal = pyqtSignal()
     pollCoordinatesSignal = pyqtSignal()
     pollCurrentToolSignal = pyqtSignal()
     setOffsetsSignal = pyqtSignal(object)
@@ -1174,7 +1175,7 @@ class App(QMainWindow):
         # Start detector in DetectionManager
         self.toggleEndstopAutoDetectionSignal.emit(True)
         self.uv = [None, None]
-        self.callTool()
+        self.unloadToolSignal.emit()
         # send exiting to log
         _logger.debug('*** exiting App.setupCPAutoCapture')
 
@@ -1199,16 +1200,21 @@ class App(QMainWindow):
 
     def resetCalibration(self):
         # Reset program state, and frame capture control to defaults
-        self.mpp = None
-        self.transform_matrix = None
-        self.transform_input = None
-        self.state = 0
-        self.__stateSetupCPCapture = False
-        self.__stateManualCPCapture = False
-        self.__stateAutoCPCapture = False
         self.__stateEndstopAutoCalibrate = False
+        self.__stateAutoCPCapture = False
+        self.__stateSetupCPCapture = False
+        self.__stateManualNozzleAlignment = False
+        self.__stateAutoNozzleAlignment = False
         self.toggleEndstopAutoDetectionSignal.emit(False)
-        # self.callTool(-1)
+        self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleDetectionSignal.emit(False)
+        self.retries = 0
+        if(self.transform_matrix is None or self.mpp is None):
+            self.state = 0
+        else:
+            self.state = 200
+        self.calibrationMoves = 0
+        self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
     
     def resetNozzleAlignment(self):
@@ -1227,7 +1233,7 @@ class App(QMainWindow):
         else:
             self.state = 200
         self.calibrationMoves = 0
-        self.callTool(-1)
+        self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
 
     def startAlignTools(self):
@@ -1555,7 +1561,7 @@ class App(QMainWindow):
             self.cpLabel.setStyleSheet(self.styleOrange)
             self.connectionStatusLabel.setStyleSheet(self.styleOrange)
             self.resetCalibration()
-            # self.moveAbsoluteSignal.emit(self.originalPrinterPosition)
+            self.moveAbsoluteSignal.emit(self.originalPrinterPosition)
         except:
             errorMsg = 'Error sending message to statusbar.'
             _logger.error(errorMsg)
@@ -1598,6 +1604,7 @@ class App(QMainWindow):
             self.printerManager.coordinatesSignal.connect(self.saveCurrentPosition)
 
             self.callToolSignal.connect(self.printerManager.callTool)
+            self.unloadToolSignal.connect(self.printerManager.unloadTools)
             self.printerManager.toolLoadedSignal.connect(self.toolLoaded)
             self.pollCurrentToolSignal.connect(self.printerManager.currentTool)
             self.printerManager.toolIndexSignal.connect(self.registerActiveTool)
@@ -1731,11 +1738,14 @@ class App(QMainWindow):
         # disable detection
         self.toggleDetectionSignal.emit(False)
         toolNumber = int(toolNumber)
+        if(toolNumber == -1):
+            self.unloadToolSignal.emit()
+            return
         try:
-            if(toolNumber == int(self.__activePrinter['currentTool'])):
-                self.callToolSignal.emit(-1)
-            else:
-                self.callToolSignal.emit(toolNumber)
+            # if(toolNumber == int(self.__activePrinter['currentTool'])):
+            #     self.unloadToolSignal.emit()
+            # else:
+            self.callToolSignal.emit(toolNumber)
         except:
             errorMsg = 'Unable to call tool from printer: ' + str(toolNumber)
             _logger.error(errorMsg)

@@ -388,6 +388,11 @@ class PrinterManager(QObject):
             raise Exception('PrinterManager: Unable to load tool: ' + str(toolNumber))
         self.toolLoadedSignal.emit()
 
+    @pyqtSlot()
+    def unloadTools(self):
+        self.__activePrinter.unloadTools()
+        self.toolLoadedSignal.emit()
+
     @pyqtSlot(object)
     def calibrationSetOffset(self, params=None):
         try:
