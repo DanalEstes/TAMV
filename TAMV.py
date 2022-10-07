@@ -796,7 +796,8 @@ class App(QMainWindow):
         for i in range(11,count):
             item = self.jogPanel.itemAt(i)
             widget = item.widget()
-            widget.deleteLater()
+            widget.setVisible(False)
+            # widget.deleteLater()
         self.resetCalibration()
 
     def stateConnected(self):
@@ -841,6 +842,14 @@ class App(QMainWindow):
         # highest tool number storage
         numTools = max(self.__activePrinter['tools'], key= lambda x:int(x['number']))['number']
         _logger.debug('Highest tool number is: ' + str(numTools))
+        # Delete old toolbuttons, if they exist
+        # Delete tool buttons
+        count = self.jogPanel.count()
+        for i in range(11,count):
+            item = self.jogPanel.itemAt(i)
+            widget = item.widget()
+            widget.setVisible(False)
+            # widget.deleteLater()
         for tool in range(numTools+1):
             # add tool buttons
             toolButton = QPushButton('T' + str(tool))
