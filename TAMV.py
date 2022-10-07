@@ -1384,6 +1384,7 @@ class App(QMainWindow):
                             self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
                         # save position as previous position
                         self.olduv = self.uv
+                        _logger.debug('Step ' + str(self.state) + ' detection UV: ' + str(self.uv))
                         # save machine coordinates for detected nozzle
                         self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                         # save camera coordinates
