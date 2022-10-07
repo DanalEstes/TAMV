@@ -61,6 +61,7 @@ class Camera(QtCore.QObject):
                     raise Exception
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             # self.cap.setExceptionMode(enable=True)
             _logger.debug('Active CV backend: ' + self.cap.getBackendName())
             _logger.info('    .. camera connected using ' + self.cap.getBackendName() + '..')
