@@ -230,11 +230,11 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 3):
-            # Discard a few frames to get a clean detection due to printer movement
-            for i in range(2):
-                self.frame = self.videoFeed.getFrame()
-            (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
+        # while(detectionCount < 3):
+        # Discard a few frames to get a clean detection due to printer movement
+        for i in range(2):
+            self.frame = self.videoFeed.getFrame()
+        (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
         #     if(self.__uv is not None):
         #         if(self.__uv[0] is not None and self.__uv[1] is not None):
         #             average_location[0] += np.around(self.__uv[0],0)
@@ -256,7 +256,7 @@ class DetectionManager(QObject):
         #     average_location = np.around(average_location,3)
         #     self.__uv = average_location
         # else:
-            self.__uv = [None,None]
+        self.__uv = [None,None]
 
     @pyqtSlot(int)
     def burstEndstopDetection(self):
@@ -355,10 +355,10 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 1):
+        # while(detectionCount < 1):
             # Discard a few frames to get a clean detection due to printer movement
-            for i in range(2):
-                self.frame = self.videoFeed.getFrame()
+        for i in range(2):
+            self.frame = self.videoFeed.getFrame()
         #     (self.__uv, self.frame) = self.nozzleDetection()
         #     if(self.__uv is not None):
         #         if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -381,7 +381,7 @@ class DetectionManager(QObject):
         #     average_location = np.around(average_location,0)
         #     self.__uv = average_location
         # else:
-            self.__uv = [None,None]
+        self.__uv = [None,None]
 
     def burstNozzleDetection(self):
         detectionCount = 0
