@@ -1820,7 +1820,7 @@ class App(QMainWindow):
     @pyqtSlot(object)
     def saveCurrentPosition(self, coordinates):
         self.__currentPosition = coordinates
-        _logger.debug('Coordinates received:', coordinates)
+        _logger.debug('Coordinates received:' + str(coordinates))
         self.toggleDetectionSignal.emit(True)
         if(self.__stateManualCPCapture is True):
             _logger.debug('saveCurrentPosition: manual CP capture')
