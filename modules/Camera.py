@@ -118,8 +118,10 @@ class Camera(QtCore.QObject):
     def getFrame(self):
         self.__success, self.__frame = self.cap.read()
         if(self.__success):
+            print('Got frame.')
             return(self.__frame)
         else:
+            print('Frame read failed')
             self.cap.release()
             raise Exception
 
