@@ -274,7 +274,9 @@ class DetectionManager(QObject):
                     average_location[0] += self.__uv[0]
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
+                    print('Detected endstop')
                 else:
+                    print('No endstop detected')
                     retries += 1
             else:
                 retries += 1
