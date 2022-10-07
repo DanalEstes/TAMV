@@ -1510,7 +1510,7 @@ class App(QMainWindow):
         self.detectionThread = QThread()
         self.detectionManager = DetectionManager(videoSrc=self._videoSrc, width=self._cameraWidth, height=self._cameraHeight, parent=None)
         self.detectionManager.moveToThread(self.detectionThread)
-        self.detectionThread.start(priority=QThread.TimeCriticalPriority)
+        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
         # Thread management signals and slots
         self.detectionManager.errorSignal.connect(self.detectionManagerError)
         self.detectionThread.started.connect(self.detectionManager.processFrame)
@@ -2071,7 +2071,7 @@ if __name__=='__main__':
     ### Setup OS options
     # os.putenv("QT_LOGGING_RULES","qt5ct.debug=true")
     os.putenv("OPENCV_VIDEOIO_DEBUG", "0")
-    os.putenv("OPENCV_VIDEOIO_PRIORITY_LIST", "DSHOW,FFMPEG,GSTREAMER")
+    # os.putenv("OPENCV_VIDEOIO_PRIORITY_LIST", "DSHOW,FFMPEG,GSTREAMER")
     ### Setup argmument parser
     parser = argparse.ArgumentParser(description='Program to allign multiple tools on Duet/klipper based printers, using machine vision.', allow_abbrev=False)
     parser.add_argument('-d','--debug',action='store_true',help='Enable debug output to terminal')
