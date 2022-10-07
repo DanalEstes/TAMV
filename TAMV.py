@@ -1207,7 +1207,14 @@ class App(QMainWindow):
         self.__stateAutoNozzleAlignment = False
         self.toggleEndstopAutoDetectionSignal.emit(False)
         self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleEndstopDetectionSignal.emit(False)
         self.toggleDetectionSignal.emit(False)
+        self.uv = [None, None]
+        self.guess_position  = [1,1]
+        self.olduv  = self.uv
+        self.detect_count = 0
+        self.space_coordinates = []
+        self.camera_coordinates = []
         self.retries = 0
         if(self.transform_matrix is None or self.mpp is None):
             self.state = 0
@@ -1226,7 +1233,14 @@ class App(QMainWindow):
         self.__stateAutoNozzleAlignment = False
         self.toggleEndstopAutoDetectionSignal.emit(False)
         self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleEndstopDetectionSignal.emit(False)
         self.toggleDetectionSignal.emit(False)
+        self.uv = [None, None]
+        self.guess_position  = [1,1]
+        self.olduv  = self.uv
+        self.detect_count = 0
+        self.space_coordinates = []
+        self.camera_coordinates = []
         self.retries = 0
         if(self.transform_matrix is None or self.mpp is None):
             self.state = 0

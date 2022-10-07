@@ -263,9 +263,9 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 6):
+        while(detectionCount < 5):
             # Discard a few frames to get a clean detection due to printer movement
-            for i in range(1):
+            for i in range(5):
                 self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
