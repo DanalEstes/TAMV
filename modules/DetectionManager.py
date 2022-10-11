@@ -233,33 +233,33 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        # while(detectionCount < 3):
-        # Discard a few frames to get a clean detection due to printer movement
-        for i in range(2):
-            self.frame = self.videoFeed.getFrame()
-        (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
-        #     if(self.__uv is not None):
-        #         if(self.__uv[0] is not None and self.__uv[1] is not None):
-        #             average_location[0] += np.around(self.__uv[0],0)
-        #             average_location[1] += np.around(self.__uv[1],0)
-        #             detectionCount += 1
-        #         else:
-        #             retries += 1
-        #     else:
-        #         retries += 1
-        #     if(retries > 3):
-        #         average_location[0] = None
-        #         average_location[1] = None
-        #         break
-        # if(average_location[0] is not None):
-        #     # calculate average X Y position from detection
-        #     average_location[0] /= detectionCount
-        #     average_location[1] /= detectionCount
-        #     # round to 0 decimal places
-        #     average_location = np.around(average_location,3)
-        #     self.__uv = average_location
-        # else:
-        self.__uv = [None,None]
+        while(detectionCount < 3):
+            # Discard a few frames to get a clean detection due to printer movement
+            for i in range(3):
+                self.frame = self.videoFeed.getFrame()
+            (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
+            if(self.__uv is not None):
+                if(self.__uv[0] is not None and self.__uv[1] is not None):
+                    average_location[0] += np.around(self.__uv[0],0)
+                    average_location[1] += np.around(self.__uv[1],0)
+                    detectionCount += 1
+                else:
+                    retries += 1
+            else:
+                retries += 1
+            if(retries > 3):
+                average_location[0] = None
+                average_location[1] = None
+                break
+        if(average_location[0] is not None):
+            # calculate average X Y position from detection
+            average_location[0] /= detectionCount
+            average_location[1] /= detectionCount
+            # round to 0 decimal places
+            average_location = np.around(average_location,3)
+            self.__uv = average_location
+        else:
+            self.__uv = [None,None]
 
     @pyqtSlot(int)
     def burstEndstopDetection(self):
@@ -277,9 +277,13 @@ class DetectionManager(QObject):
                     average_location[0] += self.__uv[0]
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
+<<<<<<< HEAD
                     #print('Detected endstop')
                 else:
                     #print('No endstop detected')
+=======
+                else:
+>>>>>>> 21715a90e75983805d6c3a46b093e062fdec875b
                     retries += 1
             else:
                 retries += 1
@@ -298,43 +302,39 @@ class DetectionManager(QObject):
             self.__uv = None
 
     def endstopContourDetection(self, detectFrame):
+        # apply endstop detection algorithm
+        usedFrame = copy.deepcopy(detectFrame)
+        yuv = cv2.cvtColor(usedFrame, cv2.COLOR_BGR2YUV)
+        yuvPlanes = cv2.split(yuv)
+        still = yuvPlanes[0]
+        black = np.zeros((still.shape[0],still.shape[1]), np.uint8)
+        kernel = np.ones((5,5),np.uint8)
+        img_blur = cv2.GaussianBlur(still, (7, 7), 3)
+        img_canny = cv2.Canny(img_blur, 50, 190)
+        img_dilate = cv2.morphologyEx(img_canny, cv2.MORPH_DILATE, kernel, iterations=2)
+        cnt, hierarchy = cv2.findContours(img_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        black = cv2.drawContours(black, cnt, -1, (255, 0, 255), -1)
+        black = cv2.morphologyEx(black, cv2.MORPH_DILATE, kernel, iterations=2)
+        cnt2, hierarchy2 = cv2.findContours(black, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        black = cv2.cvtColor(black, cv2.COLOR_GRAY2BGR)
+        # detectFrame = black
         center = (None, None)
-        if(self.__endstopAutomatedDetectionActive is True):
-            # apply endstop detection algorithm
-            usedFrame = copy.deepcopy(detectFrame)
-            yuv = cv2.cvtColor(usedFrame, cv2.COLOR_BGR2YUV)
-            yuvPlanes = cv2.split(yuv)
-            still = yuvPlanes[0]
-            black = np.zeros((still.shape[0],still.shape[1]), np.uint8)
-            kernel = np.ones((5,5),np.uint8)
-            img_blur = cv2.GaussianBlur(still, (7, 7), 3)
-            img_canny = cv2.Canny(img_blur, 50, 190)
-            img_dilate = cv2.morphologyEx(img_canny, cv2.MORPH_DILATE, kernel, iterations=2)
-            cnt, hierarchy = cv2.findContours(img_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-            black = cv2.drawContours(black, cnt, -1, (255, 0, 255), -1)
-            black = cv2.morphologyEx(black, cv2.MORPH_DILATE, kernel, iterations=2)
-            cnt2, hierarchy2 = cv2.findContours(black, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-            black = cv2.cvtColor(black, cv2.COLOR_GRAY2BGR)
-            # detectFrame = black
-            if len(cnt2) > 0:
-                myContours = []
-                for k in range(len(cnt2)):
-                    if hierarchy2[0][k][3] > -1:
-                        myContours.append(cnt2[k])
-                if len(myContours) > 0:
-                    # return only the biggest detected contour
-                    blobContours = max(myContours, key=lambda el: cv2.contourArea(el))
-                    contourArea = cv2.contourArea(blobContours)
-                    if( len(blobContours) > 0 and contourArea >= 43000 and contourArea < 50000):
-                        M = cv2.moments(blobContours)
-                        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-                        detectFrame = cv2.circle(detectFrame, center, 150, (255,0,0), 5)
-                        detectFrame = cv2.circle(detectFrame, center, 5, (255,0,255), 2)
-                        detectFrame = cv2.line(detectFrame, (320,0), (320,480), (255,255,255), 1)
-                        detectFrame = cv2.line(detectFrame, (0,240), (640,240), (255,255,255), 1)
-        else:
-            detectFrame = cv2.line(self.frame, (320,0), (320,480), (255,255,255), 1)
-            detectFrame = cv2.line(detectFrame, (0,240), (640,240), (255,255,255), 1)
+        if len(cnt2) > 0:
+            myContours = []
+            for k in range(len(cnt2)):
+                if hierarchy2[0][k][3] > -1:
+                    myContours.append(cnt2[k])
+            if len(myContours) > 0:
+                # return only the biggest detected contour
+                blobContours = max(myContours, key=lambda el: cv2.contourArea(el))
+                contourArea = cv2.contourArea(blobContours)
+                if( len(blobContours) > 0 and contourArea >= 43000 and contourArea < 50000):
+                    M = cv2.moments(blobContours)
+                    center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                    detectFrame = cv2.circle(detectFrame, center, 150, (255,0,0), 5)
+                    detectFrame = cv2.circle(detectFrame, center, 5, (255,0,255), 2)
+                    detectFrame = cv2.line(detectFrame, (320,0), (320,480), (255,255,255), 1)
+                    detectFrame = cv2.line(detectFrame, (0,240), (640,240), (255,255,255), 1)
         return(center,detectFrame)
 
     @pyqtSlot(bool)
@@ -360,10 +360,10 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        # while(detectionCount < 1):
+        while(detectionCount < 1):
             # Discard a few frames to get a clean detection due to printer movement
-        for i in range(2):
-            self.frame = self.videoFeed.getFrame()
+            for i in range(2):
+                self.frame = self.videoFeed.getFrame()
         #     (self.__uv, self.frame) = self.nozzleDetection()
         #     if(self.__uv is not None):
         #         if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -386,7 +386,7 @@ class DetectionManager(QObject):
         #     average_location = np.around(average_location,0)
         #     self.__uv = average_location
         # else:
-        self.__uv = [None,None]
+            self.__uv = [None,None]
 
     def burstNozzleDetection(self):
         detectionCount = 0
