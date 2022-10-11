@@ -6,6 +6,7 @@ _logger = logging.getLogger('TAMV.CaptureManager.Camera')
 import cv2
 import sys
 from PyQt5 import QtCore
+import threading
 
 class Camera(QtCore.QObject):
     # class attributes
@@ -61,7 +62,8 @@ class Camera(QtCore.QObject):
                     raise Exception
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,2)
+            self.cap.set(cv2.CAP_PROP_FPS, 25)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             # self.cap.setExceptionMode(enable=True)
             _logger.debug('Active CV backend: ' + self.cap.getBackendName())
             _logger.info('    .. camera connected using ' + self.cap.getBackendName() + '..')
@@ -100,10 +102,24 @@ class Camera(QtCore.QObject):
         except Exception as e:
             self.cap.release()
             raise SystemExit
-        
+        self.stopEvent = threading.Event()
+        self.t = threading.Thread(target=self._reader)
+        self.t.daemon = True
+        self.t.start()
         # send exiting to log
         _logger.debug('*** exiting Camera.__init__')
     
+    def _reader(self):
+        while True:
+            ret = self.cap.grab()
+            if not ret:
+                break
+            if self.stopEvent.is_set():
+                break
+    
+    def stop(self):
+        self.stopEvent.set()
+        
     def getCurrentImageSettings(self):
         return self.__imageSettings
         
@@ -111,17 +127,21 @@ class Camera(QtCore.QObject):
         # send calling to log
         _logger.debug('*** calling Camera.quit')
         _logger.info('    .. closing camera..')
+        self.stop()
+        self.t.join()
         self.cap.release()
         # send exiting to log
         _logger.debug('*** exiting Camera.quit') 
     
     def getFrame(self):
-        self.__success, self.__frame = self.cap.read()
-        if(self.__success):
-            return(self.__frame)
-        else:
-            self.cap.release()
-            raise Exception
+        # self.__success, self.__frame = self.cap.read()
+        # if(self.__success):
+            # return(self.__frame)
+        # else:
+            # self.cap.release()
+            # raise Exception
+        ret, frame = self.cap.retrieve()
+        return frame
 
     def getImagePropertiesJSON(self):
         try:

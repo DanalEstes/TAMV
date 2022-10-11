@@ -23,6 +23,7 @@ class DetectionManager(QObject):
     __endstopAutomatedDetectionActive = False
     __running = True
     __uv = None
+    __counter = 0
     
     # Signals
     detectionManagerNewFrameSignal = pyqtSignal(object)
@@ -205,6 +206,8 @@ class DetectionManager(QObject):
 
     # convert from cv2.mat to QPixmap and return results (frame+keypoint)
     def receivedFrame(self, frame):
+        #print('Detection:',self.__counter)
+        self.__counter += 1
         if(self.__running):
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
@@ -274,9 +277,9 @@ class DetectionManager(QObject):
                     average_location[0] += self.__uv[0]
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
-                    print('Detected endstop')
+                    #print('Detected endstop')
                 else:
-                    print('No endstop detected')
+                    #print('No endstop detected')
                     retries += 1
             else:
                 retries += 1

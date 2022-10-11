@@ -55,6 +55,8 @@ class App(QMainWindow):
     # default move speed in feedrate/min
     _moveSpeed = 6000
     
+    __counter = 0
+    
     ########################################################################### Initialize class
     def __init__(self, parent=None):
         # send calling to log
@@ -1184,6 +1186,7 @@ class App(QMainWindow):
         self.toggleEndstopAutoDetectionSignal.emit(True)
         self.uv = [None, None]
         self.unloadToolSignal.emit()
+        self.pollCoordinatesSignal.emit()
         # send exiting to log
         _logger.debug('*** exiting App.setupCPAutoCapture')
 
@@ -1347,9 +1350,11 @@ class App(QMainWindow):
             self.resetNozzleAlignment()
 
     def autoCalibrate(self):
+        print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV', self.uv, ' old UV', self.olduv)
         self.tabPanel.setDisabled(True)
         if(self.uv is not None):
             if(self.uv[0] is not None and self.uv[1] is not None):
+                self.retries = 0
                 # First calibration step
                 if(self.state == 0):
                     self.updateStatusbarMessage('Calibrating camera step 0..')
@@ -1370,29 +1375,29 @@ class App(QMainWindow):
                     self.moveRelativeSignal.emit(params)
                     return
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
-                    if(self.state == self.lastState):
-                        self.offsetX = self.calibrationCoordinates[self.state][0]
-                        self.offsetY = self.calibrationCoordinates[self.state][1]
-                        self.state += 1
+                    if(self.state != self.lastState):
+                        # save position as previous position
+                        self.olduv = self.uv
+                        
+                        # return carriage to relative center of movement
+                        self.offsetX = (-1*self.offsetX)
+                        self.offsetY = (-1*self.offsetY)
+                        self.lastState = self.state
                         params = {'position':{'X': self.offsetX, 'Y': self.offsetY}}
                         self.moveRelativeSignal.emit(params)
                         return
                     else:
                         self.updateStatusbarMessage('Calibrating camera step ' + str(self.state) + '..')
-                        # check if we've already moved, and calculate mpp value
-                        if self.state == 2:
-                            self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
-                        # save position as previous position
-                        self.olduv = self.uv
                         _logger.debug('Step ' + str(self.state) + ' detection UV: ' + str(self.uv))
                         # save machine coordinates for detected nozzle
                         self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                         # save camera coordinates
                         self.camera_coordinates.append((self.uv[0],self.uv[1]))
-                        # return carriage to relative center of movement
-                        self.offsetX = (-1*self.offsetX)
-                        self.offsetY = (-1*self.offsetY)
+                        # move carriage to next calibration point
+                        self.offsetX = self.calibrationCoordinates[self.state][0]
+                        self.offsetY = self.calibrationCoordinates[self.state][1]
                         self.lastState = int(self.state)
+                        self.state += 1
                         params = {'position':{'X': self.offsetX, 'Y': self.offsetY}}
                         self.moveRelativeSignal.emit(params)
                         return
@@ -1437,10 +1442,11 @@ class App(QMainWindow):
                     self.offsets[0] = np.around(self.offsets[0],3)
                     self.offsets[1] = np.around(self.offsets[1],3)
                     # Add rounding handling for endstop alignment
-                    if(self.__stateEndstopAutoCalibrate):
-                        if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.02):
-                            self.offsets[0] = 0.0
-                            self.offsets[1] = 0.0
+                    # if(self.__stateEndstopAutoCalibrate):
+                        # if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.02):
+                            # print('ROUNDING!!! ************************')
+                            # self.offsets[0] = 0.0
+                            # self.offsets[1] = 0.0
                     if(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
                         params = {'position': {'X': self.offsets[0], 'Y': self.offsets[1]}, 'moveSpeed':1000}
                         self.moveRelativeSignal.emit(params)
@@ -1470,44 +1476,49 @@ class App(QMainWindow):
                         self.updateStatusbarMessage(updateMessage)
                         self.pollCoordinatesSignal.emit()
                         return
-        elif(self.retries < 3):
+            elif(self.retries < 100):
+                self.retries += 1
+                self.pollCoordinatesSignal.emit()
+                return
+        if(self.retries < 10):
+            print('Retries:',self.retries)
             self.retries += 1
             # enable detection
             self.toggleDetectionSignal.emit(True)
             self.pollCoordinatesSignal.emit()
             return
-        else:
-            self.retries = 0
-            if(self.__stateEndstopAutoCalibrate is True):
-                self.updateStatusbarMessage('Failed to detect endstop.')
-                _logger.warning('Failed to detect endstop. Cancelled operation.')
-                if(self.originalPrinterPosition['X'] is not None and self.originalPrinterPosition['Y'] is not None):
-                    params = {'moveSpeed':1000, 'position':{'X':self.originalPrinterPosition['X'],'Y':self.originalPrinterPosition['Y']}}
-                    self.moveAbsoluteSignal.emit(params)
-                # End calibration
-                self.__stateAutoCPCapture = False
-                self.__stateEndstopAutoCalibrate = False
-                self.toggleEndstopAutoDetectionSignal.emit(False)
-                self.haltCPAutoCapture()
-                self.pollCoordinatesSignal.emit()
-            elif(self.__stateAutoNozzleAlignment is True):
-                updateMessage = 'Failed to detect nozzle. Try manual override.'
-                self.updateStatusbarMessage(updateMessage)
-                _logger.warning(updateMessage)
-                self.state = -99
-                # End auto calibration
-                self.__stateAutoNozzleAlignment = False
-                self.__stateManualNozzleAlignment = True
-                # calibrating nozzle manual
-                self.tabPanel.setDisabled(False)
-                self.alignToolsButton.setVisible(False)
-                self.alignToolsButton.setDisabled(True)
-                self.manualToolOffsetCaptureButton.setVisible(True)
-                self.manualToolOffsetCaptureButton.setDisabled(False)
-                self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
-                self.toggleNozzleAutoDetectionSignal.emit(False)
-                self.toggleNozzleDetectionSignal.emit(True)
-                self.toggleDetectionSignal.emit(True)
+        print('Canceling:',self.retries)
+        self.retries = 0
+        if(self.__stateEndstopAutoCalibrate is True):
+            self.updateStatusbarMessage('Failed to detect endstop.')
+            _logger.warning('Failed to detect endstop. Cancelled operation.')
+            # if(self.originalPrinterPosition['X'] is not None and self.originalPrinterPosition['Y'] is not None):
+                # params = {'moveSpeed':1000, 'position':{'X':self.originalPrinterPosition['X'],'Y':self.originalPrinterPosition['Y']}}
+                # self.moveAbsoluteSignal.emit(params)
+            # End calibration
+            self.__stateAutoCPCapture = False
+            self.__stateEndstopAutoCalibrate = False
+            self.toggleEndstopAutoDetectionSignal.emit(False)
+            self.haltCPAutoCapture()
+            self.pollCoordinatesSignal.emit()
+        elif(self.__stateAutoNozzleAlignment is True):
+            updateMessage = 'Failed to detect nozzle. Try manual override.'
+            self.updateStatusbarMessage(updateMessage)
+            _logger.warning(updateMessage)
+            self.state = -99
+            # End auto calibration
+            self.__stateAutoNozzleAlignment = False
+            self.__stateManualNozzleAlignment = True
+            # calibrating nozzle manual
+            self.tabPanel.setDisabled(False)
+            self.alignToolsButton.setVisible(False)
+            self.alignToolsButton.setDisabled(True)
+            self.manualToolOffsetCaptureButton.setVisible(True)
+            self.manualToolOffsetCaptureButton.setDisabled(False)
+            self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
+            self.toggleNozzleAutoDetectionSignal.emit(False)
+            self.toggleNozzleDetectionSignal.emit(True)
+            self.toggleDetectionSignal.emit(True)
 
 
     ########################################################################### Module interfaces and handlers
@@ -1554,6 +1565,9 @@ class App(QMainWindow):
 
     @pyqtSlot(object)
     def refreshImage(self, data):
+        #print('TAMV:', self.__counter)
+        self.__lastCounter = self.__counter
+        self.__counter += 1
         frame = data[0]
         uvCoordinates = data[1]
         self.image.setPixmap(frame)
@@ -1690,10 +1704,10 @@ class App(QMainWindow):
         else:
             params['noUpdate'] = False
         # restore position
-        if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
-            params['parkPosition'] = self.__cpCoordinates
-            self.disconnectSignal.emit(params)
-        elif(self.__restorePosition is not None):
+        # if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
+            # params['parkPosition'] = self.__cpCoordinates
+            # self.disconnectSignal.emit(params)
+        if(self.__restorePosition is not None):
             params['parkPosition'] = self.__restorePosition
             self.disconnectSignal.emit(params)
         else:
@@ -2015,6 +2029,7 @@ class App(QMainWindow):
         _logger.debug('*** exiting App.saveUserSettings')
 
     def getDistance(self, x1, y1, x0, y0):
+        print('getDistance: (', x1, ',', y1,') :: (', x0, ',',y0, ')')
         _logger.debug('*** calling CalibrateNozzles.getDistance')
         x1_float = float(x1)
         x0_float = float(x0)
