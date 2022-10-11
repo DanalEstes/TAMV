@@ -1324,10 +1324,10 @@ class App(QMainWindow):
                     button.setStyleSheet(self.styleOrange)
             #### Initialize calibration parameters
             # self.state to indicate if we need to run a camera alignment
-            if(self.transform_matrix is None or self.mpp is None):
-                self.state = 0
+            if(len(self.transform_matrix) > 1 and self.mpp is not None):
+                state = 200
             else:
-                self.state = 200
+                self.state = 0
             # self.retries to reset detection
             self.retries = 0
             # self.calibrationMoves for GUI updates
@@ -1421,6 +1421,8 @@ class App(QMainWindow):
                     cameraCalibrationTime = np.around(time.time() - self.startTime,1)
                     _logger.info('Camera calibrated (' + str(cameraCalibrationTime) + 's); aligning..')
                     self.state = 200
+                    self.retries = 0
+                    self.calibrationMoves = 0
                     self.transform_input = [(self.space_coordinates[i], self.normalize_coords(camera)) for i, camera in enumerate(self.camera_coordinates)]
                     self.transform_matrix, self.transform_residual = self.least_square_mapping(self.transform_input)
                     # define camera center in machine coordinate space
@@ -1446,17 +1448,28 @@ class App(QMainWindow):
                     self.offsets[0] = np.around(self.offsets[0],3)
                     self.offsets[1] = np.around(self.offsets[1],3)
                     # Add rounding handling for endstop alignment
-                    # if(self.__stateEndstopAutoCalibrate):
-                        # if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.02):
-                            # print('ROUNDING!!! ************************')
-                            # self.offsets[0] = 0.0
-                            # self.offsets[1] = 0.0
-                    if(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
+                    if(self.__stateEndstopAutoCalibrate):
+                        if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.04):
+                            self.offsets[0] = 0.0
+                            self.offsets[1] = 0.0
+
+                    # Start checking calibration status
+                    try:
+                        if(self.toolTime):
+                            pass
+                    except:
+                        self.toolTime = time.time()
+                    # current calibration cycle runtime
+                    runtime = np.around(time.time() - self.toolTime,1)
+                    if(runtime > 60 or self.calibrationMoves > 20):
+                        # too long of a cycle, default to manual override
+                        self.retries = 10
+                    elif(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
                         params = {'position': {'X': self.offsets[0], 'Y': self.offsets[1]}, 'moveSpeed':1000}
                         self.moveRelativeSignal.emit(params)
                         _logger.debug('Calibration move X{0:-1.3f} Y{1:-1.3f} F1000 '.format(self.offsets[0],self.offsets[1]))
                         return
-                    else:
+                    elif(self.offsets[0] == 0.0 and self.offsets[1] == 0.0):
                         # auto calibration complete - end process
                         if(self.__stateEndstopAutoCalibrate):
                             # endstop calibration handling
@@ -1480,18 +1493,17 @@ class App(QMainWindow):
                         self.updateStatusbarMessage(updateMessage)
                         self.pollCoordinatesSignal.emit()
                         return
-            elif(self.retries < 100):
+            elif(self.retries < 100 and runtime <= 15):
                 self.retries += 1
                 self.pollCoordinatesSignal.emit()
                 return
         if(self.retries < 10):
-            print('Retries:',self.retries)
             self.retries += 1
             # enable detection
             self.toggleDetectionSignal.emit(True)
             self.pollCoordinatesSignal.emit()
             return
-        print('Canceling:',self.retries)
+
         self.retries = 0
         if(self.__stateEndstopAutoCalibrate is True):
             self.updateStatusbarMessage('Failed to detect endstop.')
@@ -1534,7 +1546,7 @@ class App(QMainWindow):
         self.detectionThread = QThread()
         self.detectionManager = DetectionManager(videoSrc=self._videoSrc, width=self._cameraWidth, height=self._cameraHeight, parent=None)
         self.detectionManager.moveToThread(self.detectionThread)
-        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
+        self.detectionThread.start(priority=QThread.TimeCriticalPriority)
         # Thread management signals and slots
         self.detectionManager.errorSignal.connect(self.detectionManagerError)
         self.detectionThread.started.connect(self.detectionManager.processFrame)

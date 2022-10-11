@@ -354,6 +354,11 @@ class DetectionManager(QObject):
         retries = 0
         self.frame = self.videoFeed.getFrame()
         self.__uv = [None,None]
+        # draw crosshair
+        self.frame = cv2.line(self.frame, (320,0), (320,480), (0,0,0), 3)
+        self.frame = cv2.line(self.frame, (0,240), (640,240), (0,0,0), 3)
+        self.frame = cv2.line(self.frame, (320,0), (320,480), (255,255,255), 1)
+        self.frame = cv2.line(self.frame, (0,240), (640,240), (255,255,255), 1)
 
     def burstNozzleDetection(self):
         detectionCount = 0
