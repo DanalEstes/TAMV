@@ -62,7 +62,7 @@ class Camera(QtCore.QObject):
                     raise Exception
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
-            self.cap.set(cv2.CAP_PROP_FPS, 25)
+            self.cap.set(cv2.CAP_PROP_FPS, 30)
             # self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             # self.cap.setExceptionMode(enable=True)
             _logger.debug('Active CV backend: ' + self.cap.getBackendName())

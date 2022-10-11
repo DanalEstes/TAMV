@@ -1377,8 +1377,9 @@ class App(QMainWindow):
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
                     if(self.state != self.lastState):
                         # save position as previous position
+                        if(self.state == 2):
+                            self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
                         self.olduv = self.uv
-                        
                         # return carriage to relative center of movement
                         self.offsetX = (-1*self.offsetX)
                         self.offsetY = (-1*self.offsetY)
@@ -2032,7 +2033,6 @@ class App(QMainWindow):
         _logger.debug('*** exiting App.saveUserSettings')
 
     def getDistance(self, x1, y1, x0, y0):
-        print('getDistance: (', x1, ',', y1,') :: (', x0, ',',y0, ')')
         _logger.debug('*** calling CalibrateNozzles.getDistance')
         x1_float = float(x1)
         x0_float = float(x0)

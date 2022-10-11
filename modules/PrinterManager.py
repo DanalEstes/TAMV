@@ -73,7 +73,7 @@ class PrinterManager(QObject):
         self.disconnectPrinter({'noUpdate':True})
         if( self.__printerJSON is not None):
             _logger.info('  Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')')
-        
+        self.__printerJSON = None
         _logger.info('Printer Manager shut down successfully.')
         # send exiting to log
         _logger.debug('*** exiting PrinterManager.quit')
@@ -183,7 +183,6 @@ class PrinterManager(QObject):
                     # notify parent thread
                     successMsg = 'Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')'
                     _logger.info(successMsg)
-                    self.__printerJSON = None
                     self.printerDisconnectedSignal.emit(successMsg)
                 else:
                     self.printerDisconnectedSignal.emit(None)
