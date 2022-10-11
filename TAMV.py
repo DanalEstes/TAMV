@@ -271,6 +271,8 @@ class App(QMainWindow):
                     except:
                         _logger.warning('Cannot rename old settings.json, leaving in place and using new file.')
                 except FileNotFoundError:
+                    # create config folder if it doesn't exist
+                    os.makedirs('./config',exist_ok=True)
                     # No settings file defined, create a default file
                     _logger.info('  .. creating new settings.json..')
                     # create a camera array
