@@ -178,13 +178,12 @@ class PrinterManager(QObject):
                 if(parkPosition is not None):
                     _logger.info('    .. restoring position..')
                     self.complexMoveAbsolute(position=parkPosition)
-                # delete printer connection
-                # self.__activePrinter['disconnected'] = True
                 
                 if(noUpdate is False):
                     # notify parent thread
                     successMsg = 'Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')'
                     _logger.info(successMsg)
+                    self.__printerJSON = None
                     self.printerDisconnectedSignal.emit(successMsg)
                 else:
                     self.printerDisconnectedSignal.emit(None)

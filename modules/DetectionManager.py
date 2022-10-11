@@ -233,10 +233,9 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 3):
-            # Discard a few frames to get a clean detection due to printer movement
-            for i in range(3):
-                self.frame = self.videoFeed.getFrame()
+        while(detectionCount < 5):
+            # for i in range(10):
+            #     self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -268,9 +267,7 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
-            # Discard a few frames to get a clean detection due to printer movement
-            for i in range(5):
-                self.frame = self.videoFeed.getFrame()
+            self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -354,33 +351,8 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 1):
-            # Discard a few frames to get a clean detection due to printer movement
-            for i in range(2):
-                self.frame = self.videoFeed.getFrame()
-        #     (self.__uv, self.frame) = self.nozzleDetection()
-        #     if(self.__uv is not None):
-        #         if(self.__uv[0] is not None and self.__uv[1] is not None):
-        #             average_location[0] += np.around(self.__uv[0],0)
-        #             average_location[1] += np.around(self.__uv[1],0)
-        #             detectionCount += 1
-        #         else:
-        #             retries += 1
-        #     else:
-        #         retries += 1
-        #     if(retries > 9):
-        #         average_location[0] = None
-        #         average_location[1] = None
-        #         break
-        # if(average_location[0] is not None):
-        #     # calculate average X Y position from detection
-        #     average_location[0] /= detectionCount
-        #     average_location[1] /= detectionCount
-        #     # round to 0 decimal places
-        #     average_location = np.around(average_location,0)
-        #     self.__uv = average_location
-        # else:
-            self.__uv = [None,None]
+        self.frame = self.videoFeed.getFrame()
+        self.__uv = [None,None]
 
     def burstNozzleDetection(self):
         detectionCount = 0
@@ -388,9 +360,7 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
-            # Discard a few frames to get a clean detection due to printer movement
-            for i in range(1):
-                self.frame = self.videoFeed.getFrame()
+            self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.nozzleDetection()
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):

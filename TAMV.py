@@ -1350,13 +1350,13 @@ class App(QMainWindow):
             self.resetNozzleAlignment()
 
     def autoCalibrate(self):
-        print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV', self.uv, ' old UV', self.olduv)
         self.tabPanel.setDisabled(True)
         if(self.uv is not None):
             if(self.uv[0] is not None and self.uv[1] is not None):
                 self.retries = 0
                 # First calibration step
                 if(self.state == 0):
+                    print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV:', self.uv, ' old UV:', self.olduv)
                     self.updateStatusbarMessage('Calibrating camera step 0..')
                     self.olduv = self.uv
                     # Reset space and camera coordinates
@@ -1387,6 +1387,7 @@ class App(QMainWindow):
                         self.moveRelativeSignal.emit(params)
                         return
                     else:
+                        print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV:', self.uv, ' old UV:', self.olduv)
                         self.updateStatusbarMessage('Calibrating camera step ' + str(self.state) + '..')
                         _logger.debug('Step ' + str(self.state) + ' detection UV: ' + str(self.uv))
                         # save machine coordinates for detected nozzle
@@ -1704,10 +1705,12 @@ class App(QMainWindow):
         else:
             params['noUpdate'] = False
         # restore position
-        # if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
-            # params['parkPosition'] = self.__cpCoordinates
-            # self.disconnectSignal.emit(params)
-        if(self.__restorePosition is not None):
+        if(self.__cpCoordinates['X'] is not None and self.__cpCoordinates['Y'] is not None):
+            _logger.debug('Restoring to CP position..')
+            params['parkPosition'] = self.__cpCoordinates
+            self.disconnectSignal.emit(params)
+        elif(self.__restorePosition is not None):
+            _logger.debug('Restoring to master restore position..')
             params['parkPosition'] = self.__restorePosition
             self.disconnectSignal.emit(params)
         else:

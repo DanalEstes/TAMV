@@ -37,8 +37,8 @@ class Camera(QtCore.QObject):
         
         if sys.platform.startswith('linux'):        # all Linux
             self.backend = cv2.CAP_V4L
-        elif sys.platform.startswith('win'):        # MS Windows
-            self.backend = cv2.CAP_DSHOW
+        # elif sys.platform.startswith('win'):        # MS Windows
+        #     self.backend = cv2.CAP_DSHOW
         elif sys.platform.startswith('darwin'):     # macOS
             self.backend = cv2.CAP_AVFOUNDATION
         else:
@@ -63,7 +63,7 @@ class Camera(QtCore.QObject):
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
             self.cap.set(cv2.CAP_PROP_FPS, 25)
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+            # self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             # self.cap.setExceptionMode(enable=True)
             _logger.debug('Active CV backend: ' + self.cap.getBackendName())
             _logger.info('    .. camera connected using ' + self.cap.getBackendName() + '..')
