@@ -1618,7 +1618,7 @@ class App(QMainWindow):
         self.detectionThread = QThread()
         self.detectionManager = DetectionManager(videoSrc=self._videoSrc, width=self._cameraWidth, height=self._cameraHeight, parent=None)
         self.detectionManager.moveToThread(self.detectionThread)
-        self.detectionThread.start(priority=QThread.TimeCriticalPriority)
+        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
         # Thread management signals and slots
         self.detectionManager.errorSignal.connect(self.detectionManagerError)
         self.detectionThread.started.connect(self.detectionManager.processFrame)
@@ -1743,7 +1743,7 @@ class App(QMainWindow):
             self.printerManager.offsetsSetSignal.connect(self.calibrateOffsetsApplied)
             self.setOffsetsSignal.connect(self.printerManager.calibrationSetOffset)
             
-            self.printerThread.start(priority=QThread.TimeCriticalPriority)
+            self.printerThread.start()#priority=QThread.TimeCriticalPriority)
         except Exception as e:
             print(e)
             errorMsg = 'Failed to start PrinterManager.'
