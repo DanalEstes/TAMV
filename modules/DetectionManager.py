@@ -265,7 +265,7 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
-            for j in range(3):
+            for j in range(10):
                 self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
@@ -386,7 +386,6 @@ class DetectionManager(QObject):
         self.uv = [0, 0]
         average_location=[0,0]
         retries = 0
-        self.frame = self.videoFeed.getFrame()
         self.__uv = [None,None]
         # draw crosshair
         keypointRadius = 17
@@ -410,7 +409,9 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
-            self.frame = self.videoFeed.getFrame()
+            # skip a few frames
+            for i in range(10):
+                self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.nozzleDetection()
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
