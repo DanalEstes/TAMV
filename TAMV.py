@@ -106,6 +106,7 @@ class App(QMainWindow):
             # Nozzle detection
             self.__stateAutoNozzleAlignment = False
             self.__stateManualNozzleAlignment = False
+            self.__displayCrosshair = False
         
         ####  setup window properties
         if(True):
@@ -492,6 +493,16 @@ class App(QMainWindow):
                 self.disconnectButton.setDisabled(True)
                 self.disconnectButton.clicked.connect(self.haltPrinterOperation)
                 self.leftToolbarLayout.addWidget(self.disconnectButton)#, 1, 0, 1, 1, Qt.AlignLeft|Qt.AlignTop)
+                # Crosshair button
+                self.crosshairDisplayButton = QPushButton('-+-')
+                self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+                self.crosshairDisplayButton.setMinimumSize(self.pushbuttonSize,self.pushbuttonSize)
+                self.crosshairDisplayButton.setMaximumSize(self.pushbuttonSize,self.pushbuttonSize)
+                self.crosshairDisplayButton.setToolTip('toggle crosshair on display')
+                self.crosshairDisplayButton.setDisabled(False)
+                self.crosshairDisplayButton.setChecked(False)
+                self.crosshairDisplayButton.clicked.connect(self.toggleCrosshair)
+                self.leftToolbarLayout.addWidget(self.crosshairDisplayButton)
                 # Setup Control Point button
                 self.cpSetupButton = QPushButton('CP')
                 self.cpSetupButton.setStyleSheet(self.styleDisabled)
@@ -793,6 +804,7 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        
         # Delete tool buttons
         count = self.jogPanel.count()
         for i in range(11,count):
@@ -801,6 +813,15 @@ class App(QMainWindow):
             widget.setVisible(False)
             # widget.deleteLater()
         self.resetCalibration()
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(False)
+        if(self.__displayCrosshair):
+            self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+            self.crosshairDisplayButton.setChecked(True)
+        else:
+            self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+            self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(True)
 
@@ -901,6 +922,15 @@ class App(QMainWindow):
         self.__stateManualNozzleAlignment = False
         self.__stateAutoNozzleAlignment = False
         self.toggleNozzleAutoDetectionSignal.emit(False)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(False)
+        if(self.__displayCrosshair):
+            self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+            self.crosshairDisplayButton.setChecked(True)
+        else:
+            self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+            self.crosshairDisplayButton.setChecked(False)
 
         _logger.debug('Tool data and interface created successfully.')
 
@@ -937,6 +967,15 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(False)
+        if(self.__displayCrosshair):
+            self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+            self.crosshairDisplayButton.setChecked(True)
+        else:
+            self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+            self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(False)
 
@@ -973,6 +1012,11 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(True)
+        self.crosshairDisplayButton.setStyleSheet(self.styleDisabled)
+        self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(True)
 
@@ -1009,6 +1053,15 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(False)
+        if(self.__displayCrosshair):
+            self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+            self.crosshairDisplayButton.setChecked(True)
+        else:
+            self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+            self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(False)
         # Tool buttons
@@ -1049,6 +1102,11 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(True)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(True)
+        self.crosshairDisplayButton.setStyleSheet(self.styleDisabled)
+        self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(True)
         # Tool selection buttons disable
@@ -1088,6 +1146,15 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(False)
+        if(self.__displayCrosshair):
+            self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+            self.crosshairDisplayButton.setChecked(True)
+        else:
+            self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+            self.crosshairDisplayButton.setChecked(False)
         # Jog panel tab
         self.tabPanel.setDisabled(False)
         # Tool buttons
@@ -1128,6 +1195,11 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Crosshair display button
+        self.crosshairDisplayButton.setVisible(True)
+        self.crosshairDisplayButton.setDisabled(True)
+        self.crosshairDisplayButton.setStyleSheet(self.styleDisabled)
+        self.crosshairDisplayButton.setChecked(False)    
         # Jog panel tab
         self.tabPanel.setDisabled(True)
 
@@ -1137,30 +1209,13 @@ class App(QMainWindow):
         self.toggleEndstopDetectionSignal.emit(True)
         # enable detection
         self.toggleDetectionSignal.emit(True)
+        self.__displayCrosshair = True
         # update machine coordinates
         self.pollCoordinatesSignal.emit()
         # Get original physical coordinates
         self.originalPrinterPosition = self.__currentPosition
         self.__restorePosition = copy.deepcopy(self.__currentPosition)
-        # Setup camera calibration move coordinates
-        self.calibrationCoordinates = [ [0,-0.5], [0.294,-0.405], [0.476,-0.155], [0.476,0.155], [0.294,0.405], [0,0.5], [-0.294,0.405], [-0.476,0.155], [-0.476,-0.155], [-0.294,-0.405] ]
-        # guess position used for camera calibration
-        self.guess_position  = [1,1]
-        # current keypoint location
-        self.uv = None
-        # previous keypoint location
-        self.olduv  = self.uv
-        # detected blob counter
-        self.detect_count = 0
-        # set initial state variable based on camera matrix exists or not
-        if(self.transform_matrix is None or self.mpp is None):
-            self.state = 0
-        else:
-            self.state = 200
-        self.space_coordinates = []
-        self.camera_coordinates = []
-        self.calibrationMoves = 0
-        self.retries = 0
+        self.resetCalibrationVariables()
         self.stateCPSetup()
         self.repaint()
 
@@ -1222,18 +1277,8 @@ class App(QMainWindow):
         self.toggleNozzleAutoDetectionSignal.emit(False)
         self.toggleEndstopDetectionSignal.emit(False)
         self.toggleDetectionSignal.emit(False)
-        self.uv = [None, None]
-        self.guess_position  = [1,1]
-        self.olduv  = self.uv
-        self.detect_count = 0
-        self.space_coordinates = []
-        self.camera_coordinates = []
-        self.retries = 0
-        if(self.transform_matrix is None or self.mpp is None):
-            self.state = 0
-        else:
-            self.state = 200
-        self.calibrationMoves = 0
+        self.__displayCrosshair = False
+        self.resetCalibrationVariables()
         self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
     
@@ -1248,20 +1293,28 @@ class App(QMainWindow):
         self.toggleNozzleAutoDetectionSignal.emit(False)
         self.toggleEndstopDetectionSignal.emit(False)
         self.toggleDetectionSignal.emit(False)
-        self.uv = [None, None]
+        self.__displayCrosshair = False
+        self.resetCalibrationVariables()
+        self.unloadToolSignal.emit()
+        self.getVideoFrameSignal.emit()
+
+    # Function to reset calibrateTools variables
+    def resetCalibrationVariables(self):
+        # Setup camera calibration move coordinates
+        self.calibrationCoordinates = [ [0,-0.5], [0.294,-0.405], [0.476,-0.155], [0.476,0.155], [0.294,0.405], [0,0.5], [-0.294,0.405], [-0.476,0.155], [-0.476,-0.155], [-0.294,-0.405] ]
+        # reset all variables
         self.guess_position  = [1,1]
+        self.uv = [0, 0]
         self.olduv  = self.uv
-        self.detect_count = 0
-        self.space_coordinates = []
-        self.camera_coordinates = []
-        self.retries = 0
         if(self.transform_matrix is None or self.mpp is None):
             self.state = 0
         else:
             self.state = 200
+        self.detect_count = 0
+        self.space_coordinates = []
+        self.camera_coordinates = []
+        self.retries = 0
         self.calibrationMoves = 0
-        self.unloadToolSignal.emit()
-        self.getVideoFrameSignal.emit()
 
     def startAlignTools(self):
         # send calling to log
@@ -1269,7 +1322,6 @@ class App(QMainWindow):
         self.startTime = time.time()
         self.__stateManualNozzleAlignment = True
         self.__stateAutoNozzleAlignment = True
-        self.uv = [None, None]
 
         # Update GUI state
         self.stateCalibtrateRunning()
@@ -1283,10 +1335,6 @@ class App(QMainWindow):
                 self.alignmentToolSet.append(int(checkbox.objectName()[13:]))
         if(len(self.alignmentToolSet) > 0):
             self.toggleNozzleAutoDetectionSignal.emit(True)
-            if(self.transform_matrix is None or self.mpp is None):
-                self.state = 0
-            else:
-                self.state = 200
             self.calibrateTools(self.alignmentToolSet)
         else:
             # tell user no tools selected
@@ -1322,16 +1370,7 @@ class App(QMainWindow):
                 buttonName = 'toolButton_' + str(toolIndex)
                 if(button.objectName() == buttonName):
                     button.setStyleSheet(self.styleOrange)
-            #### Initialize calibration parameters
-            # self.state to indicate if we need to run a camera alignment
-            if(len(self.transform_matrix) > 1 and self.mpp is not None):
-                state = 200
-            else:
-                self.state = 0
-            # self.retries to reset detection
-            self.retries = 0
-            # self.calibrationMoves for GUI updates
-            self.calibrationMoves = 0
+            self.resetCalibrationVariables()
             # main program state flags
             self.__stateManualNozzleAlignment = True
             self.__stateAutoNozzleAlignment = True
@@ -1360,28 +1399,37 @@ class App(QMainWindow):
                 if(self.state == 0):
                     print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV:', self.uv, ' old UV:', self.olduv)
                     self.updateStatusbarMessage('Calibrating camera step 0..')
+                    
                     self.olduv = self.uv
-                    # Reset space and camera coordinates
                     self.space_coordinates = []
                     self.camera_coordinates = []
-                    self.calibrationMoves = 0
+
                     self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                     self.camera_coordinates.append((self.uv[0], self.uv[1]))
+
                     # move carriage for calibration
                     self.offsetX = self.calibrationCoordinates[0][0]
                     self.offsetY = self.calibrationCoordinates[0][1]
                     params = {'position':{'X': self.offsetX, 'Y': self.offsetY}}
                     self.lastState = 0
                     self.state = 1
-                    self.retries = 0
                     self.moveRelativeSignal.emit(params)
                     return
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
+                    # capture the UV data when a calibration move has been executed, before returning to original position
                     if(self.state != self.lastState):
-                        # save position as previous position
-                        if(self.state == 2):
+                        # Calculate mpp at first move
+                        if(self.state == 1):
                             self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
+                        # save position as previous position
                         self.olduv = self.uv
+                        # save machine coordinates for detected nozzle
+                        self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
+                        # save camera coordinates
+                        self.camera_coordinates.append((self.uv[0],self.uv[1]))
+
+                        print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV:', self.uv, ' old UV:', self.olduv)
+
                         # return carriage to relative center of movement
                         self.offsetX = (-1*self.offsetX)
                         self.offsetY = (-1*self.offsetY)
@@ -1389,14 +1437,10 @@ class App(QMainWindow):
                         params = {'position':{'X': self.offsetX, 'Y': self.offsetY}}
                         self.moveRelativeSignal.emit(params)
                         return
+                    # otherwise, move the carriage from the original position to the next step and increment state
                     else:
-                        print('*** State:', self.state,' Coords:', self.__currentPosition, ' UV:', self.uv, ' old UV:', self.olduv)
                         self.updateStatusbarMessage('Calibrating camera step ' + str(self.state) + '..')
                         _logger.debug('Step ' + str(self.state) + ' detection UV: ' + str(self.uv))
-                        # save machine coordinates for detected nozzle
-                        self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
-                        # save camera coordinates
-                        self.camera_coordinates.append((self.uv[0],self.uv[1]))
                         # move carriage to next calibration point
                         self.offsetX = self.calibrationCoordinates[self.state][0]
                         self.offsetY = self.calibrationCoordinates[self.state][1]
@@ -1407,38 +1451,49 @@ class App(QMainWindow):
                         return
                 elif(self.state == len(self.calibrationCoordinates)):
                     # Camera calibration moves completed.
+                    
                     # Update GUI thread with current status and percentage complete
                     updateMessage = 'Millimeters per pixel is ' + str(self.mpp)
                     self.updateStatusbarMessage(updateMessage)
                     _logger.info(updateMessage)
+                    
                     # save position as previous position
                     self.olduv = self.uv
                     # save machine coordinates for detected nozzle
                     self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                     # save camera coordinates
                     self.camera_coordinates.append((self.uv[0],self.uv[1]))
+                    
                     # calculate camera transformation matrix
                     cameraCalibrationTime = np.around(time.time() - self.startTime,1)
                     _logger.info('Camera calibrated (' + str(cameraCalibrationTime) + 's); aligning..')
-                    self.state = 200
-                    self.retries = 0
-                    self.calibrationMoves = 0
+                    
+                    # Calculate transformation matrix
                     self.transform_input = [(self.space_coordinates[i], self.normalize_coords(camera)) for i, camera in enumerate(self.camera_coordinates)]
                     self.transform_matrix, self.transform_residual = self.least_square_mapping(self.transform_input)
+                    
                     # define camera center in machine coordinate space
                     self.newCenter = self.transform_matrix.T @ np.array([0, 0, 0, 0, 0, 1])
                     self.guess_position[0]= np.around(self.newCenter[0],3)
                     self.guess_position[1]= np.around(self.newCenter[1],3)
                     _logger.info('Calibration positional guess: ' + str(self.guess_position))
+
+                    # Set next calibration variables state
+                    self.state = 200
+                    self.retries = 0
+                    self.calibrationMoves = 0
+
                     params = {'position':{'X': self.guess_position[0], 'Y': self.guess_position[1]}}
                     self.moveAbsoluteSignal.emit(params)
                     return
                 elif(self.state == 200):
+                    # Update GUI with current status
                     if(self.__stateEndstopAutoCalibrate):
                         updateMessage = 'Endstop calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     else:
                         updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     self.updateStatusbarMessage(updateMessage)
+
                     # increment moves counter
                     self.calibrationMoves += 1
                     # nozzle detected, frame rotation is set, start
@@ -1447,45 +1502,56 @@ class App(QMainWindow):
                     self.offsets = -1*(0.55*self.transform_matrix.T @ self.v)
                     self.offsets[0] = np.around(self.offsets[0],3)
                     self.offsets[1] = np.around(self.offsets[1],3)
+
                     # Add rounding handling for endstop alignment
                     if(self.__stateEndstopAutoCalibrate):
-                        if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.04):
+                        if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.02):
                             self.offsets[0] = 0.0
                             self.offsets[1] = 0.0
-
-                    # Start checking calibration status
+                    
+                    # Start timer if we're calibrating the CP using the automated endstop detection
                     try:
                         if(self.toolTime):
                             pass
                     except:
                         self.toolTime = time.time()
-                    # current calibration cycle runtime
+
+                    # calculate current calibration cycle runtime
                     runtime = np.around(time.time() - self.toolTime,1)
+                    # check if too much time has passed
                     if(runtime > 60 or self.calibrationMoves > 20):
-                        # too long of a cycle, default to manual override
                         self.retries = 10
+                    # Otherwise, check if we're not aligned to the center
                     elif(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
                         params = {'position': {'X': self.offsets[0], 'Y': self.offsets[1]}, 'moveSpeed':1000}
                         self.moveRelativeSignal.emit(params)
                         _logger.debug('Calibration move X{0:-1.3f} Y{1:-1.3f} F1000 '.format(self.offsets[0],self.offsets[1]))
                         return
+                    # finally, we're aligned to the center, and we should update the tool offsets
                     elif(self.offsets[0] == 0.0 and self.offsets[1] == 0.0):
-                        # auto calibration complete - end process
+                        # endstop calibration wrapping up
                         if(self.__stateEndstopAutoCalibrate):
-                            # endstop calibration handling
                             updateMessage = 'Endstop auto-calibrated in ' + str(self.calibrationMoves) + ' steps. (MPP=' + str(self.mpp) +')'
+                            # update state flags for endstop alignment
                             self.__stateAutoCPCapture = False
                             self.__stateEndstopAutoCalibrate = False
+                            self.__stateManualCPCapture = False
+                            # update detection manager state
                             self.toggleEndstopAutoDetectionSignal.emit(False)
-                            # disable detection
+                            # disable detection manager frame analysis
                             self.toggleDetectionSignal.emit(False)
+                            self.__displayCrosshair = False
+                            # Set CP location
                             self.__cpCoordinates['X'] = np.around(self.__currentPosition['X'],2)
                             self.__cpCoordinates['Y'] = np.around(self.__currentPosition['Y'],2)
                             self.__cpCoordinates['Z'] = np.around(self.__currentPosition['Z'],2)
+                            # Update GUI statusbar with CP coordinates and green status
                             self.cpLabel.setText('<b>CP:</b> <i>('+ str(self.__cpCoordinates['X']) + ', ' + str(self.__cpCoordinates['Y']) + ')</i>')
                             self.cpLabel.setStyleSheet(self.styleGreen)
+                            # Reset entire GUI for next state
                             self.stateCalibrateReady()
                             self.repaint()
+                        # tool calibration wrapping up
                         elif(self.__stateAutoNozzleAlignment):
                             updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' has been calibrated.'
                             self.state = 100
@@ -1501,10 +1567,9 @@ class App(QMainWindow):
             self.retries += 1
             # enable detection
             self.toggleDetectionSignal.emit(True)
+            self.__displayCrosshair = True
             self.pollCoordinatesSignal.emit()
             return
-
-        self.retries = 0
         if(self.__stateEndstopAutoCalibrate is True):
             self.updateStatusbarMessage('Failed to detect endstop.')
             _logger.warning('Failed to detect endstop. Cancelled operation.')
@@ -1535,6 +1600,7 @@ class App(QMainWindow):
             self.toggleNozzleAutoDetectionSignal.emit(False)
             self.toggleNozzleDetectionSignal.emit(True)
             self.toggleDetectionSignal.emit(True)
+            self.__displayCrosshair = True
 
 
     ########################################################################### Module interfaces and handlers
@@ -1737,8 +1803,6 @@ class App(QMainWindow):
         # send calling to log
         _logger.debug('*** calling App.printerConnected')
         self.__activePrinter = printerJSON
-        #HBHBHBHB TODO: update interface for connected state
-        # self.statusBar.showMessage('Printer connected.')
         # Status label
         self.connectionStatusLabel.setText(self.__activePrinter['nickname'] + ' [' + self.__activePrinter['controller'] + ' v' + self.__activePrinter['version'] + ']')
         self.connectionStatusLabel.setStyleSheet(self.styleGreen)
@@ -1792,6 +1856,7 @@ class App(QMainWindow):
     def callTool(self, toolNumber=-1):
         # disable detection
         self.toggleDetectionSignal.emit(False)
+        self.__displayCrosshair = False
         toolNumber = int(toolNumber)
         if(toolNumber == -1):
             self.unloadToolSignal.emit()
@@ -1830,18 +1895,21 @@ class App(QMainWindow):
         if(self.__stateAutoCPCapture and self.__stateEndstopAutoCalibrate):
             # enable detection
             self.toggleDetectionSignal.emit(True)
+            self.__displayCrosshair = True
             _logger.debug('Endstop auto detection active')
             # Calibrating camera, go based on state
             self.tabPanel.setDisabled(True)
         elif(self.__stateAutoNozzleAlignment is True):
             # enable detection
             self.toggleDetectionSignal.emit(True)
+            self.__displayCrosshair = True
             _logger.debug('Nozzle auto detection active')
             # calibrating nozzle auto
             self.tabPanel.setDisabled(True)
         elif(self.__stateManualNozzleAlignment is True):
             # enable detection
             self.toggleDetectionSignal.emit(True)
+            self.__displayCrosshair = True
             _logger.debug('Nozzle manual detection active')
             # calibrating nozzle manual
             self.alignToolsButton.setVisible(False)
@@ -1855,6 +1923,7 @@ class App(QMainWindow):
         self.__currentPosition = coordinates
         _logger.debug('Coordinates received:' + str(coordinates))
         self.toggleDetectionSignal.emit(True)
+        self.__displayCrosshair = True
         if(self.__stateManualCPCapture is True):
             _logger.debug('saveCurrentPosition: manual CP capture')
             self.__cpCoordinates = coordinates
@@ -1869,29 +1938,25 @@ class App(QMainWindow):
                     _logger.debug('saveCurrentPosition: autoCalibrate nozzle for T' + str(int(self.__activePrinter['currentTool'])))
                 else:
                     _logger.debug('saveCurrentPosition: autoCalibrate endstop.')
-                self.autoCalibrate()
-            else:
+            elif(self.state == 100):
                 _logger.debug('saveCurrentPosition: autoCalibrate nozzle set offsets for T' + str(int(self.__activePrinter['currentTool'])))
-                # set initial state variable based on camera matrix exists or not
-                if(self.transform_matrix is None or self.mpp is None):
-                    self.state = 0
-                else:
-                    self.state = 200
+                # set state to detect next tool
+                self.state = 200
                 self.__stateAutoNozzleAlignment = True
                 self.toggleNozzleAutoDetectionSignal.emit(True)
                 params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
                 self.setOffsetsSignal.emit(params)
+                return
+            self.autoCalibrate()
         elif(self.__stateManualNozzleAlignment is True):
             _logger.debug('saveCurrentPosition: manual nozzle set offsets for T' + str(int(self.__activePrinter['currentTool'])))
-            # set initial state variable based on camera matrix exists or not
-            if(self.transform_matrix is None or self.mpp is None):
-                self.state = 0
-            else:
-                self.state = 200
+            # set state to detect next tool
+            self.state = 200
             self.__stateAutoNozzleAlignment = True
             self.toggleNozzleAutoDetectionSignal.emit(True)
             params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
             self.setOffsetsSignal.emit(params)
+            return
         elif(self.__firstConnection):
             _logger.debug('saveCurrentPosition: firstConnection')
             self.__restorePosition = copy.deepcopy(self.__currentPosition)
@@ -2075,6 +2140,25 @@ class App(QMainWindow):
         A = np.vstack([x**2,y**2,x * y, x,y,np.ones(n)]).T
         transform = np.linalg.lstsq(A, real_coords, rcond = None)
         return transform[0], transform[1].mean()
+
+    def toggleCrosshair(self):
+        if(self.__stateAutoCPCapture is False and self.__stateAutoNozzleAlignment is False and self.__stateEndstopAutoCalibrate is False):
+            if(self.__displayCrosshair is False):
+                print('Crosshair on')
+                self.crosshairDisplayButton.setChecked(True)
+                self.crosshairDisplayButton.setStyleSheet(self.styleOrange)
+                self.__displayCrosshair = True
+                self.toggleNozzleDetectionSignal.emit(True)
+                self.toggleDetectionSignal.emit(True)
+                self.__displayCrosshair = True
+            else:
+                print('Crosshair off')
+                self.crosshairDisplayButton.setChecked(False)
+                self.crosshairDisplayButton.setStyleSheet(self.styleBlue)
+                self.__displayCrosshair = False
+                self.toggleNozzleDetectionSignal.emit(False)
+                self.toggleDetectionSignal.emit(False)
+                self.__displayCrosshair = False
 
     ########################################################################### Close application handler
     def closeEvent(self, event):

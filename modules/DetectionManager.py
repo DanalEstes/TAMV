@@ -234,8 +234,6 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
-            # for i in range(10):
-            #     self.frame = self.videoFeed.getFrame()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -294,39 +292,60 @@ class DetectionManager(QObject):
             self.__uv = None
 
     def endstopContourDetection(self, detectFrame):
-        # apply endstop detection algorithm
-        usedFrame = copy.deepcopy(detectFrame)
-        yuv = cv2.cvtColor(usedFrame, cv2.COLOR_BGR2YUV)
-        yuvPlanes = cv2.split(yuv)
-        still = yuvPlanes[0]
-        black = np.zeros((still.shape[0],still.shape[1]), np.uint8)
-        kernel = np.ones((5,5),np.uint8)
-        img_blur = cv2.GaussianBlur(still, (7, 7), 3)
-        img_canny = cv2.Canny(img_blur, 50, 190)
-        img_dilate = cv2.morphologyEx(img_canny, cv2.MORPH_DILATE, kernel, iterations=2)
-        cnt, hierarchy = cv2.findContours(img_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        black = cv2.drawContours(black, cnt, -1, (255, 0, 255), -1)
-        black = cv2.morphologyEx(black, cv2.MORPH_DILATE, kernel, iterations=2)
-        cnt2, hierarchy2 = cv2.findContours(black, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        black = cv2.cvtColor(black, cv2.COLOR_GRAY2BGR)
-        # detectFrame = black
         center = (None, None)
-        if len(cnt2) > 0:
-            myContours = []
-            for k in range(len(cnt2)):
-                if hierarchy2[0][k][3] > -1:
-                    myContours.append(cnt2[k])
-            if len(myContours) > 0:
-                # return only the biggest detected contour
-                blobContours = max(myContours, key=lambda el: cv2.contourArea(el))
-                contourArea = cv2.contourArea(blobContours)
-                if( len(blobContours) > 0 and contourArea >= 43000 and contourArea < 50000):
-                    M = cv2.moments(blobContours)
-                    center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-                    detectFrame = cv2.circle(detectFrame, center, 150, (255,0,0), 5)
-                    detectFrame = cv2.circle(detectFrame, center, 5, (255,0,255), 2)
-                    detectFrame = cv2.line(detectFrame, (320,0), (320,480), (255,255,255), 1)
-                    detectFrame = cv2.line(detectFrame, (0,240), (640,240), (255,255,255), 1)
+        if(self.__endstopAutomatedDetectionActive is True):
+            # apply endstop detection algorithm
+            usedFrame = copy.deepcopy(detectFrame)
+            yuv = cv2.cvtColor(usedFrame, cv2.COLOR_BGR2YUV)
+            yuvPlanes = cv2.split(yuv)
+            still = yuvPlanes[0]
+            black = np.zeros((still.shape[0],still.shape[1]), np.uint8)
+            kernel = np.ones((5,5),np.uint8)
+            img_blur = cv2.GaussianBlur(still, (7, 7), 3)
+            img_canny = cv2.Canny(img_blur, 50, 190)
+            img_dilate = cv2.morphologyEx(img_canny, cv2.MORPH_DILATE, kernel, iterations=2)
+            cnt, hierarchy = cv2.findContours(img_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            black = cv2.drawContours(black, cnt, -1, (255, 0, 255), -1)
+            black = cv2.morphologyEx(black, cv2.MORPH_DILATE, kernel, iterations=2)
+            cnt2, hierarchy2 = cv2.findContours(black, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            black = cv2.cvtColor(black, cv2.COLOR_GRAY2BGR)
+            # detectFrame = black
+            if len(cnt2) > 0:
+                myContours = []
+                for k in range(len(cnt2)):
+                    if hierarchy2[0][k][3] > -1:
+                        myContours.append(cnt2[k])
+                if len(myContours) > 0:
+                    # return only the biggest detected contour
+                    blobContours = max(myContours, key=lambda el: cv2.contourArea(el))
+                    contourArea = cv2.contourArea(blobContours)
+                    if( len(blobContours) > 0 and contourArea >= 43000 and contourArea < 50000):
+                        M = cv2.moments(blobContours)
+                        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                        detectFrame = cv2.circle(detectFrame, center, 150, (255,0,0), 5,lineType=cv2.LINE_AA)
+                        detectFrame = cv2.circle(detectFrame, center, 5, (255,0,255), 2,lineType=cv2.LINE_AA)
+                        
+                        detectFrame = self.dashedLine(image=detectFrame, start=(320,0), end=(320,480), color=(0,0,0), horizontal=False, segmentWidth=4, lineWidth=2)
+                        detectFrame = self.dashedLine(image=detectFrame, start=(0,240), end=(640,240), color=(0,0,0), horizontal=True, segmentWidth=4, lineWidth=2)
+                        detectFrame = self.dashedLine(image=detectFrame, start=(320,0), end=(320,480), horizontal=False, segmentWidth=4, lineWidth=1)
+                        detectFrame = self.dashedLine(image=detectFrame, start=(0,240), end=(640,240), horizontal=True, segmentWidth=4, lineWidth=1)
+                        
+        else:
+            # draw crosshair
+            keypointRadius = 57
+            width = 4
+            detectFrame = self.dashedLine(image=detectFrame, start=(320,0), end=(320, 240-keypointRadius), color=(0,0,0), horizontal=False, lineWidth=2, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(320,240+keypointRadius), end=(320,480), color=(0,0,0), horizontal=False, lineWidth=2, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(320,0), end=(320, 240-keypointRadius), color=(255,255,255), horizontal=False, lineWidth=1, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(320,240+keypointRadius), end=(320,480), color=(255,255,255), horizontal=False, lineWidth=1, segmentWidth=width)
+
+            detectFrame = self.dashedLine(image=detectFrame, start=(0,240), end=(320-keypointRadius, 240), color=(0,0,0), horizontal=True, lineWidth=2, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(320+keypointRadius,240), end=(640,240), color=(0,0,0), horizontal=True, lineWidth=2, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(0,240), end=(320-keypointRadius, 240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
+            detectFrame = self.dashedLine(image=detectFrame, start=(320+keypointRadius,240), end=(640,240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
+
+            detectFrame = cv2.circle(img=detectFrame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
+            detectFrame = cv2.circle(img=detectFrame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
         return(center,detectFrame)
 
     @pyqtSlot(bool)
@@ -345,6 +364,21 @@ class DetectionManager(QObject):
             self.__endstopDetectionActive = False
             self.__endstopAutomatedDetectionActive = False
 
+    def dashedLine(self, image, start, end, color=(255,255,255), segmentWidth=10, horizontal=True, lineWidth=1):
+        if(horizontal):
+            segments = int((end[0] - start[0])/segmentWidth)
+        else:
+            segments = int((end[1] - start[1])/segmentWidth)
+        for i in range(segments):
+            if(horizontal):
+                segmentStart = (start[0] + segmentWidth*i, start[1])
+                segmentEnd = (segmentStart[0]+segmentWidth, segmentStart[1])
+            else:
+                segmentStart = (start[0], start[1] + segmentWidth*i)
+                segmentEnd = (segmentStart[0], segmentStart[1]+segmentWidth)
+            if(i%2 == 0):
+                image = cv2.line( image, segmentStart, segmentEnd, color, lineWidth)
+        return(image)
 
     ##### Nozzle detection
     def analyzeNozzleFrame(self):
@@ -355,10 +389,20 @@ class DetectionManager(QObject):
         self.frame = self.videoFeed.getFrame()
         self.__uv = [None,None]
         # draw crosshair
-        self.frame = cv2.line(self.frame, (320,0), (320,480), (0,0,0), 3)
-        self.frame = cv2.line(self.frame, (0,240), (640,240), (0,0,0), 3)
-        self.frame = cv2.line(self.frame, (320,0), (320,480), (255,255,255), 1)
-        self.frame = cv2.line(self.frame, (0,240), (640,240), (255,255,255), 1)
+        keypointRadius = 17
+        width = 4
+        self.frame = self.dashedLine(image=self.frame, start=(320,0), end=(320, 240-keypointRadius), color=(0,0,0), horizontal=False, lineWidth=2, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(320,240+keypointRadius), end=(320,480), color=(0,0,0), horizontal=False, lineWidth=2, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(320,0), end=(320, 240-keypointRadius), color=(255,255,255), horizontal=False, lineWidth=1, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(320,240+keypointRadius), end=(320,480), color=(255,255,255), horizontal=False, lineWidth=1, segmentWidth=width)
+
+        self.frame = self.dashedLine(image=self.frame, start=(0,240), end=(320-keypointRadius, 240), color=(0,0,0), horizontal=True, lineWidth=2, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(320+keypointRadius,240), end=(640,240), color=(0,0,0), horizontal=True, lineWidth=2, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(0,240), end=(320-keypointRadius, 240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
+        self.frame = self.dashedLine(image=self.frame, start=(320+keypointRadius,240), end=(640,240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
+
+        self.frame = cv2.circle(img=self.frame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
+        self.frame = cv2.circle(img=self.frame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
 
     def burstNozzleDetection(self):
         detectionCount = 0
@@ -428,19 +472,19 @@ class DetectionManager(QObject):
             # create radius object
             keypointRadius = np.around(keypoints[0].size/2)
             keypointRadius = int(keypointRadius)
-            circleFrame = cv2.circle(img=nozzleDetectFrame, center=center, radius=keypointRadius,color=keypointColor,thickness=-1)
+            circleFrame = cv2.circle(img=nozzleDetectFrame, center=center, radius=keypointRadius,color=keypointColor,thickness=-1,lineType=cv2.LINE_AA)
             nozzleDetectFrame = cv2.addWeighted(circleFrame, 0.4, nozzleDetectFrame, 0.6, 0)
-            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=center, radius=keypointRadius, color=(0,0,0), thickness=1)
+            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=center, radius=keypointRadius, color=(0,0,0), thickness=1,lineType=cv2.LINE_AA)
             nozzleDetectFrame = cv2.line(nozzleDetectFrame, (x-5,y), (x+5, y), (255,255,255), 2)
             nozzleDetectFrame = cv2.line(nozzleDetectFrame, (x,y-5), (x, y+5), (255,255,255), 2)
         else:
             # no keypoints, draw a 3 outline circle in the middle of the frame
             keypointRadius = 17
-            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3)
-            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1)
+            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
+            nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
         # draw crosshair
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (0,0,0), 3)
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (0,0,0), 3)
+        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (0,0,0), 2)
+        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (0,0,0), 2)
         nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (255,255,255), 1)
         nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (255,255,255), 1)
         return(center, nozzleDetectFrame)
