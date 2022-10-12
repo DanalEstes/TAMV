@@ -1392,6 +1392,11 @@ class App(QMainWindow):
 
     def autoCalibrate(self):
         self.tabPanel.setDisabled(True)
+        try:
+            if(runtime):
+                pass
+        except:
+            runtime = time.time()
         if(self.uv is not None):
             if(self.uv[0] is not None and self.uv[1] is not None):
                 self.retries = 0
