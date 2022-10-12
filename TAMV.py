@@ -653,6 +653,7 @@ class App(QMainWindow):
             self.instructionsBox = QTextEdit()
             self.instructionsBox.setReadOnly(True)
             self.instructionsBox.setFixedSize(640, 45)
+            self.instructionsBox.setVisible(False)
             self.footerLayout.addWidget(self.instructionsBox, 0,0,1,-1,Qt.AlignLeft|Qt.AlignVCenter)
 
             # Manual CP Capture button
@@ -687,6 +688,17 @@ class App(QMainWindow):
             self.alignToolsButton.setVisible(False)
             self.alignToolsButton.clicked.connect(self.startAlignTools)
             self.footerLayout.addWidget(self.alignToolsButton, 0,1,1,1,Qt.AlignRight|Qt.AlignVCenter)
+
+            # Resume auto alignment button
+            self.resumeAutoToolAlignmentButton = QPushButton('Auto Align')
+            self.resumeAutoToolAlignmentButton.setMinimumSize(self.pushbuttonSize*3,self.pushbuttonSize)
+            self.resumeAutoToolAlignmentButton.setMaximumSize(self.pushbuttonSize*3,self.pushbuttonSize)
+            self.resumeAutoToolAlignmentButton.setToolTip('Resume automated calibration')
+            self.resumeAutoToolAlignmentButton.setDisabled(True)
+            self.resumeAutoToolAlignmentButton.setVisible(False)
+            self.resumeAutoToolAlignmentButton.clicked.connect(self.resumeAutoAlignment)
+            self.footerLayout.addWidget(self.resumeAutoToolAlignmentButton, 0,0,1,1,Qt.AlignRight|Qt.AlignVCenter)
+
 
         #### Set current interface state to disconnected
         self.stateDisconnected()
@@ -805,7 +817,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
-        
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Delete tool buttons
         count = self.jogPanel.count()
         for i in range(11,count):
@@ -859,6 +874,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Jog panel tab
         self.tabPanel.setDisabled(False)
         
@@ -968,6 +987,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(False)
@@ -1013,6 +1036,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(True)
@@ -1054,6 +1081,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(False)
@@ -1103,6 +1134,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(True)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(True)
@@ -1147,6 +1182,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(False)
@@ -1196,6 +1235,10 @@ class App(QMainWindow):
         self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        # Resume auto alignment button
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
         # Crosshair display button
         self.crosshairDisplayButton.setVisible(True)
         self.crosshairDisplayButton.setDisabled(True)
@@ -1610,11 +1653,20 @@ class App(QMainWindow):
             self.manualToolOffsetCaptureButton.setVisible(True)
             self.manualToolOffsetCaptureButton.setDisabled(False)
             self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
+            self.resumeAutoToolAlignmentButton.setVisible(True)
+            self.resumeAutoToolAlignmentButton.setDisabled(False)
+            self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleGreen)
             self.toggleNozzleAutoDetectionSignal.emit(False)
             self.toggleNozzleDetectionSignal.emit(True)
             self.toggleDetectionSignal.emit(True)
             self.__displayCrosshair = True
 
+    def resumeAutoAlignment(self):
+        self.state = 200
+        self.retries = 0
+        self.__stateAutoNozzleAlignment = True
+        self.toggleNozzleAutoDetectionSignal.emit(True)
+        self.pollCoordinatesSignal.emit()
 
     ########################################################################### Module interfaces and handlers
     ########################################################################### Interface with Detection Manager
