@@ -1665,6 +1665,7 @@ class App(QMainWindow):
         self.state = 200
         self.retries = 0
         self.__stateAutoNozzleAlignment = True
+        self.toolTime = time.time()
         self.toggleNozzleAutoDetectionSignal.emit(True)
         self.pollCoordinatesSignal.emit()
 
