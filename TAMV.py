@@ -1673,10 +1673,10 @@ class App(QMainWindow):
         except:
             errorMsg = 'Error sending message to statusbar.'
             _logger.error(errorMsg)
+        self.__mutex.unlock()
         app.processEvents()
         # send exiting to log
         _logger.debug('*** exiting App.updateStatusbarMessage')
-        self.__mutex.unlock()
 
     @pyqtSlot(object)
     def detectionManagerError(self, message):
@@ -1688,11 +1688,13 @@ class App(QMainWindow):
             self.cpLabel.setStyleSheet(self.styleOrange)
             self.connectionStatusLabel.setStyleSheet(self.styleOrange)
             self.resetCalibration()
+            self.__mutex.unlock()
             self.moveAbsoluteSignal.emit(self.originalPrinterPosition)
         except:
+            self.__mutex.unlock()
             errorMsg = 'Error sending message to statusbar.'
             _logger.error(errorMsg)
-        self.__mutex.unlock()
+        
         # Kill thread
         self.detectionThread.quit()
         self.detectionThread.wait()
@@ -1908,7 +1910,6 @@ class App(QMainWindow):
 
     @pyqtSlot()
     def printerMoveComplete(self):
-        self.__mutex.lock()
         self.tabPanel.setDisabled(False)
         if(self.__stateAutoCPCapture and self.__stateEndstopAutoCalibrate):
             # enable detection
@@ -1933,15 +1934,14 @@ class App(QMainWindow):
             self.alignToolsButton.setVisible(False)
             self.alignToolsButton.setDisabled(True)
             self.manualCPCaptureButton.setVisible(True)
-            self.__mutex.unlock()
             return
         self.pollCoordinatesSignal.emit()
-        self.__mutex.unlock()
 
     @pyqtSlot(object)
     def saveCurrentPosition(self, coordinates):
         self.__mutex.lock()
         self.__currentPosition = coordinates
+        self.__mutex.unlock()
         _logger.debug('Coordinates received:' + str(coordinates))
         self.toggleDetectionSignal.emit(True)
         self.__displayCrosshair = True
@@ -1967,7 +1967,6 @@ class App(QMainWindow):
                 self.toggleNozzleAutoDetectionSignal.emit(True)
                 params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
                 self.setOffsetsSignal.emit(params)
-                self.__mutex.unlock()
                 return
             self.autoCalibrate()
         elif(self.__stateManualNozzleAlignment is True):
@@ -1978,17 +1977,14 @@ class App(QMainWindow):
             self.toggleNozzleAutoDetectionSignal.emit(True)
             params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
             self.setOffsetsSignal.emit(params)
-            self.__mutex.unlock()
             return
         elif(self.__firstConnection):
             _logger.debug('saveCurrentPosition: firstConnection')
             self.__restorePosition = copy.deepcopy(self.__currentPosition)
             self.__firstConnection = False
-        self.__mutex.unlock()
 
     @pyqtSlot(object)
     def calibrateOffsetsApplied(self, params=None):
-        self.__mutex.lock()
         try:
             offsets = params['offsets']
         except: offsets = None
@@ -2003,9 +1999,7 @@ class App(QMainWindow):
             self.toggleNozzleAutoDetectionSignal.emit(True)
             self.calibrateTools(self.workingToolset)
         else:
-            self.__mutex.unlock()
             raise SystemExit('FUCKED!')
-        self.__mutex.unlock()
 
     ########################################################################### Interface with Settings Dialog
     def displayPreferences(self, event=None, newPrinterFlag=False):
