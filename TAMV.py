@@ -690,9 +690,9 @@ class App(QMainWindow):
             self.footerLayout.addWidget(self.alignToolsButton, 0,1,1,1,Qt.AlignRight|Qt.AlignVCenter)
 
             # Resume auto alignment button
-            self.resumeAutoToolAlignmentButton = QPushButton('Auto Align')
-            self.resumeAutoToolAlignmentButton.setMinimumSize(self.pushbuttonSize*3,self.pushbuttonSize)
-            self.resumeAutoToolAlignmentButton.setMaximumSize(self.pushbuttonSize*3,self.pushbuttonSize)
+            self.resumeAutoToolAlignmentButton = QPushButton('Resume Auto Align')
+            self.resumeAutoToolAlignmentButton.setMinimumSize(self.pushbuttonSize*4,self.pushbuttonSize)
+            self.resumeAutoToolAlignmentButton.setMaximumSize(self.pushbuttonSize*4,self.pushbuttonSize)
             self.resumeAutoToolAlignmentButton.setToolTip('Resume automated calibration')
             self.resumeAutoToolAlignmentButton.setDisabled(True)
             self.resumeAutoToolAlignmentButton.setVisible(False)
