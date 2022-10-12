@@ -1680,8 +1680,8 @@ class App(QMainWindow):
 
     @pyqtSlot(object)
     def detectionManagerError(self, message):
-        self.__mutex.lock()
         self.haltPrinterOperation(silent=True)
+        self.__mutex.lock()
         try:
             self.statusBar.showMessage(message)
             self.statusBar.setStyleSheet(self.styleRed)
@@ -1692,6 +1692,7 @@ class App(QMainWindow):
         except:
             errorMsg = 'Error sending message to statusbar.'
             _logger.error(errorMsg)
+        self.__mutex.unlock()
         # Kill thread
         self.detectionThread.quit()
         self.detectionThread.wait()
@@ -1699,7 +1700,7 @@ class App(QMainWindow):
         self.printerThread.wait()
         # display error image
         self.image.setPixmap(self.errorImage)
-        self.__mutex.unlock()
+        
 
     ########################################################################### Interface with Printer Manager
     def createPrinterManagerThread(self,announce=True):
