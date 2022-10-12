@@ -101,7 +101,7 @@ class App(QMainWindow):
             self.__firstConnection = False
             self.state = 0
             # Camera transform matrix
-            self.transform_matrix = None
+            self.transformMatrix = None
             self.transform_input = None
             self.mpp = None
             # Nozzle detection
@@ -1293,6 +1293,7 @@ class App(QMainWindow):
 
     def haltCPAutoCapture(self):
         self.resetCalibration()
+        self.resetCalibrationVariables()
         self.statusBar.showMessage('CP calibration cancelled.')
         # Reset GUI
         self.stateConnected()
@@ -1348,10 +1349,16 @@ class App(QMainWindow):
         # Setup camera calibration move coordinates
         self.calibrationCoordinates = [ [0,-0.5], [0.294,-0.405], [0.476,-0.155], [0.476,0.155], [0.294,0.405], [0,0.5], [-0.294,0.405], [-0.476,0.155], [-0.476,-0.155], [-0.294,-0.405] ]
         # reset all variables
-        self.guess_position  = [1,1]
+        self.guessPosition  = [1,1]
         self.uv = [0, 0]
         self.olduv  = self.uv
-        if(self.transform_matrix is None or self.mpp is None):
+        if(self.transformMatrix is None or self.mpp is None):
+            _logger.debug('Camera calibration matrix reset.')
+            self.state = 0
+        elif(len(self.transformMatrix) < 6):
+            print('Matrix size: ', len(self.transformMatrix))
+            self.transformMatrix = None
+            self.mpp = None
             self.state = 0
         else:
             self.state = 200
@@ -1526,20 +1533,20 @@ class App(QMainWindow):
                     
                     # Calculate transformation matrix
                     self.transform_input = [(self.space_coordinates[i], self.normalize_coords(camera)) for i, camera in enumerate(self.camera_coordinates)]
-                    self.transform_matrix, self.transform_residual = self.least_square_mapping(self.transform_input)
+                    self.transformMatrix, self.transform_residual = self.least_square_mapping(self.transform_input)
                     
                     # define camera center in machine coordinate space
-                    self.newCenter = self.transform_matrix.T @ np.array([0, 0, 0, 0, 0, 1])
-                    self.guess_position[0]= np.around(self.newCenter[0],3)
-                    self.guess_position[1]= np.around(self.newCenter[1],3)
-                    _logger.info('Calibration positional guess: ' + str(self.guess_position))
+                    self.newCenter = self.transformMatrix.T @ np.array([0, 0, 0, 0, 0, 1])
+                    self.guessPosition[0]= np.around(self.newCenter[0],3)
+                    self.guessPosition[1]= np.around(self.newCenter[1],3)
+                    _logger.info('Calibration positional guess: ' + str(self.guessPosition))
 
                     # Set next calibration variables state
                     self.state = 200
                     self.retries = 0
                     self.calibrationMoves = 0
 
-                    params = {'position':{'X': self.guess_position[0], 'Y': self.guess_position[1]}}
+                    params = {'position':{'X': self.guessPosition[0], 'Y': self.guessPosition[1]}}
                     self.moveAbsoluteSignal.emit(params)
                     return
                 elif(self.state == 200):
@@ -1555,7 +1562,7 @@ class App(QMainWindow):
                     # nozzle detected, frame rotation is set, start
                     self.cx,self.cy = self.normalize_coords(self.uv)
                     self.v = [self.cx**2, self.cy**2, self.cx*self.cy, self.cx, self.cy, 0]
-                    self.offsets = -1*(0.55*self.transform_matrix.T @ self.v)
+                    self.offsets = -1*(0.55*self.transformMatrix.T @ self.v)
                     self.offsets[0] = np.around(self.offsets[0],3)
                     self.offsets[1] = np.around(self.offsets[1],3)
 
@@ -1666,6 +1673,10 @@ class App(QMainWindow):
         self.retries = 0
         self.__stateAutoNozzleAlignment = True
         self.toolTime = time.time()
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
+        self.updateStatusbarMessage('Resuming auto detection of current tool..')
         self.toggleNozzleAutoDetectionSignal.emit(True)
         self.pollCoordinatesSignal.emit()
 
@@ -1868,6 +1879,7 @@ class App(QMainWindow):
             self.disconnectSignal.emit(params)
         else:
             self.disconnectSignal.emit(params)
+        self.resetCalibrationVariables()
         self.updateStatusbarMessage('Printer disconnected.')
 
     @pyqtSlot(object)

@@ -506,7 +506,6 @@ class DetectionManager(QObject):
             self.__nozzleDetectionActive = False
             self.__nozzleAutoDetectionActive = False
     
-    
     ##### Utilities
     # adjust image gamma
     def adjust_gamma(self, image, gamma=1.2):
@@ -535,7 +534,6 @@ class DetectionManager(QObject):
             outputFrame = cv2.GaussianBlur( outputFrame, (7,7), 6 )
             outputFrame = cv2.cvtColor( outputFrame, cv2.COLOR_GRAY2BGR )
         return(outputFrame)
-
 
     ##### Image adjustment properties
     @pyqtSlot(object)
