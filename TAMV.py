@@ -1818,13 +1818,13 @@ class App(QMainWindow):
         self.connectionStatusLabel.setStyleSheet(self.styleGreen)
         # poll for position
         self.__firstConnection = True
+        self.__mutex.unlock()
         self.pollCoordinatesSignal.emit()
         # Gui state
         self.stateConnected()
         self.repaint()
         # send exiting to log
         _logger.debug('*** exiting App.printerConnected')
-        self.__mutex.unlock()
 
     @pyqtSlot(object)
     def printerDisconnected(self, **kwargs):
@@ -1844,15 +1844,15 @@ class App(QMainWindow):
         # Status label
         self.connectionStatusLabel.setText('Disconnected')
         self.connectionStatusLabel.setStyleSheet(self.styleOrange)
+        self.__mutex.unlock()
         self.stateDisconnected()
         self.repaint()
         # send exiting to log
         _logger.debug('*** exiting App.printerDisconnected')
-        self.__mutex.unlock()
+        
 
     @pyqtSlot(object)
     def printerError(self, message):
-        self.__mutex.lock()
         _logger.debug('Printer Error: ' + message)
         if(self.__restorePosition is not None):
             params = {'parkPosition': self.__restorePosition}
@@ -1866,7 +1866,6 @@ class App(QMainWindow):
         except: _logger.warning('Printer thread not created yet.')
         self.printerDisconnected(message=message)
         self.statusBar.setStyleSheet(self.styleRed)
-        self.__mutex.unlock()
 
     def callTool(self, toolNumber=-1):
         # disable detection
