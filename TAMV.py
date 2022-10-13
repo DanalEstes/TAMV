@@ -1480,6 +1480,7 @@ class App(QMainWindow):
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
                     # capture the UV data when a calibration move has been executed, before returning to original position
                     if(self.state != self.lastState):
+                        _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                         # Calculate mpp at first move
                         if(self.state == 2):
                             self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
@@ -1489,8 +1490,6 @@ class App(QMainWindow):
                         self.space_coordinates.append((self.__currentPosition['X'], self.__currentPosition['Y']))
                         # save camera coordinates
                         self.camera_coordinates.append((self.uv[0],self.uv[1]))
-
-                        _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
 
                         # return carriage to relative center of movement
                         self.offsetX = (-1*self.offsetX)
