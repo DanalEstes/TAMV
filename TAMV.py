@@ -1356,7 +1356,6 @@ class App(QMainWindow):
             _logger.debug('Camera calibration matrix reset.')
             self.state = 0
         elif(len(self.transformMatrix) < 6):
-            print('Matrix size: ', len(self.transformMatrix))
             self.transformMatrix = None
             self.mpp = None
             self.state = 0
@@ -1460,7 +1459,7 @@ class App(QMainWindow):
                 self.retries = 0
                 # First calibration step
                 if(self.state == 0):
-                    _logger.debug('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
+                    _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                     self.updateStatusbarMessage('Calibrating camera step 0..')
                     
                     self.olduv = self.uv
@@ -1482,7 +1481,7 @@ class App(QMainWindow):
                     # capture the UV data when a calibration move has been executed, before returning to original position
                     if(self.state != self.lastState):
                         # Calculate mpp at first move
-                        if(self.state == 1):
+                        if(self.state == 2):
                             self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
                         # save position as previous position
                         self.olduv = self.uv
@@ -1491,7 +1490,7 @@ class App(QMainWindow):
                         # save camera coordinates
                         self.camera_coordinates.append((self.uv[0],self.uv[1]))
 
-                        _logger.debug('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
+                        _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
 
                         # return carriage to relative center of movement
                         self.offsetX = (-1*self.offsetX)
@@ -1550,6 +1549,7 @@ class App(QMainWindow):
                     self.moveAbsoluteSignal.emit(params)
                     return
                 elif(self.state == 200):
+                    _logger.info('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                     # Update GUI with current status
                     if(self.__stateEndstopAutoCalibrate):
                         updateMessage = 'Endstop calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
@@ -1669,7 +1669,14 @@ class App(QMainWindow):
             self.__displayCrosshair = True
 
     def resumeAutoAlignment(self):
-        self.state = 200
+        if(self.transformMatrix is None or self.mpp is None):
+            self.state = 0
+        elif(len(self.transformMatrix) < 6):
+            self.transformMatrix = None
+            self.mpp = None
+            self.state = 0
+        else:
+            self.state = 200
         self.retries = 0
         self.__stateAutoNozzleAlignment = True
         self.toolTime = time.time()
@@ -1773,7 +1780,6 @@ class App(QMainWindow):
         self.printerThread.wait()
         # display error image
         self.image.setPixmap(self.errorImage)
-        
 
     ########################################################################### Interface with Printer Manager
     def createPrinterManagerThread(self,announce=True):
