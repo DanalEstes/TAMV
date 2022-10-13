@@ -387,6 +387,7 @@ class DetectionManager(QObject):
         average_location=[0,0]
         retries = 0
         self.__uv = [None,None]
+        (self.__uv, self.frame) = self.nozzleDetection()
         # draw crosshair
         keypointRadius = 17
         width = 4
@@ -445,25 +446,24 @@ class DetectionManager(QObject):
         preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
         preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
 
-        if( self.__nozzleAutoDetectionActive is True ):
-            # apply combo 1 (standard detector, preprocessor 0)
-            keypoints = self.detector.detect(preprocessorImage0)
-            keypointColor = (0,0,255)
+        # apply combo 1 (standard detector, preprocessor 0)
+        keypoints = self.detector.detect(preprocessorImage0)
+        keypointColor = (0,0,255)
+        if(len(keypoints) != 1):
+            # apply combo 2 (standard detector, preprocessor 1)
+            keypoints = self.detector.detect(preprocessorImage1)
+            keypointColor = (0,255,0)
             if(len(keypoints) != 1):
-                # apply combo 2 (standard detector, preprocessor 1)
-                keypoints = self.detector.detect(preprocessorImage1)
-                keypointColor = (0,255,0)
+                # apply combo 3 (standard detector, preprocessor 0)
+                keypoints = self.relaxedDetector.detect(preprocessorImage0)
+                keypointColor = (255,0,0)
                 if(len(keypoints) != 1):
-                    # apply combo 3 (standard detector, preprocessor 0)
-                    keypoints = self.relaxedDetector.detect(preprocessorImage0)
-                    keypointColor = (255,0,0)
+                    # apply combo 4 (standard detector, preprocessor 1)
+                    keypoints = self.relaxedDetector.detect(preprocessorImage1)
+                    keypointColor = (39,127,255)
                     if(len(keypoints) != 1):
-                        # apply combo 4 (standard detector, preprocessor 1)
-                        keypoints = self.relaxedDetector.detect(preprocessorImage1)
-                        keypointColor = (39,127,255)
-                        if(len(keypoints) != 1):
-                            # failed to detect a nozzle, correct return value object
-                            keypoints = None
+                        # failed to detect a nozzle, correct return value object
+                        keypoints = None
         # process keypoint
         if(keypoints is not None):
             # create center object
@@ -478,16 +478,17 @@ class DetectionManager(QObject):
             nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=center, radius=keypointRadius, color=(0,0,0), thickness=1,lineType=cv2.LINE_AA)
             nozzleDetectFrame = cv2.line(nozzleDetectFrame, (x-5,y), (x+5, y), (255,255,255), 2)
             nozzleDetectFrame = cv2.line(nozzleDetectFrame, (x,y-5), (x, y+5), (255,255,255), 2)
-        else:
+        elif(self.__nozzleAutoDetectionActive is True):
             # no keypoints, draw a 3 outline circle in the middle of the frame
             keypointRadius = 17
             nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
             nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
-        # draw crosshair
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (0,0,0), 2)
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (0,0,0), 2)
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (255,255,255), 1)
-        nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (255,255,255), 1)
+        if(self.__nozzleAutoDetectionActive is True):
+            # draw crosshair
+            nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (0,0,0), 2)
+            nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (0,0,0), 2)
+            nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (255,255,255), 1)
+            nozzleDetectFrame = cv2.line(nozzleDetectFrame, (0,240), (640,240), (255,255,255), 1)
         return(center, nozzleDetectFrame)
 
     @pyqtSlot(bool)
