@@ -1581,7 +1581,7 @@ class App(QMainWindow):
                     # calculate current calibration cycle runtime
                     runtime = np.around(time.time() - self.toolTime,1)
                     # check if too much time has passed
-                    if(runtime > 60 or self.calibrationMoves > 20):
+                    if(runtime > 120 or self.calibrationMoves > 30):
                         self.retries = 10
                     # Otherwise, check if we're not aligned to the center
                     elif(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
@@ -1621,7 +1621,7 @@ class App(QMainWindow):
                         self.updateStatusbarMessage(updateMessage)
                         self.pollCoordinatesSignal.emit()
                         return
-            elif(self.retries < 100 and runtime <= 15):
+            elif(self.retries < 100 and runtime <= 120):
                 self.retries += 1
                 self.pollCoordinatesSignal.emit()
                 return
