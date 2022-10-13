@@ -1625,7 +1625,7 @@ class App(QMainWindow):
                 self.retries += 1
                 self.pollCoordinatesSignal.emit()
                 return
-        if(self.retries < 10):
+        if(self.retries < 100):
             self.retries += 1
             # enable detection
             self.toggleDetectionSignal.emit(True)
