@@ -230,7 +230,7 @@ class DetectionManager(QObject):
     ##### Endstop detection
     def analyzeEndstopFrame(self):
         detectionCount = 0
-        self.uv = [0, 0]
+        self.uv = [None, None]
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
@@ -383,7 +383,7 @@ class DetectionManager(QObject):
     ##### Nozzle detection
     def analyzeNozzleFrame(self):
         detectionCount = 0
-        self.uv = [0, 0]
+        self.uv = [None, None]
         average_location=[0,0]
         retries = 0
         self.__uv = [None,None]
@@ -406,7 +406,7 @@ class DetectionManager(QObject):
 
     def burstNozzleDetection(self):
         detectionCount = 0
-        self.uv = [0, 0]
+        self.uv = [None, None]
         average_location=[0,0]
         retries = 0
         while(detectionCount < 5):
@@ -483,6 +483,7 @@ class DetectionManager(QObject):
             keypointRadius = 17
             nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
             nozzleDetectFrame = cv2.circle(img=nozzleDetectFrame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
+            center = (None, None)
         if(self.__nozzleAutoDetectionActive is True):
             # draw crosshair
             nozzleDetectFrame = cv2.line(nozzleDetectFrame, (320,0), (320,480), (0,0,0), 2)

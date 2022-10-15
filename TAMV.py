@@ -1350,7 +1350,7 @@ class App(QMainWindow):
         self.calibrationCoordinates = [ [0,-0.5], [0.294,-0.405], [0.476,-0.155], [0.476,0.155], [0.294,0.405], [0,0.5], [-0.294,0.405], [-0.476,0.155], [-0.476,-0.155], [-0.294,-0.405] ]
         # reset all variables
         self.guessPosition  = [1,1]
-        self.uv = [0, 0]
+        self.uv = [None, None]
         self.olduv  = self.uv
         if(self.transformMatrix is None or self.mpp is None):
             _logger.debug('Camera calibration matrix reset.')
@@ -1366,6 +1366,7 @@ class App(QMainWindow):
         self.camera_coordinates = []
         self.retries = 0
         self.calibrationMoves = 0
+        self.repeatCounter = 0
 
     def startAlignTools(self):
         # send calling to log
@@ -1456,12 +1457,24 @@ class App(QMainWindow):
             runtime = time.time()
         if(self.uv is not None):
             if(self.uv[0] is not None and self.uv[1] is not None):
-                self.retries = 0
                 # First calibration step
                 if(self.state == 0):
                     _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                     self.updateStatusbarMessage('Calibrating camera step 0..')
-                    
+                    if(self.olduv is not None):
+                        if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
+                            # print('Repeating detection: ' + str(self.repeatCounter))
+                            self.repeatCounter += 1
+                            if(self.repeatCounter > 10):
+                                self.nozzleDetectionFailed()
+                                return
+                            # loop through again
+                            self.retries += 1
+                            self.pollCoordinatesSignal.emit()
+                            return
+                        else:
+                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
+                            self.repeatCounter = 0
                     self.olduv = self.uv
                     self.space_coordinates = []
                     self.camera_coordinates = []
@@ -1481,9 +1494,23 @@ class App(QMainWindow):
                     # capture the UV data when a calibration move has been executed, before returning to original position
                     if(self.state != self.lastState):
                         _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
+                        if(self.olduv is not None):
+                            if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
+                                # print('Repeating detection: ' + str(self.repeatCounter))
+                                self.repeatCounter += 1
+                                if(self.repeatCounter > 10):
+                                    self.nozzleDetectionFailed()
+                                    return
+                                # loop through again
+                                self.retries += 1
+                                self.pollCoordinatesSignal.emit()
+                                return
+                            else:
+                                # print('Took ' + str(self.repeatCounter) + ' attempts.')
+                                self.repeatCounter = 0
                         # Calculate mpp at first move
-                        if(self.state == 2):
-                            self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),4)
+                        if(self.state == 1):
+                            self.mpp = np.around(0.5/self.getDistance(self.olduv[0],self.olduv[1],self.uv[0],self.uv[1]),3)
                         # save position as previous position
                         self.olduv = self.uv
                         # save machine coordinates for detected nozzle
@@ -1512,7 +1539,20 @@ class App(QMainWindow):
                         return
                 elif(self.state == len(self.calibrationCoordinates)):
                     # Camera calibration moves completed.
-                    
+                    if(self.olduv is not None):
+                        if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
+                            # print('Repeating detection: ' + str(self.repeatCounter))
+                            self.repeatCounter += 1
+                            if(self.repeatCounter > 10):
+                                self.nozzleDetectionFailed()
+                                return
+                            # loop through again
+                            self.retries += 1
+                            self.pollCoordinatesSignal.emit()
+                            return
+                        else:
+                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
+                            self.repeatCounter = 0
                     # Update GUI thread with current status and percentage complete
                     updateMessage = 'Millimeters per pixel is ' + str(self.mpp)
                     self.updateStatusbarMessage(updateMessage)
@@ -1548,14 +1588,26 @@ class App(QMainWindow):
                     self.moveAbsoluteSignal.emit(params)
                     return
                 elif(self.state == 200):
-                    _logger.info('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                     # Update GUI with current status
                     if(self.__stateEndstopAutoCalibrate):
                         updateMessage = 'Endstop calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     else:
                         updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     self.updateStatusbarMessage(updateMessage)
-
+                    if(self.olduv is not None):
+                        if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
+                            # print('Repeating detection: ' + str(self.repeatCounter))
+                            self.repeatCounter += 1
+                            if(self.repeatCounter > 10):
+                                self.nozzleDetectionFailed()
+                                return
+                            # loop through again
+                            self.retries += 1
+                            self.pollCoordinatesSignal.emit()
+                            return
+                        else:
+                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
+                            self.repeatCounter = 0
                     # increment moves counter
                     self.calibrationMoves += 1
                     # nozzle detected, frame rotation is set, start
@@ -1564,7 +1616,7 @@ class App(QMainWindow):
                     self.offsets = -1*(0.55*self.transformMatrix.T @ self.v)
                     self.offsets[0] = np.around(self.offsets[0],3)
                     self.offsets[1] = np.around(self.offsets[1],3)
-
+                    _logger.info('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' X' + str(self.__currentPosition['X']) + ' Y' + str(self.__currentPosition['Y']) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv) + ' Offsets: ' + str(self.offsets))
                     # Add rounding handling for endstop alignment
                     if(self.__stateEndstopAutoCalibrate):
                         if(abs(self.offsets[0])+abs(self.offsets[1]) <= 0.02):
@@ -1585,6 +1637,7 @@ class App(QMainWindow):
                         self.retries = 10
                     # Otherwise, check if we're not aligned to the center
                     elif(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
+                        self.olduv = self.uv
                         params = {'position': {'X': self.offsets[0], 'Y': self.offsets[1]}, 'moveSpeed':1000}
                         self.moveRelativeSignal.emit(params)
                         _logger.debug('Calibration move X{0:-1.3f} Y{1:-1.3f} F1000 '.format(self.offsets[0],self.offsets[1]))
@@ -1648,24 +1701,27 @@ class App(QMainWindow):
             updateMessage = 'Failed to detect nozzle. Try manual override.'
             self.updateStatusbarMessage(updateMessage)
             _logger.warning(updateMessage)
-            self.state = -99
-            # End auto calibration
-            self.__stateAutoNozzleAlignment = False
-            self.__stateManualNozzleAlignment = True
-            # calibrating nozzle manual
-            self.tabPanel.setDisabled(False)
-            self.alignToolsButton.setVisible(False)
-            self.alignToolsButton.setDisabled(True)
-            self.manualToolOffsetCaptureButton.setVisible(True)
-            self.manualToolOffsetCaptureButton.setDisabled(False)
-            self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
-            self.resumeAutoToolAlignmentButton.setVisible(True)
-            self.resumeAutoToolAlignmentButton.setDisabled(False)
-            self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleGreen)
-            self.toggleNozzleAutoDetectionSignal.emit(False)
-            self.toggleNozzleDetectionSignal.emit(True)
-            self.toggleDetectionSignal.emit(True)
-            self.__displayCrosshair = True
+            self.nozzleDetectionFailed()
+
+    def nozzleDetectionFailed(self):
+        self.state = -99
+        # End auto calibration
+        self.__stateAutoNozzleAlignment = False
+        self.__stateManualNozzleAlignment = True
+        # calibrating nozzle manual
+        self.tabPanel.setDisabled(False)
+        self.alignToolsButton.setVisible(False)
+        self.alignToolsButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(True)
+        self.manualToolOffsetCaptureButton.setDisabled(False)
+        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
+        self.resumeAutoToolAlignmentButton.setVisible(True)
+        self.resumeAutoToolAlignmentButton.setDisabled(False)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleGreen)
+        self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleNozzleDetectionSignal.emit(True)
+        self.toggleDetectionSignal.emit(True)
+        self.__displayCrosshair = True
 
     def resumeAutoAlignment(self):
         if(self.transformMatrix is None or self.mpp is None):
@@ -1677,6 +1733,9 @@ class App(QMainWindow):
         else:
             self.state = 200
         self.retries = 0
+        self.repeatCounter = 0
+        self.uv = [None, None]
+        self.olduv = [None, None]
         self.__stateAutoNozzleAlignment = True
         self.toolTime = time.time()
         self.resumeAutoToolAlignmentButton.setVisible(False)
