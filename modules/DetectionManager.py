@@ -3,14 +3,12 @@ from sys import stdout
 # invoke parent (TAMV) _logger
 _logger = logging.getLogger('TAMV.DetectionManager')
 
-from modules.Camera import Camera
-
 import cv2
 import numpy as np
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import pyqtSlot, QObject, pyqtSignal
 from time import sleep
-import copy
+import copy, sys, multiprocessing
 
 class DetectionManager(QObject):
     # class attributes
@@ -60,6 +58,7 @@ class DetectionManager(QObject):
         self.startCamera()
         self.createDetectors()
         self.processFrame()
+
         self.uv = [None, None]
         # send exiting to log
         _logger.debug('*** exiting DetectionManager.__init__')
@@ -67,22 +66,30 @@ class DetectionManager(QObject):
     def startCamera(self):
         # send calling to log
         _logger.debug('*** calling DetectionManager.startCamera')
-        try:
-            # Setup camera
-            self.videoFeed = Camera(videoSrc=self.__videoSource,width=self.__frameSize['width'],height=self.__frameSize['height'],parent=self)
-            self.__imageSettings = self.videoFeed.getCurrentImageSettings()
-            if(self.__imageSettings is not None):
-                self.cameraReady(imageSettings=self.__imageSettings)
-            else: raise Exception()
-        except:
-            _logger.exception('Camera failed to start..')
-            self.errorSignal.emit('Camera failed to start..')
+        
+        if sys.platform.startswith('linux'):        # all Linux
+            self.backend = cv2.CAP_V4L
+        elif sys.platform.startswith('win'):        # MS Windows
+            self.backend = cv2.CAP_DSHOW
+        elif sys.platform.startswith('darwin'):     # macOS
+            self.backend = cv2.CAP_AVFOUNDATION
+        else:
+            self.backend = cv2.CAP_ANY      # auto-detect via OpenCV
+
+        # create shared event object
+        self.frameEvent = multiprocessing.Event()
+        self.stopEvent = multiprocessing.Event()
+        self.pipeDM, self.pipeQ = multiprocessing.Pipe()
+        
+        self.proc = multiprocessing.Process(target=_reader, args=(self.pipeQ, self.frameEvent, self.stopEvent, self.__videoSource, self.__frameSize['height'], self.__frameSize['width'], self.backend))
+        self.proc.daemon = True
         # send exiting to log
         _logger.debug('*** exiting DetectionManager.startCamera')
 
     def cameraReady(self, imageSettings):
         # send calling to log
         _logger.debug('*** calling DetectionManager.cameraReady')
+        print(imageSettings)
         # consume JSON
         try:
             brightness = imageSettings['brightness']
@@ -173,7 +180,8 @@ class DetectionManager(QObject):
         _logger.info('Shutting down Detection Manager..')
         _logger.info('  .. disconnecting video feed..')
         self.__running = False
-        self.videoFeed.quit()
+        self.stopEvent.set()
+        self.proc.join()
         _logger.info('Detection Manager shut down successfully.')
         # send exiting to log
         _logger.debug('*** exiting DetectionManager.quit')
@@ -181,10 +189,27 @@ class DetectionManager(QObject):
     # Main processing function
     @pyqtSlot()
     def processFrame(self):
+        if(not self.proc.is_alive()):
+            # Start camera process
+            self.proc.start()
+            print(self.proc)
+            # Retrieve camera settings
+            try:
+                print('Connecting to camera..')
+                cameraSettings = self.pipeDM.recv()
+                print('Connecting to camera..')
+                self.cameraReady(imageSettings=cameraSettings)
+            except:
+                _logger.exception('Camera failed to start..')
+                self.errorSignal.emit('Camera failed to start..')
+        
         try:
-            self.frame = self.videoFeed.getFrame()
-            if(self.frame is None):
-                self.errorSignal.emit('Failed to get signal')
+            self.frameEvent.set()
+            self.frame = self.pipeDM.recv()
+            self.frameEvent.clear()
+            if(len(self.frame)==1):
+                if(self.frame==-1):
+                    self.errorSignal.emit('Failed to get signal')
             elif(self.__enableDetection is True):
                 if(self.__endstopDetectionActive is True):
                     if(self.__endstopAutomatedDetectionActive is False):
@@ -266,7 +291,9 @@ class DetectionManager(QObject):
         retries = 0
         while(detectionCount < 5):
             for j in range(10):
-                self.frame = self.videoFeed.getFrame()
+                self.frameEvent.set()
+                self.frame = self.pipeDM.recv()
+                self.frameEvent.clear()
             (self.__uv, self.frame) = self.endstopContourDetection(self.frame)
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -412,7 +439,9 @@ class DetectionManager(QObject):
         while(detectionCount < 5):
             # skip a few frames
             for i in range(10):
-                self.frame = self.videoFeed.getFrame()
+                self.frameEvent.set()
+                self.frame = self.pipeDM.recv()
+                self.frameEvent.clear()
             (self.__uv, self.frame) = self.nozzleDetection()
             if(self.__uv is not None):
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
@@ -565,14 +594,76 @@ class DetectionManager(QObject):
 
     @pyqtSlot(object)
     def relayImageProperties(self, imageProperties):
-        self.videoFeed.setImageProperties(imagePropterties=imageProperties)
+        self.pipeDM.send(imageProperties)
 
     @pyqtSlot()
     def relayResetImage(self):
-        self.videoFeed.resetImageProperties()
+        settings = {'brightness': self.__brightnessDefault, 'contrast': self.__contrastDefault, 'saturation': self.__saturationDefault, 'hue': self.__hueDefault}
+        self.pipeDM.send(settings)
 
-    def getPropertiesJSON(self):
-        self.detectionManagerImagePropertiesSignal.emit()
-
-    def getDefaultPropertiesJSON(self):
-        self.detectionManagerDefaultImagePropertiesSignal.emit()
+# Independent process to run camera grab functions
+def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
+        print('Starting camera...')
+        cap = cv2.VideoCapture(videoSrc, backend)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.setExceptionMode(enable=True)
+        try:
+            ret = cap.grab()
+            ret, frame = cap.retrieve()
+            if(not ret):
+                cap.release()
+                raise SystemError('Camera failure.')
+            # Get camera default settings
+            brightness = cap.get(cv2.CAP_PROP_BRIGHTNESS)
+            contrast = cap.get(cv2.CAP_PROP_CONTRAST)
+            saturation = cap.get(cv2.CAP_PROP_SATURATION)
+            hue = cap.get(cv2.CAP_PROP_HUE)
+            cameraSettings = {'default': 1, 'brightness': brightness, 'contrast': contrast, 'saturation': saturation, 'hue': hue}
+            print(cameraSettings)
+            # send default settings to queue
+            q.send(cameraSettings)
+        except Exception as e:
+            cap.release()
+            print('**** Camera failed:',e)
+            stopEvent.set()
+        FPS = 1/30
+        while True:
+            try:
+                ret = cap.grab()
+            except: break
+            if not ret:
+                break
+            if stopEvent.is_set():
+                print('Stopping capture')
+                break
+            if frameEvent.is_set():
+                ret, frame = cap.retrieve()
+                q.send(frame)
+            # check for inputs
+            if(q.poll(FPS/2)):
+                settings = q.recv()
+                try:
+                    brightness = float(settings['brightness'])
+                except KeyError: pass
+                try:
+                    contrast = float(settings['contrast'])
+                except KeyError: pass
+                try:
+                    saturation = float(settings['saturation'])
+                except KeyError: pass
+                try:
+                    hue = float(settings['hue'])
+                except KeyError: pass
+                try:
+                    cap.set(cv2.CAP_PROP_BRIGHTNESS, brightness)
+                    cap.set(cv2.CAP_PROP_CONTRAST, contrast)
+                    cap.set(cv2.CAP_PROP_SATURATION, saturation)
+                    cap.set(cv2.CAP_PROP_HUE, hue)
+                except:
+                    _logger.warning('Failed to set image properties')
+            sleep(FPS)
+        cap.release()
+        q.send(-1)
+        q.close()

@@ -1754,13 +1754,14 @@ class App(QMainWindow):
         self.detectionThread = QThread()
         self.detectionManager = DetectionManager(videoSrc=self._videoSrc, width=self._cameraWidth, height=self._cameraHeight, parent=None)
         self.detectionManager.moveToThread(self.detectionThread)
-        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
+        
         # Thread management signals and slots
         self.detectionManager.errorSignal.connect(self.detectionManagerError)
         self.detectionThread.started.connect(self.detectionManager.processFrame)
         self.detectionThread.finished.connect(self.detectionManager.quit)
         self.detectionThread.finished.connect(self.detectionManager.deleteLater)
         self.detectionThread.finished.connect(self.detectionThread.deleteLater)
+        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
         # Video frame signals and slots
         self.detectionManager.detectionManagerNewFrameSignal.connect(self.refreshImage)
         self.detectionManager.detectionManagerReadySignal.connect(self.startVideo)
