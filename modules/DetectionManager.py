@@ -91,7 +91,6 @@ class DetectionManager(QObject):
     def cameraReady(self, imageSettings):
         # send calling to log
         _logger.debug('*** calling DetectionManager.cameraReady')
-        print(imageSettings)
         # consume JSON
         try:
             brightness = imageSettings['brightness']
@@ -194,7 +193,6 @@ class DetectionManager(QObject):
         if(not self.proc.is_alive()):
             # Start camera process
             self.proc.start()
-            print(self.proc)
             # Retrieve camera settings
             try:
                 cameraSettings = self.pipeDM.recv()
@@ -235,7 +233,6 @@ class DetectionManager(QObject):
 
     # convert from cv2.mat to QPixmap and return results (frame+keypoint)
     def receivedFrame(self, frame):
-        #print('Detection:',self.__counter)
         self.__counter += 1
         if(self.__running):
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -445,35 +442,27 @@ class DetectionManager(QObject):
         self.uv = [None, None]
         average_location=[0,0]
         retries = 0
-        print('Starting detection loop')
         while(detectionCount < 3):
             # skip a few frames
-            print('  .. skipping frames..')
             for i in range(1):
                 self.frameEvent.set()
                 self.frame = self.pipeDM.recv()
                 self.frameEvent.clear()
-            print('  .. detecting..')
             (self.__uv, self.frame) = self.nozzleDetection()
             if(self.__uv is not None):
-                print('  .. keypoints found..')
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
                     average_location[0] += self.__uv[0]
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
                 else:
-                    print('  .. no keypoints..')
                     retries += 1
             else:
-                print('  .. still no keypoints..')
                 retries += 1
             if(retries > 5):
-                print('  .. retries failed..')
                 average_location[0] = None
                 average_location[1] = None
                 break
         if(average_location[0] is not None):
-            print('  .. calculating average position..')
             # calculate average X Y position from detection
             average_location[0] /= detectionCount
             average_location[1] /= detectionCount
@@ -481,7 +470,6 @@ class DetectionManager(QObject):
             average_location = np.around(average_location,0)
             self.__uv = average_location
         else:
-            print('  .. no position found!')
             self.__uv = None
 
     def nozzleDetection(self):
@@ -538,14 +526,11 @@ class DetectionManager(QObject):
             keypoints = self.relaxedDetector.detect(preprocessorImage1)
             keypointColor = (39,127,255)
         # process keypoint
-        print('Checking keypoints')
         if(keypoints is not None and len(keypoints) >= 1):
-            print('Keypoints is not none:', keypoints)
             # create center object
             (x,y) = np.around(keypoints[0].pt)
             x,y = int(x), int(y)
             center = (x,y)
-            print('Center:', center)
             # create radius object
             keypointRadius = np.around(keypoints[0].size/2)
             keypointRadius = int(keypointRadius)
@@ -570,7 +555,6 @@ class DetectionManager(QObject):
 
     @pyqtSlot(bool)
     def toggleNozzleDetection(self, nozzleDetectFlag):
-        print('Switch nozzle detection to:', nozzleDetectFlag)
         if(nozzleDetectFlag is True):
             self.__nozzleDetectionActive = True
         else:
@@ -578,7 +562,6 @@ class DetectionManager(QObject):
 
     @pyqtSlot(bool)
     def toggleNozzleAutoDetection(self, nozzleDetectFlag):
-        print('Switch nozzle auto detection to:', nozzleDetectFlag)
         if(nozzleDetectFlag is True):
             self.__nozzleDetectionActive = True
             self.__nozzleAutoDetectionActive = True
@@ -653,7 +636,6 @@ class DetectionManager(QObject):
 
 # Independent process to run camera grab functions
 def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
-        print('Starting camera...')
         cap = cv2.VideoCapture(videoSrc, backend)
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -671,12 +653,11 @@ def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
             saturation = cap.get(cv2.CAP_PROP_SATURATION)
             hue = cap.get(cv2.CAP_PROP_HUE)
             cameraSettings = {'default': 1, 'brightness': brightness, 'contrast': contrast, 'saturation': saturation, 'hue': hue}
-            print(cameraSettings)
             # send default settings to queue
             q.send(cameraSettings)
         except Exception as e:
             cap.release()
-            print('**** Camera failed:',e)
+            _logger.critical('Camera failed:' + str(e)_
             stopEvent.set()
         FPS = 1/30
         while True:

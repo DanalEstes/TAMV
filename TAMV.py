@@ -1465,9 +1465,8 @@ class App(QMainWindow):
                     self.updateStatusbarMessage('Calibrating camera step 0..')
                     if(self.olduv is not None):
                         if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
-                            # print('Repeating detection: ' + str(self.repeatCounter))
                             self.repeatCounter += 1
-                            if(self.repeatCounter > 10):
+                            if(self.repeatCounter > 5):
                                 self.nozzleDetectionFailed()
                                 return
                             # loop through again
@@ -1475,7 +1474,6 @@ class App(QMainWindow):
                             self.pollCoordinatesSignal.emit()
                             return
                         else:
-                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
                             self.repeatCounter = 0
                     self.olduv = self.uv
                     self.space_coordinates = []
@@ -1498,7 +1496,6 @@ class App(QMainWindow):
                         _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                         if(self.olduv is not None):
                             if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
-                                # print('Repeating detection: ' + str(self.repeatCounter))
                                 self.repeatCounter += 1
                                 if(self.repeatCounter > 10):
                                     self.nozzleDetectionFailed()
@@ -1508,7 +1505,6 @@ class App(QMainWindow):
                                 self.pollCoordinatesSignal.emit()
                                 return
                             else:
-                                # print('Took ' + str(self.repeatCounter) + ' attempts.')
                                 self.repeatCounter = 0
                         # Calculate mpp at first move
                         if(self.state == 1):
@@ -1543,7 +1539,6 @@ class App(QMainWindow):
                     # Camera calibration moves completed.
                     if(self.olduv is not None):
                         if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
-                            # print('Repeating detection: ' + str(self.repeatCounter))
                             self.repeatCounter += 1
                             if(self.repeatCounter > 10):
                                 self.nozzleDetectionFailed()
@@ -1553,7 +1548,6 @@ class App(QMainWindow):
                             self.pollCoordinatesSignal.emit()
                             return
                         else:
-                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
                             self.repeatCounter = 0
                     # Update GUI thread with current status and percentage complete
                     updateMessage = 'Millimeters per pixel is ' + str(self.mpp)
@@ -2094,7 +2088,6 @@ class App(QMainWindow):
 
     @pyqtSlot(object)
     def saveUVCoordinates(self, uvCoordinates):
-        print('Received UV:', uvCoordinates)
         print('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' X' + str(self.__currentPosition['X']) + ' Y' + str(self.__currentPosition['Y']) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv) )
         if(uvCoordinates is None):
             # failed to detect, poll coordinates again
