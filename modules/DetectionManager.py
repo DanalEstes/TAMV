@@ -539,7 +539,7 @@ class DetectionManager(QObject):
             keypointColor = (39,127,255)
         # process keypoint
         print('Checking keypoints')
-        if(keypoints is not None):
+        if(keypoints is not None and len(keypoints) >= 1):
             print('Keypoints is not none:', keypoints)
             # create center object
             (x,y) = np.around(keypoints[0].pt)
