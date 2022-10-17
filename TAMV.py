@@ -1778,7 +1778,7 @@ class App(QMainWindow):
         self.toggleNozzleDetectionSignal.connect(self.detectionManager.toggleNozzleDetection)
         self.toggleNozzleAutoDetectionSignal.connect(self.detectionManager.toggleNozzleAutoDetection)
         # UV coordinates update signals and slots
-        self.getUVCoordinatesSignal.connect(self.saveUVCoordinates)
+        self.getUVCoordinatesSignal.connect(self.detectionManager.sendUVCoorindates)
         self.detectionManager.detectionManagerUVCoordinatesSignal.connect(self.saveUVCoordinates)
         # Master detection swtich enable/disable
         self.toggleDetectionSignal.connect(self.detectionManager.enableDetection)
