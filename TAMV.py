@@ -2095,7 +2095,7 @@ class App(QMainWindow):
     @pyqtSlot(object)
     def saveUVCoordinates(self, uvCoordinates):
         print('Received UV:', uvCoordinates)
-        print('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' X' + str(self.__currentPosition['X']) + ' Y' + str(self.__currentPosition['Y']) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv) + ' Offsets: ' + str(self.offsets))
+        print('*** State: ' + str(self.state) + ' retries: ' + str(self.retries) + ' X' + str(self.__currentPosition['X']) + ' Y' + str(self.__currentPosition['Y']) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv) )
         if(uvCoordinates is None):
             # failed to detect, poll coordinates again
             self.pollCoordinatesSignal.emit()
