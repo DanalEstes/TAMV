@@ -1601,9 +1601,11 @@ class App(QMainWindow):
                             # print('Repeating detection: ' + str(self.repeatCounter))
                             self.repeatCounter += 1
                             if(self.repeatCounter > 10):
+                                print('Failed to detect.')
                                 self.nozzleDetectionFailed()
                                 return
                             # loop through again
+                            print('Retrying', self.retries)
                             self.retries += 1
                             self.pollCoordinatesSignal.emit()
                             return
@@ -2092,6 +2094,7 @@ class App(QMainWindow):
 
     @pyqtSlot(object)
     def saveUVCoordinates(self, uvCoordinates):
+        print('Received UV:', uvCoordinates)
         self.uv = uvCoordinates
         self.autoCalibrate()
 
