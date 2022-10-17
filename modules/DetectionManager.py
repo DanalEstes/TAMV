@@ -489,26 +489,31 @@ class DetectionManager(QObject):
         keypoints = self.detector.detect(preprocessorImage0)
         keypointColor = (0,0,255)
         if(len(keypoints) != 1):
+            print('Trying combo 2')
             # apply combo 2 (standard detector, preprocessor 1)
             keypoints = self.detector.detect(preprocessorImage1)
             keypointColor = (0,255,0)
             if(len(keypoints) != 1):
+                print('Trying combo 3')
                 # apply combo 3 (standard detector, preprocessor 0)
                 keypoints = self.relaxedDetector.detect(preprocessorImage0)
                 keypointColor = (255,0,0)
                 if(len(keypoints) != 1):
+                    print('Trying combo 4')
                     # apply combo 4 (standard detector, preprocessor 1)
                     keypoints = self.relaxedDetector.detect(preprocessorImage1)
                     keypointColor = (39,127,255)
                     if(len(keypoints) != 1):
                         # failed to detect a nozzle, correct return value object
                         keypoints = None
+                        print('nozzleDetection did not find any keypoints')
         # process keypoint
         if(keypoints is not None):
             # create center object
             (x,y) = np.around(keypoints[0].pt)
             x,y = int(x), int(y)
             center = (x,y)
+            print('Center:', center)
             # create radius object
             keypointRadius = np.around(keypoints[0].size/2)
             keypointRadius = int(keypointRadius)
