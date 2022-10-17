@@ -2095,6 +2095,10 @@ class App(QMainWindow):
     @pyqtSlot(object)
     def saveUVCoordinates(self, uvCoordinates):
         print('Received UV:', uvCoordinates)
+        if(uvCoordinates is None):
+            # failed to detect, poll coordinates again
+            self.pollCoordinatesSignal.emit()
+            return
         self.uv = uvCoordinates
         self.autoCalibrate()
 
