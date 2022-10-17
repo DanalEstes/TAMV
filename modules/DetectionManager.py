@@ -71,8 +71,8 @@ class DetectionManager(QObject):
         
         if sys.platform.startswith('linux'):        # all Linux
             self.backend = cv2.CAP_V4L
-        elif sys.platform.startswith('win'):        # MS Windows
-            self.backend = cv2.CAP_DSHOW
+        # elif sys.platform.startswith('win'):        # MS Windows
+        #     self.backend = cv2.CAP_DSHOW
         elif sys.platform.startswith('darwin'):     # macOS
             self.backend = cv2.CAP_AVFOUNDATION
         else:

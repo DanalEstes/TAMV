@@ -294,7 +294,7 @@ class App(QMainWindow):
                         'password': 'reprap',
                         'name': 'My Duet',
                         'nickname': 'Default',
-                        'controller' : 'RRF/Duet', 
+                        'controller' : 'RRF', 
                         'version': '',
                         'default': 1,
                         'rotated': 0,
@@ -373,7 +373,7 @@ class App(QMainWindow):
                 try:
                     temp = machine['controller']
                 except KeyError:
-                    machine['controller'] = 'RRF/Duet'
+                    machine['controller'] = 'RRF'
                 # Check if version doesn't exist
                 try:
                     temp = machine['version']
@@ -389,6 +389,8 @@ class App(QMainWindow):
                     temp = machine['tools']
                 except KeyError:
                     machine['tools'] = [ { 'number': 0, 'name': 'Tool 0', 'nozzleSize': 0.4, 'offsets': [0,0,0] } ]
+                if(machine['default'] == 1):
+                    self.__activePrinter = machine
             # Check if we have no default machine
             if(defaultPrinterDefined is False):
                 self.__activePrinter = self.__userSettings['printer'][0]
@@ -1899,6 +1901,8 @@ class App(QMainWindow):
             if(self.printerThread.isRunning() is False):
                 self.createPrinterManagerThread(announce=False)
         except: self.createPrinterManagerThread(announce=False)
+        #HBHBHBHB TODO: add connection popup
+
         self.connectSignal.emit(self.__activePrinter)
 
     def haltPrinterOperation(self, **kwargs):
