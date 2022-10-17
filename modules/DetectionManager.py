@@ -657,7 +657,7 @@ def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
             q.send(cameraSettings)
         except Exception as e:
             cap.release()
-            _logger.critical('Camera failed:' + str(e)_
+            _logger.critical('Camera failed:' + str(e))
             stopEvent.set()
         FPS = 1/30
         while True:
