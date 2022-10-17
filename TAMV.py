@@ -1368,7 +1368,7 @@ class App(QMainWindow):
         self.camera_coordinates = []
         self.retries = 0
         self.calibrationMoves = 0
-        # self.repeatCounter = 0
+        self.repeatCounter = 0
 
     def startAlignTools(self):
         # send calling to log
@@ -1691,7 +1691,7 @@ class App(QMainWindow):
         else:
             self.state = 200
         self.retries = 0
-        # self.repeatCounter = 0
+        self.repeatCounter = 0
         self.uv = [None, None]
         self.olduv = [None, None]
         self.__stateAutoNozzleAlignment = True
