@@ -1492,7 +1492,7 @@ class App(QMainWindow):
                     return
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
                     # capture the UV data when a calibration move has been executed, before returning to original position
-                    if(self.state != self.lastState):
+                    if(self.state != self.lastState and self.state < len(self.calibrationCoordinates)):
                         _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                         if(self.olduv is not None):
                             if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
