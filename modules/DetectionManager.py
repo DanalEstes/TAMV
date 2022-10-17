@@ -214,18 +214,23 @@ class DetectionManager(QObject):
             _logger.critical(e)
         try:
             if(len(self.frame)==1):
+                print('cannot retrieve frame')
                 if(self.frame==-1):
                     self.errorSignal.emit('Failed to get signal')
             elif(self.__enableDetection is True):
                 if(self.__endstopDetectionActive is True):
                     if(self.__endstopAutomatedDetectionActive is False):
+                        print('Endstop manual')
                         self.analyzeEndstopFrame()
                     else:
+                        print('Endstop automatic')
                         self.burstEndstopDetection()
                 elif(self.__nozzleDetectionActive is True):
                     if(self.__nozzleAutoDetectionActive is False):
+                        print('Nozzle manual')
                         self.analyzeNozzleFrame()
                     else:
+                        print('Nozzle automatic')
                         self.burstNozzleDetection()
             else:
                 pass
@@ -461,13 +466,10 @@ class DetectionManager(QObject):
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
                 else:
-                    print('Retrying 1..')
                     retries += 1
             else:
-                print('Retrying 2..')
                 retries += 1
             if(retries > 5):
-                print('Retries full..')
                 average_location[0] = None
                 average_location[1] = None
                 break
@@ -479,7 +481,6 @@ class DetectionManager(QObject):
             average_location = np.around(average_location,0)
             self.__uv = average_location
         else:
-            print('No keypoints!')
             self.__uv = None
 
     def nozzleDetection(self):
@@ -576,6 +577,7 @@ class DetectionManager(QObject):
         if(nozzleDetectFlag is True):
             self.__nozzleDetectionActive = True
             self.__nozzleAutoDetectionActive = True
+            self.__algorithm = None
         else:
             self.__nozzleDetectionActive = False
             self.__nozzleAutoDetectionActive = False
