@@ -1315,32 +1315,32 @@ class App(QMainWindow):
 
     def resetCalibration(self):
         # Reset program state, and frame capture control to defaults
+        self.toggleDetectionSignal.emit(False)
+        self.toggleEndstopAutoDetectionSignal.emit(False)
+        self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleEndstopDetectionSignal.emit(False)
+        self.__displayCrosshair = False
         self.__stateEndstopAutoCalibrate = False
         self.__stateAutoCPCapture = False
         self.__stateSetupCPCapture = False
         self.__stateManualNozzleAlignment = False
         self.__stateAutoNozzleAlignment = False
-        self.toggleEndstopAutoDetectionSignal.emit(False)
-        self.toggleNozzleAutoDetectionSignal.emit(False)
-        self.toggleEndstopDetectionSignal.emit(False)
-        self.toggleDetectionSignal.emit(False)
-        self.__displayCrosshair = False
         self.resetCalibrationVariables()
         self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
     
     def resetNozzleAlignment(self):
         # Reset program state, and frame capture control to defaults
+        self.toggleDetectionSignal.emit(False)
+        self.toggleEndstopAutoDetectionSignal.emit(False)
+        self.toggleNozzleAutoDetectionSignal.emit(False)
+        self.toggleEndstopDetectionSignal.emit(False)
+        self.__displayCrosshair = False
         self.__stateEndstopAutoCalibrate = False
         self.__stateAutoCPCapture = False
         self.__stateSetupCPCapture = False
         self.__stateManualNozzleAlignment = False
         self.__stateAutoNozzleAlignment = False
-        self.toggleEndstopAutoDetectionSignal.emit(False)
-        self.toggleNozzleAutoDetectionSignal.emit(False)
-        self.toggleEndstopDetectionSignal.emit(False)
-        self.toggleDetectionSignal.emit(False)
-        self.__displayCrosshair = False
         self.resetCalibrationVariables()
         self.tabPanel.setDisabled(True)
         self.unloadToolSignal.emit()

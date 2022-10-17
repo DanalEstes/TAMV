@@ -22,6 +22,7 @@ class DetectionManager(QObject):
     __running = True
     __uv = None
     __counter = 0
+    __algorithm = None
     
     # Signals
     detectionManagerNewFrameSignal = pyqtSignal(object)
@@ -395,6 +396,8 @@ class DetectionManager(QObject):
         else:
             self.__endstopDetectionActive = False
             self.__endstopAutomatedDetectionActive = False
+            self.__algorithm = None
+
 
     def dashedLine(self, image, start, end, color=(255,255,255), segmentWidth=10, horizontal=True, lineWidth=1):
         if(horizontal):
@@ -443,7 +446,7 @@ class DetectionManager(QObject):
         retries = 0
         while(detectionCount < 5):
             # skip a few frames
-            for i in range(4):
+            for i in range(3):
                 self.frameEvent.set()
                 self.frame = self.pipeDM.recv()
                 self.frameEvent.clear()
@@ -465,7 +468,6 @@ class DetectionManager(QObject):
                 average_location[1] = None
                 break
         if(average_location[0] is not None):
-            print('Found location:', average_location)
             # calculate average X Y position from detection
             average_location[0] /= detectionCount
             average_location[1] /= detectionCount
@@ -482,31 +484,53 @@ class DetectionManager(QObject):
         # return value for keypoints
         keypoints = None
         center = (None, None)
-        preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
-        preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
+        # check which algorithm worked previously
+        if(self.__algorithm is None):
+            preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
+            preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
 
-        # apply combo 1 (standard detector, preprocessor 0)
-        keypoints = self.detector.detect(preprocessorImage0)
-        keypointColor = (0,0,255)
-        if(len(keypoints) != 1):
-            print('Trying combo 2')
-            # apply combo 2 (standard detector, preprocessor 1)
+            # apply combo 1 (standard detector, preprocessor 0)
+            keypoints = self.detector.detect(preprocessorImage0)
+            keypointColor = (0,0,255)
+            if(len(keypoints) != 1):
+                # apply combo 2 (standard detector, preprocessor 1)
+                keypoints = self.detector.detect(preprocessorImage1)
+                keypointColor = (0,255,0)
+                if(len(keypoints) != 1):
+                    # apply combo 3 (standard detector, preprocessor 0)
+                    keypoints = self.relaxedDetector.detect(preprocessorImage0)
+                    keypointColor = (255,0,0)
+                    if(len(keypoints) != 1):
+                        # apply combo 4 (standard detector, preprocessor 1)
+                        keypoints = self.relaxedDetector.detect(preprocessorImage1)
+                        keypointColor = (39,127,255)
+                        if(len(keypoints) != 1):
+                            # failed to detect a nozzle, correct return value object
+                            keypoints = None
+                        else:
+                            self.__algorithm = 4
+                    else:
+                        self.__algorithm = 3
+                else:
+                    self.__algorithm = 2
+            else:
+                self.__algorithm = 1
+        elif(self.__algorithm == 1):
+            preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
+            keypoints = self.detector.detect(preprocessorImage0)
+            keypointColor = (0,0,255)
+        elif(self.__algorithm == 2):
+            preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
             keypoints = self.detector.detect(preprocessorImage1)
             keypointColor = (0,255,0)
-            if(len(keypoints) != 1):
-                print('Trying combo 3')
-                # apply combo 3 (standard detector, preprocessor 0)
-                keypoints = self.relaxedDetector.detect(preprocessorImage0)
-                keypointColor = (255,0,0)
-                if(len(keypoints) != 1):
-                    print('Trying combo 4')
-                    # apply combo 4 (standard detector, preprocessor 1)
-                    keypoints = self.relaxedDetector.detect(preprocessorImage1)
-                    keypointColor = (39,127,255)
-                    if(len(keypoints) != 1):
-                        # failed to detect a nozzle, correct return value object
-                        keypoints = None
-                        print('nozzleDetection did not find any keypoints')
+        elif(self.__algorithm == 3):
+            preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)
+            keypoints = self.relaxedDetector.detect(preprocessorImage0)
+            keypointColor = (255,0,0)
+        else:
+            preprocessorImage1 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=1)
+            keypoints = self.relaxedDetector.detect(preprocessorImage1)
+            keypointColor = (39,127,255)
         # process keypoint
         if(keypoints is not None):
             # create center object
