@@ -1554,6 +1554,22 @@ class App(QMainWindow):
                     else:
                         updateMessage = 'Tool ' + str(self.__activePrinter['currentTool']) + ' calibration step ' + str(self.calibrationMoves) + '.. (MPP=' + str(self.mpp) +')'
                     self.updateStatusbarMessage(updateMessage)
+                    if(self.olduv is not None):
+                        if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
+                            # print('Repeating detection: ' + str(self.repeatCounter))
+                            self.repeatCounter += 1
+                            if(self.repeatCounter > 5):
+                                print('Failed to detect.')
+                                self.nozzleDetectionFailed()
+                                return
+                            # loop through again
+                            print('Retrying', self.retries)
+                            self.retries += 1
+                            self.pollCoordinatesSignal.emit()
+                            return
+                        else:
+                            # print('Took ' + str(self.repeatCounter) + ' attempts.')
+                            self.repeatCounter = 0
                     # increment moves counter
                     self.calibrationMoves += 1
                     # nozzle detected, frame rotation is set, start
