@@ -448,7 +448,7 @@ class DetectionManager(QObject):
         self.uv = [None, None]
         average_location=[0,0]
         retries = 0
-        while(detectionCount < 5):
+        while(detectionCount < 3):
             # skip a few frames
             for i in range(3):
                 self.frameEvent.set()
