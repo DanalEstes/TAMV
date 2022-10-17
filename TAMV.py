@@ -1481,22 +1481,6 @@ class App(QMainWindow):
                 elif(self.state >= 1 and self.state < len(self.calibrationCoordinates)):
                     # capture the UV data when a calibration move has been executed, before returning to original position
                     if(self.state != self.lastState):
-                        if(self.olduv is not None):
-                            if(self.olduv[0] == self.uv[0] and self.olduv[1] == self.uv[1]):
-                                # print('Repeating detection: ' + str(self.repeatCounter))
-                                self.repeatCounter += 1
-                                if(self.repeatCounter > 5):
-                                    print('Failed to detect.')
-                                    self.nozzleDetectionFailed()
-                                    return
-                                # loop through again
-                                print('Retrying', self.retries)
-                                self.retries += 1
-                                self.pollCoordinatesSignal.emit()
-                                return
-                            else:
-                                # print('Took ' + str(self.repeatCounter) + ' attempts.')
-                                self.repeatCounter = 0
                         _logger.info('*** State: ' + str(self.state) + ' Coords:' + str(self.__currentPosition) + ' UV: ' + str(self.uv) + ' old UV: ' + str(self.olduv))
                         # Calculate mpp at first move
                         if(self.state == 1):
