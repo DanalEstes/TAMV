@@ -538,6 +538,7 @@ class DetectionManager(QObject):
             keypoints = self.relaxedDetector.detect(preprocessorImage1)
             keypointColor = (39,127,255)
         # process keypoint
+        print('Checking keypoints')
         if(keypoints is not None):
             # create center object
             (x,y) = np.around(keypoints[0].pt)
