@@ -540,6 +540,7 @@ class DetectionManager(QObject):
         # process keypoint
         print('Checking keypoints')
         if(keypoints is not None):
+            print('Keypoints is not none:', keypoints)
             # create center object
             (x,y) = np.around(keypoints[0].pt)
             x,y = int(x), int(y)
