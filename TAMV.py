@@ -2126,7 +2126,7 @@ class App(QMainWindow):
                 params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
                 self.setOffsetsSignal.emit(params)
                 return
-            self.autoCalibrate()
+            self.getUVCoordinatesSignal.emit()
         elif(self.__stateManualNozzleAlignment is True):
             _logger.debug('saveCurrentPosition: manual nozzle set offsets for T' + str(int(self.__activePrinter['currentTool'])))
             # set state to detect next tool
