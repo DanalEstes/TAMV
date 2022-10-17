@@ -209,6 +209,10 @@ class DetectionManager(QObject):
             self.frameEvent.set()
             self.frame = self.pipeDM.recv()
             self.frameEvent.clear()
+        except Exception as e:
+            _logger.critical('Error in camera process')
+            _logger.critical(e)
+        try:
             if(len(self.frame)==1):
                 if(self.frame==-1):
                     self.errorSignal.emit('Failed to get signal')
