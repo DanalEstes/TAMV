@@ -35,6 +35,8 @@ class App(QMainWindow):
     # Nozzle detection signals
     toggleNozzleDetectionSignal = pyqtSignal(bool)
     toggleNozzleAutoDetectionSignal = pyqtSignal(bool)
+    # UV coordinates update signal
+    getUVCoordinatesSignal = pyqtSignal()
     # Master detection enable/disable signal
     toggleDetectionSignal = pyqtSignal(bool)
 
@@ -1775,6 +1777,9 @@ class App(QMainWindow):
         # Nozzle alignment signals and slots
         self.toggleNozzleDetectionSignal.connect(self.detectionManager.toggleNozzleDetection)
         self.toggleNozzleAutoDetectionSignal.connect(self.detectionManager.toggleNozzleAutoDetection)
+        # UV coordinates update signals and slots
+        self.getUVCoordinatesSignal.connect(self.saveUVCoordinates)
+        self.detectionManager.detectionManagerUVCoordinatesSignal.connect(self.saveUVCoordinates)
         # Master detection swtich enable/disable
         self.toggleDetectionSignal.connect(self.detectionManager.enableDetection)
 
@@ -1792,10 +1797,10 @@ class App(QMainWindow):
     def refreshImage(self, data):
         self.__mutex.lock()
         frame = data[0]
-        uvCoordinates = data[1]
+        # uvCoordinates = data[1]
         self.image.setPixmap(frame)
-        if(self.__stateEndstopAutoCalibrate is True or self.__stateAutoNozzleAlignment is True):
-            self.uv = uvCoordinates
+        # if(self.__stateEndstopAutoCalibrate is True or self.__stateAutoNozzleAlignment is True):
+        #     self.uv = uvCoordinates
         self.__mutex.unlock()
         self.getVideoFrameSignal.emit()
 
@@ -2084,6 +2089,11 @@ class App(QMainWindow):
             self.updateStatusbarMessage(statusMsg)
             _logger.debug(statusMsg)
         self.pollCoordinatesSignal.emit()
+
+    @pyqtSlot(object)
+    def saveUVCoordinates(self, uvCoordinates):
+        self.uv = uvCoordinates
+        self.autoCalibrate()
 
     @pyqtSlot(object)
     def saveCurrentPosition(self, coordinates):

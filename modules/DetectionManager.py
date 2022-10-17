@@ -36,6 +36,7 @@ class DetectionManager(QObject):
     detectionManagerEndstopPosition = pyqtSignal(object)
     detectionManagerAutoEndStopSignal = pyqtSignal(object)
     detectionManagerArrayFrameSignal = pyqtSignal(object)
+    detectionManagerUVCoordinatesSignal = pyqtSignal(object)
 
     ##### Setup functions
     # init function
@@ -242,10 +243,14 @@ class DetectionManager(QObject):
             try:
                 retObject = []
                 retObject.append(qpixmap)
-                retObject.append(self.__uv)
+                # retObject.append(self.__uv)
                 self.detectionManagerNewFrameSignal.emit(retObject)
             except: 
                 raise SystemExit('Fatal error in Detection Manager.')
+
+    @pyqtSlot()
+    def sendUVCoorindates(self):
+        self.detectionManagerUVCoordinatesSignal.emit(self.__uv)
 
     @pyqtSlot(bool)
     def enableDetection(self, state=False):
