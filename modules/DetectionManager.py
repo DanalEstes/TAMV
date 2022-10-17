@@ -610,7 +610,7 @@ class DetectionManager(QObject):
 def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
         print('Starting camera...')
         cap = cv2.VideoCapture(videoSrc, backend)
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         cap.setExceptionMode(enable=True)
