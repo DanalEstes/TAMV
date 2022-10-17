@@ -454,14 +454,18 @@ class DetectionManager(QObject):
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
                 else:
+                    print('Retrying 1..')
                     retries += 1
             else:
+                print('Retrying 2..')
                 retries += 1
             if(retries > 5):
+                print('Retries full..')
                 average_location[0] = None
                 average_location[1] = None
                 break
         if(average_location[0] is not None):
+            print('Found location:', average_location)
             # calculate average X Y position from detection
             average_location[0] /= detectionCount
             average_location[1] /= detectionCount
@@ -469,6 +473,7 @@ class DetectionManager(QObject):
             average_location = np.around(average_location,0)
             self.__uv = average_location
         else:
+            print('No keypoints!')
             self.__uv = None
 
     def nozzleDetection(self):
