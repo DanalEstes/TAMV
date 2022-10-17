@@ -197,9 +197,7 @@ class DetectionManager(QObject):
             print(self.proc)
             # Retrieve camera settings
             try:
-                print('Connecting to camera..')
                 cameraSettings = self.pipeDM.recv()
-                print('Connecting to camera..')
                 self.cameraReady(imageSettings=cameraSettings)
             except:
                 _logger.exception('Camera failed to start..')
@@ -214,23 +212,18 @@ class DetectionManager(QObject):
             _logger.critical(e)
         try:
             if(len(self.frame)==1):
-                print('cannot retrieve frame')
                 if(self.frame==-1):
                     self.errorSignal.emit('Failed to get signal')
             elif(self.__enableDetection is True):
                 if(self.__endstopDetectionActive is True):
                     if(self.__endstopAutomatedDetectionActive is False):
-                        print('Endstop manual')
                         self.analyzeEndstopFrame()
                     else:
-                        print('Endstop automatic')
                         self.burstEndstopDetection()
                 elif(self.__nozzleDetectionActive is True):
                     if(self.__nozzleAutoDetectionActive is False):
-                        print('Nozzle manual')
                         self.analyzeNozzleFrame()
                     else:
-                        print('Nozzle automatic')
                         self.burstNozzleDetection()
             else:
                 pass
@@ -253,7 +246,6 @@ class DetectionManager(QObject):
             try:
                 retObject = []
                 retObject.append(qpixmap)
-                # retObject.append(self.__uv)
                 self.detectionManagerNewFrameSignal.emit(retObject)
             except: 
                 raise SystemExit('Fatal error in Detection Manager.')
@@ -453,27 +445,35 @@ class DetectionManager(QObject):
         self.uv = [None, None]
         average_location=[0,0]
         retries = 0
+        print('Starting detection loop')
         while(detectionCount < 3):
             # skip a few frames
+            print('  .. skipping frames..')
             for i in range(3):
                 self.frameEvent.set()
                 self.frame = self.pipeDM.recv()
                 self.frameEvent.clear()
+            print('  .. detecting..')
             (self.__uv, self.frame) = self.nozzleDetection()
             if(self.__uv is not None):
+                print('  .. keypoints found..')
                 if(self.__uv[0] is not None and self.__uv[1] is not None):
                     average_location[0] += self.__uv[0]
                     average_location[1] += self.__uv[1]
                     detectionCount += 1
                 else:
+                    print('  .. no keypoints..')
                     retries += 1
             else:
+                print('  .. still no keypoints..')
                 retries += 1
             if(retries > 5):
+                print('  .. retries failed..')
                 average_location[0] = None
                 average_location[1] = None
                 break
         if(average_location[0] is not None):
+            print('  .. calculating average position..')
             # calculate average X Y position from detection
             average_location[0] /= detectionCount
             average_location[1] /= detectionCount
@@ -481,6 +481,7 @@ class DetectionManager(QObject):
             average_location = np.around(average_location,0)
             self.__uv = average_location
         else:
+            print('  .. no position found!')
             self.__uv = None
 
     def nozzleDetection(self):
@@ -567,6 +568,7 @@ class DetectionManager(QObject):
 
     @pyqtSlot(bool)
     def toggleNozzleDetection(self, nozzleDetectFlag):
+        print('Switch nozzle detection to:', nozzleDetectFlag)
         if(nozzleDetectFlag is True):
             self.__nozzleDetectionActive = True
         else:
@@ -574,6 +576,7 @@ class DetectionManager(QObject):
 
     @pyqtSlot(bool)
     def toggleNozzleAutoDetection(self, nozzleDetectFlag):
+        print('Switch nozzle auto detection to:', nozzleDetectFlag)
         if(nozzleDetectFlag is True):
             self.__nozzleDetectionActive = True
             self.__nozzleAutoDetectionActive = True
@@ -681,7 +684,6 @@ def _reader(q, frameEvent, stopEvent, videoSrc, height, width, backend):
             if not ret:
                 break
             if stopEvent.is_set():
-                print('Stopping capture')
                 break
             if frameEvent.is_set():
                 ret, frame = cap.retrieve()
