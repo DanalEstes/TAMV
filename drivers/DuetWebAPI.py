@@ -133,6 +133,8 @@ class printerAPI:
         u = urlparse(baseURL)
         hostIP = socket.gethostbyname(u.hostname)
         baseURL = u.scheme + '://' + hostIP
+        if(u.port is not None):
+            baseURL += ':' + str(u.port)
 
         # set base parameters
         self._base_url = baseURL
