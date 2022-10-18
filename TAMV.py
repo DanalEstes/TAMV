@@ -393,8 +393,9 @@ class App(QMainWindow):
             # Check if we have no default machine
             if(defaultPrinterDefined is False):
                 self.__activePrinter = self.__userSettings['printer'][0]
-            (_errCode, _errMsg, self.printerURL) = self.sanitizeURL(self.__activePrinter['address'])
-            self.__activePrinter['address'] = self.printerURL
+            if(self.__activePrinter['controller'] == 'RRF'):
+                (_errCode, _errMsg, self.printerURL) = self.sanitizeURL(self.__activePrinter['address'])
+                self.__activePrinter['address'] = self.printerURL
             if _errCode > 0:
                 # invalid input
                 _logger.error('Invalid printer URL detected in settings.json')
