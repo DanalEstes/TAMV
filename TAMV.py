@@ -399,6 +399,7 @@ class App(QMainWindow):
             if _errCode > 0:
                 # invalid input
                 _logger.error('Invalid printer URL detected in settings.json')
+                _logger.error(_errMsg)
                 _logger.info('Defaulting to \"http://localhost\"...')
                 self.printerURL = 'http://localhost'
         
@@ -2239,9 +2240,9 @@ class App(QMainWindow):
         if(scheme.lower() not in ['http','https']):
             _errCode = 1
             _errMsg = 'Invalid scheme. Please only use http connections.'
-        elif scheme.lower() in ['https']:
-            _errCode = 2
-            _errMsg = 'Cannot use https connections for Duet controllers'
+        # elif scheme.lower() in ['https']:
+        #     _errCode = 2
+        #     _errMsg = 'Cannot use https connections for Duet controllers'
         else:
             if(u.netloc == ''):
                 _printerURL = u.scheme + '://' + u.path
