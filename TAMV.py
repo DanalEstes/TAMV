@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse, logging, os, sys, traceback, time
-from tkinter import E
-from json import tool
 from logging.handlers import RotatingFileHandler
 # openCV imports
 from cv2 import cvtColor, COLOR_BGR2RGB
@@ -14,6 +12,7 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QStyle, QWidget, QMenu,
 import json
 import numpy as np
 import copy
+import socket
 # Custom modules import
 from modules.DetectionManager import DetectionManager
 from modules.SettingsDialog import SettingsDialog
@@ -395,6 +394,7 @@ class App(QMainWindow):
             if(defaultPrinterDefined is False):
                 self.__activePrinter = self.__userSettings['printer'][0]
             (_errCode, _errMsg, self.printerURL) = self.sanitizeURL(self.__activePrinter['address'])
+            self.__activePrinter['address'] = self.printerURL
             if _errCode > 0:
                 # invalid input
                 _logger.error('Invalid printer URL detected in settings.json')
@@ -2232,19 +2232,21 @@ class App(QMainWindow):
         _printerURL = 'http://localhost'
         from urllib.parse import urlparse
         u = urlparse(inputString)
+        if(u[0] ==''):
+            u = u._replace(scheme="http")
         scheme = u[0]
-        netlocation = u[1]
-        if len(scheme) < 4 or scheme.lower() not in ['http']:
+        if(scheme.lower() not in ['http','https']):
             _errCode = 1
             _errMsg = 'Invalid scheme. Please only use http connections.'
-        elif len(netlocation) < 1:
-            _errCode = 2
-            _errMsg = 'Invalid IP/network address.'
         elif scheme.lower() in ['https']:
-            _errCode = 3
+            _errCode = 2
             _errMsg = 'Cannot use https connections for Duet controllers'
         else:
-            _printerURL = scheme + '://' + netlocation
+            if(u.netloc == ''):
+                _printerURL = u.scheme + '://' + u.path
+            else:
+                _printerURL = u.geturl()
+        _logger.debug('Sanitized ' + inputString + ' to address: ' + _printerURL)
         _logger.debug('*** exiting App.sanitizeURL')
         return(_errCode, _errMsg, _printerURL)
 

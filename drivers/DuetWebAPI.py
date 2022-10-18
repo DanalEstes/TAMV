@@ -24,6 +24,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.connection import ConnectTimeoutError
 from urllib3.util.retry import Retry
 from urllib3.exceptions import *
+from urllib.parse import urlparse
+import socket
 # import dependencies
 import json
 import time
@@ -125,6 +127,14 @@ class printerAPI:
     def __init__(self, baseURL, nickname='Default', password='reprap'):
         _logger.debug('Starting DuetWebAPI..')
         # parse input parameters
+
+        # convert hostname into IP
+        # fetch IP address
+        u = urlparse(baseURL)
+        hostIP = socket.gethostbyname(u.hostname)
+        baseURL = u.scheme + '://' + hostIP
+
+        # set base parameters
         self._base_url = baseURL
         self.password = password
         self._nickname = nickname

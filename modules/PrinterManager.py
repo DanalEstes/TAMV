@@ -81,7 +81,6 @@ class PrinterManager(QObject):
     # Connections
     @pyqtSlot(object)
     def connectPrinter(self, printer):
-        print('Printer:', printer)
         # send calling to log
         _logger.debug('*** calling PrinterManager.connectPrinter')
         if(self.__activePrinter is not None):
