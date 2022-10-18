@@ -35,7 +35,6 @@ class PrinterManager(QObject):
     def __init__(self, *args, **kwargs):
         # send calling to log
         _logger.debug('*** calling PrinterManager.__init__')
-        
 
         try:
             self.__parent = kwargs['parent']
@@ -59,6 +58,9 @@ class PrinterManager(QObject):
             _logger.exception(errorMsg)
             self.errorSignal.emit(errorMsg)
             return
+        try:
+            self.__announce = kwargs['announcemode']
+        except KeyError: self.__announce = True
 
         # send exiting to log
         _logger.debug('*** exiting PrinterManager.__init__')
@@ -67,14 +69,17 @@ class PrinterManager(QObject):
     def quit(self):
         # send calling to log
         _logger.debug('*** calling PrinterManager.quit')
-        _logger.info('Shutting down  Printer Manager..')
-        if( self.__printerJSON is not None):
-            _logger.info('  .. disconnecting printer..')
+        if(self.__announce):
+            _logger.info('Shutting down  Printer Manager..')
+            if( self.__printerJSON is not None):
+                _logger.info('  .. disconnecting printer..')
         self.disconnectPrinter({'noUpdate':True})
         if( self.__printerJSON is not None):
-            _logger.info('  Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')')
+            if(self.__announce):
+                _logger.info('  Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')')
         self.__printerJSON = None
-        _logger.info('Printer Manager shut down successfully.')
+        if(self.__announce):
+            _logger.info('Printer Manager shut down successfully.')
         # send exiting to log
         _logger.debug('*** exiting PrinterManager.quit')
 
@@ -90,7 +95,8 @@ class PrinterManager(QObject):
 
         # start connect process
         self.updateStatusbarSignal.emit('Attempting to connect to: ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')')
-        _logger.info('Connecting to printer at ' + self.__printerJSON['address'] + '..')
+        if(self.__announce):
+            _logger.info('Connecting to printer at ' + self.__printerJSON['address'] + '..')
 
         # Attempt connecting to the controller
         try:
@@ -130,14 +136,16 @@ class PrinterManager(QObject):
                     return
                 else:
                     # connection succeeded, update objects accordingly
-                    _logger.info('  .. fetching tool information..')
+                    if(self.__announce):
+                        _logger.info('  .. fetching tool information..')
                     # Send printer JSON to parent thread
                     activePrinter = self.__activePrinter.getJSON()
                     activePrinter['nickname'] = self.__printerJSON['nickname']
                     activePrinter['default'] = self.__printerJSON['default']
                     activePrinter['currentTool'] = self.__activePrinter.getCurrentTool()
                     successMsg = 'Connected to ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')'
-                    _logger.info('  ' + successMsg)
+                    if(self.__announce):
+                        _logger.info('  ' + successMsg)
                     self.updateStatusbarSignal.emit(successMsg)
                     self.activePrinterSignal.emit(activePrinter)
             except Exception as e:
@@ -169,20 +177,23 @@ class PrinterManager(QObject):
             try:
                 try:
                     self.__activePrinter.flushMovementBuffer()
-                    _logger.info('    .. unloading tools..')
+                    if(self.__announce):
+                        _logger.info('    .. unloading tools..')
                     self.__activePrinter.unloadTools()
                 except:
                     errorMsg = 'Could not unload tools.'
                     raise Exception(errorMsg)
                 # move to final park position
                 if(parkPosition is not None):
-                    _logger.info('    .. restoring position..')
+                    if(self.__announce):
+                        _logger.info('    .. restoring position..')
                     self.complexMoveAbsolute(position=parkPosition)
                 
                 if(noUpdate is False):
                     # notify parent thread
                     successMsg = 'Disconnected from ' + self.__printerJSON['nickname'] + ' (' + self.__printerJSON['controller']+ ')'
-                    _logger.info(successMsg)
+                    if(self.__announce):
+                        _logger.info(successMsg)
                     self.printerDisconnectedSignal.emit(successMsg)
                 else:
                     self.printerDisconnectedSignal.emit(None)
@@ -193,6 +204,10 @@ class PrinterManager(QObject):
 
         # send exiting to log
         _logger.debug('*** exiting PrinterManager.disconnectPrinter')
+
+    @pyqtSlot(bool)
+    def setAnnounceMode(self, announceFlag=True):
+        self.__announce = announceFlag
 
     # Movements and Coordinates
     def complexMoveAbsolute(self, position=None, moveSpeed=None):

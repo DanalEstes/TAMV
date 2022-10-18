@@ -2,6 +2,7 @@
 
 import argparse, logging, os, sys, traceback, time
 from logging.handlers import RotatingFileHandler
+from urllib.parse import urlparse
 # openCV imports
 from cv2 import cvtColor, COLOR_BGR2RGB
 # Qt imports
@@ -12,10 +13,10 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QStyle, QWidget, QMenu,
 import json
 import numpy as np
 import copy
-import socket
 # Custom modules import
-from modules.DetectionManager import DetectionManager
 from modules.SettingsDialog import SettingsDialog
+from modules.ConnectionDialog import ConnectionDialog
+from modules.DetectionManager import DetectionManager
 from modules.PrinterManager import PrinterManager
 from modules.StatusTipFilter import StatusTipFilter
 
@@ -52,6 +53,7 @@ class App(QMainWindow):
     limitAxesSignal = pyqtSignal()
     flushBufferSignal = pyqtSignal()
     saveToFirmwareSignal = pyqtSignal()
+    announceSignal = pyqtSignal(bool)
     # Settings Dialog
     resetImageSignal = pyqtSignal()
     pushbuttonSize = 38
@@ -126,8 +128,7 @@ class App(QMainWindow):
             self.centralWidget = QWidget()
             self.setCentralWidget(self.centralWidget)
             #  create stylehseets
-            self.setStyleSheet(
-                '\
+            self.globalStylesheet = '\
                 QLabel#instructions_text {\
                     background-color: rgba(255,153,0,.4);\
                 }\
@@ -239,7 +240,7 @@ class App(QMainWindow):
                     color: black;\
                 }\
                 '
-          )
+            self.setStyleSheet(self.globalStylesheet)
         #### Driver API imports
         if(True):
             try:
@@ -1330,7 +1331,8 @@ class App(QMainWindow):
         self.toggleDetectionSignal.emit(False)
         self.__displayCrosshair = False
         self.resetCalibrationVariables()
-        self.unloadToolSignal.emit()
+        if(self.__firstConnection is False):
+            self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
     
     def resetNozzleAlignment(self):
@@ -1850,7 +1852,7 @@ class App(QMainWindow):
         if(announce):
             _logger.info('  .. starting Printer Manager.. ')
         try:
-            self.printerManager = PrinterManager(parent=None, firmwareList=self.__firmwareList, driverList=self.__driverList)
+            self.printerManager = PrinterManager(parent=None, firmwareList=self.__firmwareList, driverList=self.__driverList, announcemode=announce)
             self.printerThread = QThread()
             self.printerManager.moveToThread(self.printerThread)
             
@@ -1867,6 +1869,7 @@ class App(QMainWindow):
             self.printerManager.printerDisconnectedSignal.connect(self.printerDisconnected)
             self.connectSignal.connect(self.printerManager.connectPrinter)
             self.disconnectSignal.connect(self.printerManager.disconnectPrinter)
+            self.announceSignal.connect(self.printerManager.setAnnounceMode)
             
             self.moveRelativeSignal.connect(self.printerManager.moveRelative)
             self.moveAbsoluteSignal.connect(self.printerManager.moveAbsolute)
@@ -1899,13 +1902,36 @@ class App(QMainWindow):
         self.connectionStatusLabel.setText('<i>Connecting..</i>')
         self.connectionStatusLabel.setStyleSheet(self.styleBlue)
         self.repaint()
-        try:
-            if(self.printerThread.isRunning() is False):
-                self.createPrinterManagerThread(announce=False)
-        except: self.createPrinterManagerThread(announce=False)
-        #HBHBHBHB TODO: add connection popup
 
-        self.connectSignal.emit(self.__activePrinter)
+        self.connection_dialog = ConnectionDialog(parent=self, newPrinter=False, settings=self.__userSettings, stylesheet=self.globalStylesheet)
+        connectionDialogReturn = self.connection_dialog.exec()
+        # Destroy connection_dialog window
+        self.connection_dialog = None
+        
+        if(connectionDialogReturn == -2):
+            # new printer definition
+            pass
+        elif(connectionDialogReturn >= 0):
+            # fetch printer from user objects
+            self.__activePrinter = self.__userSettings['printer'][connectionDialogReturn]
+            try:
+                self.announceSignal.emit(False)
+                if(self.printerThread.isRunning() is True):
+                    # Printer already running, delete thread and restart
+                    self.printerThread.quit()
+                    self.printerThread.wait()
+                self.createPrinterManagerThread(announce=False)
+            except: self.createPrinterManagerThread(announce=False)
+            self.announceSignal.emit(True)
+            self.connectSignal.emit(self.__activePrinter)
+        else:
+            # user closed window, update GUI back to default state
+            # Settings option in menu
+            self.preferencesAction.setDisabled(False)
+            # Connect button
+            self.connectButton.setVisible(True)
+            self.connectButton.setDisabled(False)
+            self.connectButton.setStyleSheet(self.styleGreen)
 
     def haltPrinterOperation(self, **kwargs):
         try:
@@ -1991,6 +2017,8 @@ class App(QMainWindow):
         # Status label
         self.connectionStatusLabel.setText('Disconnected')
         self.connectionStatusLabel.setStyleSheet(self.styleOrange)
+        self.__firstConnection = True
+        self.__restorePosition = None
         self.__mutex.unlock()
         self.stateDisconnected()
         self.repaint()
@@ -2232,7 +2260,6 @@ class App(QMainWindow):
         _errCode = 0
         _errMsg = ''
         _printerURL = 'http://localhost'
-        from urllib.parse import urlparse
         u = urlparse(inputString)
         if(u[0] ==''):
             u = u._replace(scheme="http")
@@ -2289,6 +2316,7 @@ class App(QMainWindow):
             # Save settings to file
             with open('./config/settings.json','w') as outputfile:
                 json.dump(self.__userSettings, outputfile)
+            
             _logger.info('User preferences saved to settings.json')
             self.updateStatusbarMessage('User preferences saved to settings.json')
             self.statusBar.setStyleSheet('')
