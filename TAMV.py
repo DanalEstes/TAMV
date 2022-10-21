@@ -442,6 +442,11 @@ class App(QMainWindow):
         self.preferencesAction.setText('&Preferences..')
         self.preferencesAction.triggered.connect(self.displayPreferences)
         fileMenu.addAction(self.preferencesAction)
+        #### Save offsets to firmware
+        self.saveFirmwareAction = QAction(self)
+        self.saveFirmwareAction.setText('&Save offsets..')
+        self.saveFirmwareAction.triggered.connect(self.saveOffsets)
+        fileMenu.addAction(self.saveFirmwareAction)
         # Quit
         self.quitAction = QAction(self)
         self.quitAction.setText('&Quit')
@@ -1529,8 +1534,7 @@ class App(QMainWindow):
             calibration_time = np.around(time.time() - self.startTime,1)
             _logger.info('Calibration completed (' + str(calibration_time) + 's) with a resolution of ' + str(self.mpp) + '/pixel')
             # save to firmware
-            self.saveToFirmwareSignal.emit()
-            _logger.info('Offsets saved to firmware.')
+            self.saveOffsets()
             # reset GUI
             self.stateCalibrateComplete()
             self.repaint()
@@ -2327,6 +2331,10 @@ class App(QMainWindow):
             successMsg = 'Tool ' + str(self.__activePrinter['currentTool']) + ': (X' + str(offsets['X']) + ', Y' + str(offsets['Y']) + ', Z' + str(offsets['Z']) + ').'
             self.updateStatusbarMessage(successMsg)
             _logger.info(successMsg)
+
+    def saveOffsets(self):
+        self.saveToFirmwareSignal.emit()
+        _logger.info('Offsets saved to firmware.')
 
     ########################################################################### Interface with Settings Dialog
     def displayPreferences(self, event=None, newPrinterFlag=False):
