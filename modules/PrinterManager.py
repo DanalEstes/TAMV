@@ -383,6 +383,10 @@ class PrinterManager(QObject):
         printerCoordinates = self.__activePrinter.getCoordinates()
         self.coordinatesSignal.emit(printerCoordinates)
 
+    @pyqtSlot()
+    def saveOffsets(self):
+        self.__activePrinter.saveOffsetsToFirmware()
+        
     # Tools
     @pyqtSlot()
     def currentTool(self):

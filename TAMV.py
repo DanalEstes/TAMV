@@ -1528,6 +1528,9 @@ class App(QMainWindow):
             # entire list has been processed, output results
             calibration_time = np.around(time.time() - self.startTime,1)
             _logger.info('Calibration completed (' + str(calibration_time) + 's) with a resolution of ' + str(self.mpp) + '/pixel')
+            # save to firmware
+            self.saveToFirmwareSignal.emit()
+            _logger.info('Offsets saved to firmware.')
             # reset GUI
             self.stateCalibrateComplete()
             self.repaint()
@@ -1956,6 +1959,8 @@ class App(QMainWindow):
 
             self.printerManager.offsetsSetSignal.connect(self.calibrateOffsetsApplied)
             self.setOffsetsSignal.connect(self.printerManager.calibrationSetOffset)
+            self.saveToFirmwareSignal.connect(self.printerManager.saveOffsets)
+
             self.printerThread.start()#priority=QThread.TimeCriticalPriority)
         except Exception as e:
             print(e)
