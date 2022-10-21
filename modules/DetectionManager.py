@@ -447,6 +447,9 @@ class DetectionManager(QObject):
         self.frame = self.dashedLine(image=self.frame, start=(0,240), end=(320-keypointRadius, 240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
         self.frame = self.dashedLine(image=self.frame, start=(320+keypointRadius,240), end=(640,240), color=(255,255,255), horizontal=True, lineWidth=1, segmentWidth=width)
 
+        self.frame = self.dashedLine(image=self.frame, start=(320-keypointRadius,240), end=(320+keypointRadius, 240), color=(0,0,0), horizontal=True, lineWidth=1, segmentWidth=1)
+        self.frame = self.dashedLine(image=self.frame, start=(320,240-keypointRadius), end=(320, 240+keypointRadius), color=(0,0,0), horizontal=False, lineWidth=1, segmentWidth=1)
+
         self.frame = cv2.circle(img=self.frame, center=(320,240), radius=keypointRadius, color=(0,0,0), thickness=3,lineType=cv2.LINE_AA)
         self.frame = cv2.circle(img=self.frame, center=(320,240), radius=keypointRadius+1, color=(0,0,255), thickness=1,lineType=cv2.LINE_AA)
 
