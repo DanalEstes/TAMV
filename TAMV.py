@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QStyle, QWidget, QMenu,
 import json
 import numpy as np
 import copy
+import threading
 # Custom modules import
 from modules.SettingsDialog import SettingsDialog
 from modules.ConnectionDialog import ConnectionDialog
@@ -22,7 +23,7 @@ from modules.StatusTipFilter import StatusTipFilter
 
 ########################################################################### Core application class
 class App(QMainWindow):
-    # "Global" mutex
+    # Global mutex
     __mutex = QMutex()
     # Signals
     ######## Detection Manager
@@ -58,8 +59,11 @@ class App(QMainWindow):
     resetImageSignal = pyqtSignal()
     pushbuttonSize = 38
     # default move speed in feedrate/min
-    _moveSpeed = 6000
-    __counter = 0
+    __moveSpeed = 6000
+    # Maximum number of retries for detection
+    __maxRetries = 3
+    # Maximum runtime (in seconds) for calibration cycles
+    __maxRuntime = 120
     
     ########################################################################### Initialize class
     def __init__(self, parent=None):
@@ -110,6 +114,7 @@ class App(QMainWindow):
             # Nozzle detection
             self.__stateAutoNozzleAlignment = False
             self.__stateManualNozzleAlignment = False
+            self.singleToolOffsetsCapture = False
             self.__displayCrosshair = False
         
         ####  setup window properties
@@ -674,8 +679,19 @@ class App(QMainWindow):
             self.manualCPCaptureButton.clicked.connect(self.manualCPCapture)
             self.footerLayout.addWidget(self.manualCPCaptureButton, 0,1,1,1,Qt.AlignRight|Qt.AlignVCenter)
 
+            # Override Manual Tool offset Capture button
+            self.overrideManualOffsetCaptureButton = QPushButton('Capture offset')
+            self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+            self.overrideManualOffsetCaptureButton.setMinimumSize(self.pushbuttonSize*3,self.pushbuttonSize)
+            self.overrideManualOffsetCaptureButton.setMaximumSize(self.pushbuttonSize*3,self.pushbuttonSize)
+            self.overrideManualOffsetCaptureButton.setToolTip('Capture current position and calculate tool offset.')
+            self.overrideManualOffsetCaptureButton.setDisabled(True)
+            self.overrideManualOffsetCaptureButton.setVisible(False)
+            self.overrideManualOffsetCaptureButton.clicked.connect(self.overrideManualToolOffsetCapture)
+            self.footerLayout.addWidget(self.overrideManualOffsetCaptureButton, 0,1,1,1,Qt.AlignRight|Qt.AlignVCenter)
+
             # Manual Tool offset Capture button
-            self.manualToolOffsetCaptureButton = QPushButton('Capture offset')
+            self.manualToolOffsetCaptureButton = QPushButton('Capture2 offset')
             self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
             self.manualToolOffsetCaptureButton.setMinimumSize(self.pushbuttonSize*3,self.pushbuttonSize)
             self.manualToolOffsetCaptureButton.setMaximumSize(self.pushbuttonSize*3,self.pushbuttonSize)
@@ -683,7 +699,7 @@ class App(QMainWindow):
             self.manualToolOffsetCaptureButton.setDisabled(True)
             self.manualToolOffsetCaptureButton.setVisible(False)
             self.manualToolOffsetCaptureButton.clicked.connect(self.manualToolOffsetCapture)
-            self.footerLayout.addWidget(self.manualToolOffsetCaptureButton, 0,1,1,1,Qt.AlignRight|Qt.AlignVCenter)
+            self.footerLayout.addWidget(self.manualToolOffsetCaptureButton, 0,0,1,1,Qt.AlignRight|Qt.AlignVCenter)
 
             # Start Alignment button
             self.alignToolsButton = QPushButton('Align Tools')
@@ -724,7 +740,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'X': str(-1*incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'X': str(-1*incrementDistance)}}
         self.moveRelativeSignal.emit(params)
     
     def xRightClicked(self):
@@ -737,7 +753,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'X': str(incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'X': str(incrementDistance)}}
         self.moveRelativeSignal.emit(params)
     
     def yleftClicked(self):
@@ -750,7 +766,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'Y': str(-1*incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'Y': str(-1*incrementDistance)}}
         self.moveRelativeSignal.emit(params)
     
     def yRightClicked(self):
@@ -763,7 +779,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'Y': str(incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'Y': str(incrementDistance)}}
         self.moveRelativeSignal.emit(params)
 
     def zleftClicked(self):
@@ -776,7 +792,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'Z': str(-1*incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'Z': str(-1*incrementDistance)}}
         self.moveRelativeSignal.emit(params)
     
     def zRightClicked(self):
@@ -789,7 +805,7 @@ class App(QMainWindow):
             incrementDistance = 0.1
         elif self.button_001.isChecked():
             incrementDistance = 0.01
-        params = {'moveSpeed': self._moveSpeed, 'position':{'Z': str(incrementDistance)}}
+        params = {'moveSpeed': self.__moveSpeed, 'position':{'Z': str(incrementDistance)}}
         self.moveRelativeSignal.emit(params)
     
     ########################################################################### GUI State functions
@@ -819,10 +835,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleDisabled)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -876,10 +897,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleDisabled)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -989,10 +1015,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleDisabled)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1038,10 +1069,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleDisabled)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1083,10 +1119,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(True)
         self.alignToolsButton.setDisabled(False)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleGreen)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1136,10 +1177,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
-        self.alignToolsButton.setStyleSheet(self.styleDisabled)
+        self.alignToolsButton.setText('Detecting..')
+        self.alignToolsButton.setStyleSheet(self.styleOrange+' * {font: italic}')
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(True)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(True)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1184,10 +1230,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(True)
         self.alignToolsButton.setDisabled(False)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleGreen)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1237,10 +1288,15 @@ class App(QMainWindow):
         # Start Alignment button
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
+        self.alignToolsButton.setText('Align Tools')
         self.alignToolsButton.setStyleSheet(self.styleGreen)
+        # Override Manual Tool offset Capture button
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Manual Tool offset Capture button
-        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
         self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # Resume auto alignment button
         self.resumeAutoToolAlignmentButton.setVisible(False)
@@ -1311,12 +1367,19 @@ class App(QMainWindow):
         # Reset GUI
         self.stateCalibrateReady()
     
-    def manualToolOffsetCapture(self):
-        self.manualToolOffsetCaptureButton.setDisabled(True)
-        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+    def overrideManualToolOffsetCapture(self):
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
         # set tool alignment state to trigger offset calculation
         self.state = 100
         self.pollCoordinatesSignal.emit()
+
+    def manualToolOffsetCapture(self):
+        self.manualToolOffsetCaptureButton.setDisabled(True)
+        self.manualToolOffsetCaptureButton.setVisible(False)
+        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': self.__currentPosition, 'cpCoordinates': self.__cpCoordinates, 'continue': False}
+        self.setOffsetsSignal.emit(params)
 
     def resetCalibration(self):
         # Reset program state, and frame capture control to defaults
@@ -1331,7 +1394,7 @@ class App(QMainWindow):
         self.toggleDetectionSignal.emit(False)
         self.__displayCrosshair = False
         self.resetCalibrationVariables()
-        if(self.__firstConnection is False):
+        if(self.__restorePosition is not None):
             self.unloadToolSignal.emit()
         self.getVideoFrameSignal.emit()
     
@@ -1429,6 +1492,7 @@ class App(QMainWindow):
             # grab the first item in the list (FIFO)
             toolIndex = self.workingToolset[0]
             _logger.info('Calibrating T' + str(toolIndex) +'..')
+            self.alignToolsButton.setText('Detecting T'+ str(toolIndex) +'..')
             # delete the tool from the list before processing it
             self.workingToolset.pop(0)
             # update toolButtons GUI to indiciate which tool we're working on
@@ -1458,6 +1522,7 @@ class App(QMainWindow):
 
     def autoCalibrate(self):
         self.tabPanel.setDisabled(True)
+        # create variable for tracking the calibration run time, if not already defined
         try:
             if(runtime):
                 pass
@@ -1638,6 +1703,7 @@ class App(QMainWindow):
                     runtime = np.around(time.time() - self.toolTime,1)
                     # check if too much time has passed
                     if(runtime > 120 or self.calibrationMoves > 30):
+                        print('Runtime:', runtime, ' moves: ', self.calibrationMoves)
                         self.retries = 10
                     # Otherwise, check if we're not aligned to the center
                     elif(self.offsets[0] != 0.0 or self.offsets[1] != 0.0):
@@ -1678,34 +1744,18 @@ class App(QMainWindow):
                         self.updateStatusbarMessage(updateMessage)
                         self.pollCoordinatesSignal.emit()
                         return
-            elif(self.retries < 100 and runtime <= 120):
+            elif(self.retries < 100 and runtime <= self.__maxRuntime):
                 self.retries += 1
                 self.pollCoordinatesSignal.emit()
                 return
-        if(self.retries < 100):
+        if(self.retries < self.__maxRetries):
             self.retries += 1
             # enable detection
             self.toggleDetectionSignal.emit(True)
             self.__displayCrosshair = True
             self.pollCoordinatesSignal.emit()
             return
-        if(self.__stateEndstopAutoCalibrate is True):
-            self.updateStatusbarMessage('Failed to detect endstop.')
-            _logger.warning('Failed to detect endstop. Cancelled operation.')
-            # if(self.originalPrinterPosition['X'] is not None and self.originalPrinterPosition['Y'] is not None):
-                # params = {'moveSpeed':1000, 'position':{'X':self.originalPrinterPosition['X'],'Y':self.originalPrinterPosition['Y']}}
-                # self.moveAbsoluteSignal.emit(params)
-            # End calibration
-            self.__stateAutoCPCapture = False
-            self.__stateEndstopAutoCalibrate = False
-            self.toggleEndstopAutoDetectionSignal.emit(False)
-            self.haltCPAutoCapture()
-            self.pollCoordinatesSignal.emit()
-        elif(self.__stateAutoNozzleAlignment is True):
-            updateMessage = 'Failed to detect nozzle. Try manual override.'
-            self.updateStatusbarMessage(updateMessage)
-            _logger.warning(updateMessage)
-            self.nozzleDetectionFailed()
+        # If we've reached this part of the code, we've run over our limit of retries
 
     def nozzleDetectionFailed(self):
         self.state = -99
@@ -1716,9 +1766,9 @@ class App(QMainWindow):
         self.tabPanel.setDisabled(False)
         self.alignToolsButton.setVisible(False)
         self.alignToolsButton.setDisabled(True)
-        self.manualToolOffsetCaptureButton.setVisible(True)
-        self.manualToolOffsetCaptureButton.setDisabled(False)
-        self.manualToolOffsetCaptureButton.setStyleSheet(self.styleBlue)
+        self.overrideManualOffsetCaptureButton.setVisible(True)
+        self.overrideManualOffsetCaptureButton.setDisabled(False)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleBlue)
         self.resumeAutoToolAlignmentButton.setVisible(True)
         self.resumeAutoToolAlignmentButton.setDisabled(False)
         self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleGreen)
@@ -1745,11 +1795,15 @@ class App(QMainWindow):
         self.resumeAutoToolAlignmentButton.setVisible(False)
         self.resumeAutoToolAlignmentButton.setDisabled(True)
         self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
+        self.overrideManualOffsetCaptureButton.setVisible(False)
+        self.overrideManualOffsetCaptureButton.setDisabled(True)
+        self.overrideManualOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+        self.alignToolsButton.setVisible(True)
+        self.alignToolsButton.setDisabled(True)
         self.updateStatusbarMessage('Resuming auto detection of current tool..')
         self.toggleNozzleAutoDetectionSignal.emit(True)
         self.pollCoordinatesSignal.emit()
 
-    ########################################################################### Module interfaces and handlers
     ########################################################################### Interface with Detection Manager
     def createDetectionManagerThread(self, announce=True):
         if(announce):
@@ -1765,7 +1819,7 @@ class App(QMainWindow):
         self.detectionThread.finished.connect(self.detectionManager.quit)
         self.detectionThread.finished.connect(self.detectionManager.deleteLater)
         self.detectionThread.finished.connect(self.detectionThread.deleteLater)
-        self.detectionThread.start()#priority=QThread.TimeCriticalPriority)
+        
         # Video frame signals and slots
         self.detectionManager.detectionManagerNewFrameSignal.connect(self.refreshImage)
         self.detectionManager.detectionManagerReadySignal.connect(self.startVideo)
@@ -1799,10 +1853,7 @@ class App(QMainWindow):
     def refreshImage(self, data):
         self.__mutex.lock()
         frame = data[0]
-        # uvCoordinates = data[1]
         self.image.setPixmap(frame)
-        # if(self.__stateEndstopAutoCalibrate is True or self.__stateAutoNozzleAlignment is True):
-        #     self.uv = uvCoordinates
         self.__mutex.unlock()
         self.getVideoFrameSignal.emit()
 
@@ -1827,23 +1878,28 @@ class App(QMainWindow):
         self.haltPrinterOperation(silent=True)
         self.__mutex.lock()
         try:
+            self.resetCalibration()
+            self.stateExiting()
             self.statusBar.showMessage(message)
             self.statusBar.setStyleSheet(self.styleRed)
             self.cpLabel.setStyleSheet(self.styleOrange)
+            self.cpLabel.setVisible(False)
             self.connectionStatusLabel.setStyleSheet(self.styleOrange)
-            self.resetCalibration()
+            self.connectionStatusLabel.setText('<i>Critical Error</i>')
             self.__mutex.unlock()
-            self.moveAbsoluteSignal.emit(self.originalPrinterPosition)
-        except:
+            if(self.__restorePosition is not None):
+                self.moveAbsoluteSignal.emit(self.__restorePosition)
+        except Exception as e:
+            print(e)
             self.__mutex.unlock()
             errorMsg = 'Error sending message to statusbar.'
             _logger.error(errorMsg)
-        
         # Kill thread
         self.detectionThread.quit()
         self.detectionThread.wait()
-        self.printerThread.quit()
-        self.printerThread.wait()
+        if(self.__restorePosition is not None):
+            self.printerThread.quit()
+            self.printerThread.wait()
         # display error image
         self.image.setPixmap(self.errorImage)
 
@@ -1886,7 +1942,6 @@ class App(QMainWindow):
 
             self.printerManager.offsetsSetSignal.connect(self.calibrateOffsetsApplied)
             self.setOffsetsSignal.connect(self.printerManager.calibrationSetOffset)
-            
             self.printerThread.start()#priority=QThread.TimeCriticalPriority)
         except Exception as e:
             print(e)
@@ -2024,7 +2079,6 @@ class App(QMainWindow):
         self.repaint()
         # send exiting to log
         _logger.debug('*** exiting App.printerDisconnected')
-        
 
     @pyqtSlot(object)
     def printerError(self, message):
@@ -2048,9 +2102,11 @@ class App(QMainWindow):
         self.__displayCrosshair = False
         toolNumber = int(toolNumber)
         if(toolNumber == -1):
+            self.alignToolsButton.setText('Unloading..')
             self.unloadToolSignal.emit()
             return
         try:
+            self.alignToolsButton.setText('Loading T' +str(toolNumber) + '..')
             self.callToolSignal.emit(toolNumber)
         except:
             errorMsg = 'Unable to call tool from printer: ' + str(toolNumber)
@@ -2076,6 +2132,20 @@ class App(QMainWindow):
             else:
                 button.setChecked(True)
         self.__mutex.unlock()
+        if(self.__stateAutoNozzleAlignment is False and self.__stateManualNozzleAlignment is False and int(toolIndex) != -1):
+            overrideEnabled = True
+        else:
+            overrideEnabled = False
+        if(self.__cpCoordinates is not None and self.__cpCoordinates['X'] is not None):
+            self.manualToolOffsetCaptureButton.setDisabled(not overrideEnabled)
+            self.manualToolOffsetCaptureButton.setVisible(overrideEnabled)
+            if(overrideEnabled):
+                self.manualToolOffsetCaptureButton.setStyleSheet(self.styleGreen)
+            else:
+                self.manualToolOffsetCaptureButton.setStyleSheet(self.styleDisabled)
+            if(not overrideEnabled):
+                self.alignToolsButton.setText('Detecting T' + str(toolIndex) +'..')
+            self.alignToolsButton.setVisible(not overrideEnabled)
 
     @pyqtSlot()
     def printerMoveComplete(self):
@@ -2122,11 +2192,30 @@ class App(QMainWindow):
 
     @pyqtSlot(object)
     def saveUVCoordinates(self, uvCoordinates):
-        if(uvCoordinates is None):
-            # failed to detect, poll coordinates again
-            self.pollCoordinatesSignal.emit()
-            return
         self.uv = uvCoordinates
+        if(self.__stateEndstopAutoCalibrate is True or self.__stateAutoNozzleAlignment is True):
+            if(uvCoordinates is None):
+                print('No keypoints found')
+                # failed to detect, poll coordinates again
+                self.retries += 1
+                print('Retries:', self.retries)
+                # check if we've exceeded our maxRetries or maxRuntime
+                if(self.retries > self.__maxRetries):
+                    if(self.__stateEndstopAutoCalibrate is True):
+                        self.updateStatusbarMessage('Failed to detect endstop.')
+                        _logger.warning('Failed to detect endstop. Cancelled operation.')
+                        self.__stateAutoCPCapture = False
+                        self.__stateEndstopAutoCalibrate = False
+                        self.toggleEndstopAutoDetectionSignal.emit(False)
+                        self.haltCPAutoCapture()
+                    elif(self.__stateAutoNozzleAlignment is True):
+                        updateMessage = 'Failed to detect nozzle. Try manual override.'
+                        self.updateStatusbarMessage(updateMessage)
+                        _logger.warning(updateMessage)
+                        self.nozzleDetectionFailed()
+                        return
+                self.pollCoordinatesSignal.emit()
+                return
         self.autoCalibrate()
 
     @pyqtSlot(object)
@@ -2157,7 +2246,7 @@ class App(QMainWindow):
                 self.state = 200
                 self.__stateAutoNozzleAlignment = True
                 self.toggleNozzleAutoDetectionSignal.emit(True)
-                params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
+                params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates, 'continue': True}
                 self.setOffsetsSignal.emit(params)
                 return
             self.getUVCoordinatesSignal.emit()
@@ -2167,7 +2256,7 @@ class App(QMainWindow):
             self.state = 200
             self.__stateAutoNozzleAlignment = True
             self.toggleNozzleAutoDetectionSignal.emit(True)
-            params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates}
+            params={'toolIndex': int(self.__activePrinter['currentTool']), 'position': coordinates, 'cpCoordinates': self.__cpCoordinates, 'continue': True}
             self.setOffsetsSignal.emit(params)
             return
         elif(self.__firstConnection):
@@ -2180,7 +2269,13 @@ class App(QMainWindow):
         try:
             offsets = params['offsets']
         except: offsets = None
-        if(offsets is not None):
+        try:
+            __continue = params['continue']
+        except: __continue = True
+        self.resumeAutoToolAlignmentButton.setDisabled(True)
+        self.resumeAutoToolAlignmentButton.setVisible(False)
+        self.resumeAutoToolAlignmentButton.setStyleSheet(self.styleDisabled)
+        if(__continue is True):
             toolCalibrationTime = np.around(time.time() - self.toolTime,1)
             successMsg = 'Tool ' + str(self.__activePrinter['currentTool']) + ': (X' + str(offsets['X']) + ', Y' + str(offsets['Y']) + ', Z' + str(offsets['Z']) + ') -- [' + str(toolCalibrationTime) + 's].'
             self.updateStatusbarMessage(successMsg)
@@ -2188,10 +2283,13 @@ class App(QMainWindow):
             self.state = 200
             self.retries = 0
             self.__stateAutoNozzleAlignment = True
+            self.__stateManualNozzleAlignment = False
             self.toggleNozzleAutoDetectionSignal.emit(True)
             self.calibrateTools(self.workingToolset)
         else:
-            raise SystemExit('FUCKED!')
+            successMsg = 'Tool ' + str(self.__activePrinter['currentTool']) + ': (X' + str(offsets['X']) + ', Y' + str(offsets['Y']) + ', Z' + str(offsets['Z']) + ').'
+            self.updateStatusbarMessage(successMsg)
+            _logger.info(successMsg)
 
     ########################################################################### Interface with Settings Dialog
     def displayPreferences(self, event=None, newPrinterFlag=False):
@@ -2266,10 +2364,7 @@ class App(QMainWindow):
         scheme = u[0]
         if(scheme.lower() not in ['http','https']):
             _errCode = 1
-            _errMsg = 'Invalid scheme. Please only use http connections.'
-        # elif scheme.lower() in ['https']:
-        #     _errCode = 2
-        #     _errMsg = 'Cannot use https connections for Duet controllers'
+            _errMsg = 'Invalid scheme. Please only use http/https connections.'
         else:
             if(u.netloc == ''):
                 _printerURL = u.scheme + '://' + u.path
@@ -2408,6 +2503,10 @@ class App(QMainWindow):
         print('  Welcome to TAMV!')
         print()
         super().show()
+    
+    def startModules(self):
+        self.detectionThread.start(priority=QThread.TimeCriticalPriority)
+        self.announceSignal.emit(False)
 
 if __name__=='__main__':
     ### Setup OS options
@@ -2477,4 +2576,6 @@ if __name__=='__main__':
     app = QApplication(sys.argv)
     a = App()
     a.show()
+    t = threading.Thread(target=a.startModules)
+    t.start()
     sys.exit(app.exec())

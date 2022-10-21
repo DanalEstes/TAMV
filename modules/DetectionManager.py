@@ -190,46 +190,59 @@ class DetectionManager(QObject):
     # Main processing function
     @pyqtSlot()
     def processFrame(self):
-        if(not self.proc.is_alive()):
+        if(not self.proc.is_alive() and not self.stopEvent.is_set()):
             # Start camera process
             self.proc.start()
             # Retrieve camera settings
             try:
                 cameraSettings = self.pipeDM.recv()
+            except:
+                errorMsg = 'Camera process failed to start.'
+                _logger.exception(errorMsg)
+                self.errorSignal.emit(errorMsg)
+                self.stopEvent.set()
+            try:
                 self.cameraReady(imageSettings=cameraSettings)
             except:
-                _logger.exception('Camera failed to start..')
-                self.errorSignal.emit('Camera failed to start..')
-        
-        try:
-            self.frameEvent.set()
-            self.frame = self.pipeDM.recv()
-            self.frameEvent.clear()
-        except Exception as e:
-            _logger.critical('Error in camera process')
-            _logger.critical(e)
-        try:
-            if(len(self.frame)==1):
-                if(self.frame==-1):
-                    self.errorSignal.emit('Failed to get signal')
-            elif(self.__enableDetection is True):
-                if(self.__endstopDetectionActive is True):
-                    if(self.__endstopAutomatedDetectionActive is False):
-                        self.analyzeEndstopFrame()
-                    else:
-                        self.burstEndstopDetection()
-                elif(self.__nozzleDetectionActive is True):
-                    if(self.__nozzleAutoDetectionActive is False):
-                        self.analyzeNozzleFrame()
-                    else:
-                        self.burstNozzleDetection()
-            else:
-                pass
-            self.receivedFrame(self.frame)
-        except Exception as e:
-            _logger.critical('Camera failed to retrieve data.')
-            _logger.critical(e)
-            self.errorSignal.emit('Critical camera error. Please restart TAMV.')
+                errorMsg = 'Failed to read data from camera source.'
+                _logger.exception(errorMsg)
+                self.errorSignal.emit(errorMsg)
+                self.stopEvent.set()
+        elif(self.stopEvent.is_set()):
+            errorMsg = 'Critical error: check camera. Restart TAMV.'
+            _logger.exception(errorMsg)
+            self.errorSignal.emit(errorMsg)
+        else:
+            try:
+                self.frameEvent.set()
+                self.frame = self.pipeDM.recv()
+                self.frameEvent.clear()
+            except Exception as e:
+                _logger.critical('Error in camera process')
+                _logger.critical(e)
+            try:
+                if(len(self.frame)==1):
+                    if(self.frame==-1):
+                        self.errorSignal.emit('Failed to get signal')
+                elif(self.__enableDetection is True):
+                    if(self.__endstopDetectionActive is True):
+                        if(self.__endstopAutomatedDetectionActive is False):
+                            self.analyzeEndstopFrame()
+                        else:
+                            self.burstEndstopDetection()
+                    elif(self.__nozzleDetectionActive is True):
+                        if(self.__nozzleAutoDetectionActive is False):
+                            self.analyzeNozzleFrame()
+                        else:
+                            self.burstNozzleDetection()
+                else:
+                    pass
+                self.receivedFrame(self.frame)
+            except Exception as e:
+                _logger.critical('Camera failed to retrieve data.')
+                _logger.critical(e)
+                _logger.critical('Critical camera error. Please restart TAMV.')
+                self.errorSignal.emit('Critical camera error. Please restart TAMV.')
 
     # convert from cv2.mat to QPixmap and return results (frame+keypoint)
     def receivedFrame(self, frame):

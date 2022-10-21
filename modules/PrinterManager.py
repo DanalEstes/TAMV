@@ -428,6 +428,10 @@ class PrinterManager(QObject):
             errorMsg = 'setOffset: error in cpCoordinates'
             _logger.error(errorMsg)
             self.errorSignal.emit(errorMsg)
+        try:
+            __continue = params['continue']
+        except: __continue = True
+
         if(toolIndex < 0 or toolIndex is None):
             errorMsg = 'Invalid tool selected for offsets.'
             _logger.error(errorMsg)
@@ -451,7 +455,7 @@ class PrinterManager(QObject):
             return
         try:
             toolOffsets = self.__activePrinter.getToolOffset(toolIndex)
-            _logger.debug('calibrationSetOffset: Setting offsets for tool: ', toolIndex)
+            _logger.debug('calibrationSetOffset: Setting offsets for tool: ' + str(toolIndex))
             finalOffsets = {}
             finalOffsets['X'] = np.around(cpCoordinates['X'] + toolOffsets['X'] - position['X'],3)
             finalOffsets['Y'] = np.around(cpCoordinates['Y'] + toolOffsets['Y'] - position['Y'],3)
@@ -465,5 +469,5 @@ class PrinterManager(QObject):
             params = {'offsets': None}
             self.offsetsSetSignal.emit(params)
             return
-        params = {'offsets': finalOffsets}
+        params = {'offsets': finalOffsets, 'continue': __continue}
         self.offsetsSetSignal.emit(params)
