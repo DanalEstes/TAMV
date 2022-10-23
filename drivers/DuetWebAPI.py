@@ -58,6 +58,8 @@ class ToolTimeoutException(Error):
     pass
 class HomingException(Error):
     pass
+class DuetSBCHandler(Error):
+    pass
 
 #################################################################################################################################
 #################################################################################################################################
@@ -155,11 +157,15 @@ class printerAPI:
                 _logger.debug('Starting DuetWebAPI session..')
                 URL=(f'{self._base_url}'+'/rr_connect?password=' + self._password)
                 r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-
+            
             URL=(f'{self._base_url}'+'/rr_status?type=2')
             r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-            j = json.loads(r.text)
-            
+            if(r.ok):
+                j = json.loads(r.text)
+            else: 
+                raise DuetSBCHandler
+
+            print('Trying rr_status')
             # Send reply to clear buffer
             replyURL = (f'{self._base_url}'+'/rr_reply')
             r = self.session.get(replyURL, timeout=(self._requestTimeout,self._responseTimeout))
@@ -177,58 +183,57 @@ class printerAPI:
                 _logger.debug('Added tool: ' + str(tempTool.getJSON()))
             
             # Check for firmware version
+            firmwareName = j['firmwareName']
+            # fetch hardware board type from firmware name, character 24
+            boardVersion = firmwareName[24]
+            self._firmwareVersion = j['firmwareVersion']
+            # set RRF version based on results
+            if self._firmwareVersion[0] == "2":
+                # Duet running RRF v2
+                self._rrf2 = True
+                self.pt = 2
+            else: 
+                # Duet 2 hardware running RRF v3
+                self._rrf2 = False
+                self.pt = 2
+            _logger.info('  .. connected to '+ firmwareName + '- V'+ self._firmwareVersion + '..')
+            return
+        except DuetSBCHandler as sbc:
+            # We're probably dealing with a Duet 3 controller, get required firmware info
             try:
-                firmwareName = j['firmwareName']
-                # fetch hardware board type from firmware name, character 24
-                boardVersion = firmwareName[24]
-                self._firmwareVersion = j['firmwareVersion']
-                # set RRF version based on results
-                if self._firmwareVersion[0] == "2":
-                    # Duet running RRF v2
-                    self._rrf2 = True
-                    self.pt = 2
-                else: 
-                    # Duet 2 hardware running RRF v3
-                    self._rrf2 = False
-                    self.pt = 2
-                _logger.info('  .. connected to '+ firmwareName + '- V'+ self._firmwareVersion + '..')
+                _logger.debug('Trying to connect to Duet 3 board..')
+                # Set up session using password
+                URL=(f'{self._base_url}'+'/machine/connect?password=' + self._password)
+                r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
+                # Get session key
+                r_obj = json.loads(r.text)
+                self._sessionKey = r_obj['sessionKey']
+                self.session.headers = {'X-Session-Key': self._sessionKey }
+                
+                URL=(f'{self._base_url}'+'/machine/status')
+                r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
+                _logger.debug('Got reply, parsing again..')
+                j = json.loads(r.text)
+                _=j
+                firmwareName = j['boards'][0]['firmwareName']
+                firmwareVersion = j['boards'][0]['firmwareVersion']
+                self.pt = 3
+
+                # Setup tool definitions
+                toolData = j['tools']
+                for inputTool in toolData:
+                    tempTool = Tool(
+                        number = inputTool['number'],
+                        name = inputTool['name'],
+                        offsets={'X': inputTool['offsets'][0], 'Y': inputTool['offsets'][1], 'Z':inputTool['offsets'][2]})
+                    self._tools.append(tempTool)
+                
+                _logger.debug('Duet 3 board detected')
+                _logger.info('  .. connected to: '+ firmwareName + '- V'+firmwareVersion + '..')
                 return
             except:
-                # We're probably dealing with a Duet 3 controller, get required firmware info
-                try:
-                    _logger.debug('Trying to connect to Duet 3 board..')
-                    # Set up session using password
-                    URL=(f'{self._base_url}'+'/machine/connect?password=' + self._password)
-                    r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-                    # Get session key
-                    r_obj = json.loads(r.text)
-                    self._sessionKey = r_obj['sessionKey']
-                    self.session.headers = {'X-Session-Key': self._sessionKey }
-
-                    URL=(f'{self._base_url}'+'/machine/status')
-                    r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-                    _logger.debug('Got reply, parsing again..')
-                    j = json.loads(r.text)
-                    _=j
-                    firmwareName = j['boards'][0]['firmwareName']
-                    firmwareVersion = j['boards'][0]['firmwareVersion']
-                    self.pt = 3
-
-                    # Setup tool definitions
-                    toolData = j['tools']
-                    for inputTool in toolData:
-                        tempTool = Tool(
-                            number = inputTool['number'],
-                            name = inputTool['name'],
-                            offsets={'X': inputTool['offsets'][0], 'Y': inputTool['offsets'][1], 'Z':inputTool['offsets'][2]})
-                        self._tools.append(tempTool)
-                    
-                    _logger.debug('Duet 3 board detected')
-                    _logger.info('  .. connected to: '+ firmwareName + '- V'+firmwareVersion + '..')
-                    return
-                except:
-                    # The board is neither a Duet 2 controller using RRF v2/3 nor a Duet 3 controller board, return an error state
-                    raise UnknownController('Unknown controller detected.')
+                # The board is neither a Duet 2 controller using RRF v2/3 nor a Duet 3 controller board, return an error state
+                raise UnknownController('Unknown controller detected.')
         except UnknownController as uc:
             errorMsg = 'Unknown controller at " + self._base_url + " - does not appear to be an RRF2 or RRF3 printer'
             _logger.error(errorMsg)
@@ -237,11 +242,11 @@ class printerAPI:
             errorMsg = 'Connect operation: Connection timed out.'
             _logger.critical(errorMsg)
             raise Exception(errorMsg)
-        except HTTPException as ht:
-            _logger.error('DuetWebAPIT init: Connection error.')
+        # except HTTPException as ht:
+        #     _logger.error('DuetWebAPIT init: Connection error.')
         except Exception as e:
             # Catastrophic error. Bail.
-            _logger.critical('DuetWebAPI Init: ' + str(e))
+            _logger.critical('DuetWebAPI2 Init: ' + str(e))
             raise Exception('DuetWebAPI Init: ' + str(e))
 
     #################################################################################################################################
@@ -702,10 +707,8 @@ class printerAPI:
                 # Send reply to clear buffer
                 replyURL = (f'{self._base_url}'+'/rr_reply')
                 r = self.session.get(replyURL, timeout=(self._requestTimeout,self._responseTimeout))
-
             elif (self.pt == 3):
                 # Duet RRF v3
-
                 # Set up session using password
                 URL=(f'{self._base_url}'+'/machine/connect?password=' + self._password)
                 r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
@@ -717,8 +720,13 @@ class printerAPI:
                 URL=(f'{self._base_url}'+'/machine/status')
                 r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
                 j = json.loads(r.text)
-                if 'result' in j: j = j['result']
-                _logger.debug('Number of tools: ' + str(len(j['tools'])))
+                axesList=j['move']['axes']
+                for axis in axesList[0:3]:
+                    if(axis['homed'] is False):
+                        machineHomed = False
+                    else:
+                        pass
+
             self._homed = machineHomed
             return(self._homed)
         except ConnectTimeoutError:
@@ -1075,7 +1083,7 @@ class printerAPI:
                 self.session.headers = {'X-Session-Key': self._sessionKey }
 
                 URL=(f'{self._base_url}'+'/machine/code/')
-                r = self.requests.post(URL, data=command)
+                r = self.session.post(URL, data=command)
             if (r.ok):
                 return 0
             else:
