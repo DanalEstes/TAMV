@@ -165,7 +165,6 @@ class printerAPI:
             else: 
                 raise DuetSBCHandler
 
-            print('Trying rr_status')
             # Send reply to clear buffer
             replyURL = (f'{self._base_url}'+'/rr_reply')
             r = self.session.get(replyURL, timeout=(self._requestTimeout,self._responseTimeout))
