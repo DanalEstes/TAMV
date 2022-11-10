@@ -1161,27 +1161,6 @@ class printerAPI:
         
         r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
         return(r.text.splitlines()) # replace('\n',str(chr(0x0a))).replace('\t','    '))
-        
-    def checkDuet2RRF3(self):
-        if (self.pt == 2):
-            # Start a connection
-            _logger.debug('Starting DuetWebAPI session..')
-            URL=(f'{self._base_url}'+'/rr_connect?password=' + self._password)
-            r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-
-            URL=(f'{self._base_url}'+'/rr_status?type=2')
-            r = self.session.get(URL, timeout=(self._requestTimeout,self._responseTimeout))
-            j = json.loads(r.text)
-            s=j['firmwareVersion']
-            
-            # Send reply to clear buffer
-            replyURL = (f'{self._base_url}'+'/rr_reply')
-            r = self.session.get(replyURL, timeout=(self._requestTimeout,self._responseTimeout))
-
-            if s == "3.2":
-                return True
-            else:
-                return False
 
     #################################################################################################################################
     # The following methods provide services built on the ZTATP Core atomimc class functions. 
