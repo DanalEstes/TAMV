@@ -405,12 +405,12 @@ class App(QMainWindow):
             if(self.__activePrinter['controller'] == 'RRF'):
                 (_errCode, _errMsg, self.printerURL) = self.sanitizeURL(self.__activePrinter['address'])
                 self.__activePrinter['address'] = self.printerURL
-            if _errCode > 0:
-                # invalid input
-                _logger.error('Invalid printer URL detected in settings.json')
-                _logger.error(_errMsg)
-                _logger.info('Defaulting to \"http://localhost\"...')
-                self.printerURL = 'http://localhost'
+                if _errCode > 0:
+                    # invalid input
+                    _logger.error('Invalid printer URL detected in settings.json')
+                    _logger.error(_errMsg)
+                    _logger.info('Defaulting to \"http://localhost\"...')
+                    self.printerURL = 'http://localhost'
         
         ##### Settings Dialog
         self.__settingsGeometry = None
